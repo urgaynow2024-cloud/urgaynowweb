@@ -5,9 +5,9 @@ import { formatDateTime } from "@/lib/utils";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { Card } from "@/components/admin/ui/Card";
-import { Badge, StatusPill } from "@/components/admin/ui/Badge";
+import { Badge } from "@/components/admin/ui/Badge";
 import { EmptyState } from "@/components/admin/ui/Avatar";
-import { IconCalendar, IconPlus, IconSearch, IconEdit, IconFilter } from "@/components/admin/ui/icons";
+import { IconCalendar, IconPlus, IconSearch, IconEdit } from "@/components/admin/ui/icons";
 
 export const metadata = { title: "Events", robots: { index: false, follow: false } };
 
@@ -77,50 +77,42 @@ export default async function AdminEventsList({
             />
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="sticky top-0 z-10 bg-ink-50/80 text-xs uppercase tracking-wide text-ink-500 backdrop-blur dark:bg-ink-800/80">
-                <tr>
-                  <th className="px-5 py-3 font-semibold">Title</th>
-                  <th className="px-5 py-3 font-semibold">Date</th>
-                  <th className="hidden px-5 py-3 font-semibold lg:table-cell">Location</th>
-                  <th className="px-5 py-3 font-semibold">Status</th>
-                  <th className="px-5 py-3 text-right font-semibold">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-ink-100 dark:divide-ink-800">
-                {items.map((e) => (
-                  <tr key={e.id} className="group transition-colors hover:bg-ink-50 dark:hover:bg-ink-800/50">
-                    <td className="px-5 py-3">
-                      <div className="flex items-center gap-3">
-                        {e.coverImage && (
-                          <img src={e.coverImage} alt={e.title} className="h-10 w-10 shrink-0 rounded-lg object-cover" />
-                        )}
-                        <span className="font-medium text-ink-900 dark:text-white">{e.title}</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-3 text-ink-500">{formatDateTime(e.startDateTime)}</td>
-                    <td className="hidden px-5 py-3 lg:table-cell">{e.location || "—"}</td>
-                    <td className="px-5 py-3">
-                      <StatusPill tone={e.published ? "success" : "neutral"}>{e.published ? "Published" : "Draft"}</StatusPill>
-                    </td>
-                    <td className="px-5 py-3">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link href={`/admin/events/${e.id}`} className="btn-secondary btn-sm">
-                          <IconEdit size={14} /> Edit
-                        </Link>
-                        <ConfirmDeleteButton
-                          action={deleteEvent.bind(null, e.id)}
-                          message={`Delete "${e.title}"? This cannot be undone.`}
-                          label="Delete"
-                          className="btn-danger btn-sm"
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {items.map((e) => (
+              <Card key={e.id} className="flex flex-col transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-card-hover">
+                <div className="relative aspect-[16/9] overflow-hidden bg-ink-100 dark:bg-ink-800">
+                  {e.coverImage ? (
+                    <img src={e.coverImage} alt={e.title} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-ink-400">
+                      <IconCalendar size={28} />
+                    </div>
+                  )}
+                  <div className="absolute left-2 top-2">
+                    <Badge tone={e.published ? "success" : "neutral"}>{e.published ? "Published" : "Draft"}</Badge>
+                  </div>
+                </div>
+                <div className="flex flex-1 flex-col p-4">
+                  <h3 className="text-base font-semibold text-ink-900 dark:text-white">{e.title}</h3>
+                  <p className="mt-1 text-xs text-ink-500">{formatDateTime(e.startDateTime)}</p>
+                  {e.location && <p className="mt-1 text-xs text-ink-500">{e.location}</p>}
+                  {e.description && (
+                    <p className="mt-2 text-sm text-ink-600 dark:text-ink-300">{e.description}</p>
+                  )}
+                  <div className="mt-auto flex items-center justify-end gap-2 pt-4">
+                    <Link href={`/admin/events/${e.id}`} className="btn-secondary btn-sm">
+                      <IconEdit size={14} /> Edit
+                    </Link>
+                    <ConfirmDeleteButton
+                      action={deleteEvent.bind(null, e.id)}
+                      message={`Delete "${e.title}"? This cannot be undone.`}
+                      label="Delete"
+                      className="btn-danger btn-sm"
+                    />
+                  </div>
+                </div>
+              </Card>
+            ))}
           </div>
         )}
       </Card>

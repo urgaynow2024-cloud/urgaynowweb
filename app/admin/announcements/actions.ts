@@ -17,16 +17,19 @@ function uniqueSlug(base: string): string {
 
 export async function importFromDiscord() {
   await requireAdmin();
+  let result = "/admin/announcements?imported=1";
   try {
     const messages = await fetchDiscordMessages(1);
     if (messages.length === 0) {
-      redirect("/admin/announcements?importError=No messages found in the configured Discord channel.");
+      result = `/admin/announcements?importError=${encodeURIComponent("No messages found in the configured Discord channel.")}`;
+      return;
     }
 
     const m = messages[0];
     const content = m.content.trim();
     if (!content) {
-      redirect("/admin/announcements?importError=The latest Discord message has no text content.");
+      result = `/admin/announcements?importError=${encodeURIComponent("The latest Discord message has no text content.")}`;
+      return;
     }
 
     const firstLine = content.split("\n").find((l) => l.trim().length > 0)?.trim() ?? "Discord announcement";
@@ -49,12 +52,11 @@ export async function importFromDiscord() {
         discordMessageId: m.id,
       },
     });
-
-    redirect("/admin/announcements?imported=1");
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";
-    redirect(`/admin/announcements?importError=${encodeURIComponent(message)}`);
+    result = `/admin/announcements?importError=${encodeURIComponent(message)}`;
   }
+  redirect(result);
 }
 
 export async function createAnnouncement(formData: FormData) {

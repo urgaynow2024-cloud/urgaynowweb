@@ -140,22 +140,28 @@ export default async function HomePage() {
       {/* Featured staff */}
       <Container>
         <Section title="Meet the team" subtitle="The lovely humans who keep things running.">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {staff.map((s) => (
-              <StaffCard
-                key={s.id}
-                staff={{
-                  id: s.id,
-                  name: s.name,
-                  vrchatUsername: s.vrchatUsername,
-                  rank: s.rank,
-                  bio: s.bio,
-                  photoUrl: s.photoUrl,
-                  socials: s.socials,
-                }}
-              />
-            ))}
-          </div>
+          {staff.length > 0 ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {staff.map((s) => (
+                <StaffCard
+                  key={s.id}
+                  staff={{
+                    id: s.id,
+                    name: s.name,
+                    vrchatUsername: s.vrchatUsername,
+                    rank: s.rank,
+                    bio: s.bio,
+                    photoUrl: s.photoUrl,
+                    socials: s.socials,
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
+            <p className="rounded-xl border border-dashed border-zinc-300 p-8 text-center text-zinc-500 dark:border-zinc-700">
+              No team members yet.
+            </p>
+          )}
           <div className="mt-6">
             <Link href="/staff" className="font-semibold text-brand-600 hover:underline dark:text-brand-300">
               Full staff directory →

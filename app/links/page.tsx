@@ -62,7 +62,7 @@ export default async function LinksPage() {
           </ul>
         ) : (
           <p className="rounded-xl border border-dashed border-zinc-300 p-8 text-center text-zinc-500 dark:border-zinc-700">
-            More links coming soon.
+            No links have been added.
           </p>
         )}
       </Container>

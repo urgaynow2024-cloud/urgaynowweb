@@ -2,15 +2,12 @@ import "server-only";
 import { prisma } from "@/lib/db";
 
 const DEFAULT_SETTINGS: Record<string, string> = {
-  siteTagline: "The official community hub for Ur Gay Now.",
-  homeIntro:
-    "Welcome to Ur Gay Now — a welcoming, colourful, and LGBTQ+ friendly community. Find our latest announcements, events, rules, staff, guides, and more, all in one place.",
-  homeFeaturedTitle: "What's happening",
-  aboutContent:
-    "Ur Gay Now is a vibrant, inclusive community built around friendship, self-expression, and good times in VRChat and beyond. We celebrate everyone exactly as they are.",
-  supportMessage:
-    "Need help? Reach out and a member of our team will get back to you as soon as possible.",
-  supportEmail: "hello@urgaynow.com",
+  siteTagline: "",
+  homeIntro: "",
+  homeFeaturedTitle: "",
+  aboutContent: "",
+  supportMessage: "",
+  supportEmail: "",
   discordInvite: "",
   vrchatGroupUrl: "",
   socialDiscord: "",

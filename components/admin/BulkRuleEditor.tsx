@@ -287,7 +287,7 @@ export function BulkRuleEditor({
               className="textarea font-mono text-sm"
               value={importText}
               onChange={(e) => setImportText(e.target.value)}
-              placeholder={'[{"title":"Be respectful","content":"**Be kind** to everyone.","category":"General"}]'}
+              placeholder="Paste a JSON array of rules to import"
             />
             <div className="mt-4 flex justify-end gap-3">
               <button type="button" onClick={() => setImportOpen(false)} className="btn-secondary">Cancel</button>

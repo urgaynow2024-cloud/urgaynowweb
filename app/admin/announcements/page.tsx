@@ -49,7 +49,7 @@ export default async function AdminAnnouncementsList({
           <>
             <form action={importFromDiscord}>
               <button type="submit" className="btn-secondary btn-sm">
-                <IconDownload size={16} /> Import from Discord
+                <IconDownload size={16} /> Sync from Discord
               </button>
             </form>
             <Link href="/admin/announcements/new" className="btn-primary btn-sm">
@@ -86,9 +86,7 @@ export default async function AdminAnnouncementsList({
 
         {searchParams.imported !== undefined && (
           <div role="status" className="m-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900 dark:bg-green-950/40 dark:text-green-300">
-            {searchParams.imported === "0"
-              ? "Nothing new to import — all recent Discord announcements are already on the site."
-              : `Imported ${searchParams.imported} announcement${searchParams.imported === "1" ? "" : "s"} from Discord.`}
+            Synced the latest Discord announcement. The previous one was replaced to save space.
           </div>
         )}
 

@@ -18,39 +18,39 @@ function uniqueSlug(base: string): string {
 export async function importFromDiscord() {
   await requireAdmin();
   try {
-    const messages = await fetchDiscordMessages(20);
-    let imported = 0;
-
-    for (const m of messages) {
-      const existing = await prisma.announcement.findFirst({
-        where: { discordMessageId: m.id },
-      });
-      if (existing) continue;
-
-      const content = m.content.trim();
-      if (!content) continue;
-
-      const firstLine = content.split("\n").find((l) => l.trim().length > 0)?.trim() ?? "Discord announcement";
-      const title = firstLine.length > 100 ? `${firstLine.slice(0, 97)}…` : firstLine;
-      const excerpt = content.replace(/\s+/g, " ").slice(0, 160);
-      const image = m.attachments.find((a) => (a.contentType ?? "").startsWith("image/"));
-
-      await prisma.announcement.create({
-        data: {
-          title,
-          slug: uniqueSlug(title),
-          excerpt,
-          content,
-          coverImage: image?.url ?? "",
-          published: true,
-          publishedAt: new Date(m.timestamp),
-          discordMessageId: m.id,
-        },
-      });
-      imported++;
+    const messages = await fetchDiscordMessages(1);
+    if (messages.length === 0) {
+      redirect("/admin/announcements?importError=No messages found in the configured Discord channel.");
     }
 
-    redirect(`/admin/announcements?imported=${imported}`);
+    const m = messages[0];
+    const content = m.content.trim();
+    if (!content) {
+      redirect("/admin/announcements?importError=The latest Discord message has no text content.");
+    }
+
+    const firstLine = content.split("\n").find((l) => l.trim().length > 0)?.trim() ?? "Discord announcement";
+    const title = firstLine.length > 100 ? `${firstLine.slice(0, 97)}…` : firstLine;
+    const excerpt = content.replace(/\s+/g, " ").slice(0, 160);
+    const image = m.attachments.find((a) => (a.contentType ?? "").startsWith("image/"));
+
+    // Keep only the latest Discord-sourced announcement to avoid filling the database.
+    await prisma.announcement.deleteMany({ where: { discordMessageId: { not: null } } });
+
+    await prisma.announcement.create({
+      data: {
+        title,
+        slug: uniqueSlug(title),
+        excerpt,
+        content,
+        coverImage: image?.url ?? "",
+        published: true,
+        publishedAt: new Date(m.timestamp),
+        discordMessageId: m.id,
+      },
+    });
+
+    redirect("/admin/announcements?imported=1");
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";
     redirect(`/admin/announcements?importError=${encodeURIComponent(message)}`);

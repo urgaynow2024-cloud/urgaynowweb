@@ -51,7 +51,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ url });
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown error";
-    const storeIdConfigured = Boolean(process.env.BLOB_STORE_ID);
 
     console.error("[upload] Route-level failure", {
       user: session.name,
@@ -59,35 +58,14 @@ export async function POST(req: Request) {
       filename: file.name,
       type: file.type,
       size: file.size,
-      storeIdConfigured,
-      vercelEnv: process.env.VERCEL_ENV || "local",
       message,
       stack: err instanceof Error ? err.stack : undefined,
       name: err instanceof Error ? err.name : undefined,
     });
 
-    let userMessage = "Upload failed. Please try again.";
-    const lower = message.toLowerCase();
-    if (lower.includes("credentials") || lower.includes("token") || lower.includes("auth") || lower.includes("oidc") || lower.includes("store")) {
-      userMessage = "Image storage authentication failed. Check Blob store config.";
-    } else if (lower.includes("not found") || lower.includes("store not found")) {
-      userMessage = "Image storage bucket was not found. Check storage config.";
-    } else if (lower.includes("private")) {
-      userMessage = "Storage access denied. The uploaded file must be publicly accessible.";
-    } else if (lower.includes("path") || lower.includes("filename")) {
-      userMessage = "Invalid upload path or filename.";
-    } else if (lower.includes("too large") || lower.includes("entity too large") || lower.includes("413")) {
-      userMessage = `File too large for server upload (max ${MAX_BYTES / 1024 / 1024}MB).`;
-    } else if (lower.includes("unsupported") || lower.includes("content type")) {
-      userMessage = "Unsupported file type for storage.";
-    }
-
     return NextResponse.json(
       {
-        error: userMessage,
-        _debug: message,
-        _storeIdConfigured: storeIdConfigured,
-        _vercelEnv: process.env.VERCEL_ENV || "local",
+        error: message || "Upload failed. Please try again.",
       },
       { status: 500 },
     );

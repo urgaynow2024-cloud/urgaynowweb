@@ -33,45 +33,29 @@ function slugifyFilename(name: string): string {
 export async function uploadFile(file: File, folder = "uploads"): Promise<string> {
   await getSession();
 
-  const storeId = process.env.BLOB_STORE_ID || undefined;
   const safeName = slugifyFilename(file.name);
   const bytes = Buffer.from(await file.arrayBuffer());
-
-  const debugInfo = {
-    filename: file.name,
-    folder,
-    contentType: file.type,
-    size: file.size,
-    storeIdConfigured: Boolean(storeId),
-    vercelEnv: process.env.VERCEL_ENV || "local",
-    hasOidcToken: Boolean(process.env.VERCEL_OIDC_TOKEN),
-  };
 
   try {
     const blob = await put(`${folder}/${safeName}`, bytes, {
       access: "public",
       contentType: file.type,
-      ...(storeId ? { storeId } : {}),
     });
 
-    console.log("[upload] success", { ...debugInfo, url: blob.url, pathname: blob.pathname });
+    console.log("[upload] success", {
+      url: blob.url,
+      pathname: blob.pathname,
+      contentType: blob.contentType,
+    });
     return blob.url;
   } catch (err) {
-    const raw = err instanceof Error ? err : new Error(String(err));
-    console.error("[upload] Vercel Blob put failed", {
-      ...debugInfo,
-      message: raw.message,
-      stack: raw.stack,
-      name: raw.name,
-      cause: raw.cause,
+    console.error("[upload] Blob put failed", {
+      message: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+      name: err instanceof Error ? err.name : undefined,
+      cause: err instanceof Error ? (err as Error & { cause?: unknown }).cause : undefined,
     });
-
-    if (raw.message.includes("No blob credentials found")) {
-      throw new Error(
-        "Image storage authentication failed. Blob store credentials were not found. This usually means the Vercel Blob integration is not attached to this deployment environment."
-      );
-    }
-    throw raw;
+    throw err;
   }
 }
 

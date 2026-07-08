@@ -3,7 +3,6 @@ import { getSession } from "@/lib/auth";
 import {
   uploadFile,
   isAllowedImageType,
-  isBlobConfigured,
   MAX_BYTES,
 } from "@/lib/upload";
 
@@ -16,12 +15,12 @@ export const runtime = "nodejs";
  *
  * Graceful failure contract:
  * - Missing/invalid auth  -> 401
- * - Missing/invalid file   -> 400 (with specific, safe message)
- * - Storage not configured -> 503 "Image storage is not configured. Please contact support."
+ * - Missing/invalid file  -> 400
  * - Any other failure      -> 500 "Upload failed. Please try again."
  *
  * Stack traces are never returned to the client; details are logged server-side only.
  */
+
 export async function POST(req: Request) {
   const session = await getSession();
   if (!session) {
@@ -60,22 +59,10 @@ export async function POST(req: Request) {
     );
   }
 
-  // Fail fast and cleanly before attempting storage.
-  if (!isBlobConfigured()) {
-    console.error(
-      "Upload rejected: BLOB_READ_WRITE_TOKEN is not set. Configure Vercel Blob storage.",
-    );
-    return NextResponse.json(
-      { error: "Image storage is not configured. Please contact support." },
-      { status: 503 },
-    );
-  }
-
   try {
     const url = await uploadFile(file, folder);
     return NextResponse.json({ url });
   } catch (err) {
-    // Keep useful server logs, but never leak internals to the client.
     console.error("Upload failed", {
       user: session.name,
       folder,
@@ -85,14 +72,6 @@ export async function POST(req: Request) {
       message: err instanceof Error ? err.message : "unknown error",
     });
 
-    const message =
-      err instanceof Error &&
-      (err.message.includes("not configured") ||
-        err.message.includes("BLOB_READ_WRITE_TOKEN") ||
-        err.message.includes("environment variable"))
-        ? "Image storage is not configured. Please contact support."
-        : "Upload failed. Please try again.";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: "Upload failed. Please try again." }, { status: 500 });
   }
 }

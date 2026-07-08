@@ -19,10 +19,6 @@ export function isAllowedImageType(type: string): boolean {
   return ALLOWED_TYPES.includes(type);
 }
 
-export function isBlobConfigured(): boolean {
-  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
-}
-
 function slugifyFilename(name: string): string {
   const ext = path.extname(name) || "";
   const base = path
@@ -34,19 +30,8 @@ function slugifyFilename(name: string): string {
   return `${base || "file"}-${randomUUID().slice(0, 8)}${ext}`;
 }
 
-/**
- * Upload a file to Vercel Blob. Requires `BLOB_READ_WRITE_TOKEN` to be set.
- * Returns a public URL. Throws a controlled error when storage is not configured.
- */
 export async function uploadFile(file: File, folder = "uploads"): Promise<string> {
-  await getSession(); // ensure caller is an admin
-
-  if (!isBlobConfigured()) {
-    // Controlled, user-safe error. Never leaks credentials or stack traces.
-    throw new Error(
-      "Image storage is not configured. Please contact support.",
-    );
-  }
+  await getSession();
 
   const safeName = slugifyFilename(file.name);
   const bytes = Buffer.from(await file.arrayBuffer());
@@ -54,7 +39,6 @@ export async function uploadFile(file: File, folder = "uploads"): Promise<string
   const blob = await put(`${folder}/${safeName}`, bytes, {
     access: "public",
     contentType: file.type,
-    token: process.env.BLOB_READ_WRITE_TOKEN as string,
   });
   return blob.url;
 }

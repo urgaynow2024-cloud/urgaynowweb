@@ -1,7 +1,6 @@
 // Prisma schema configured for Supabase (PostgreSQL).
-// Set DATABASE_URL to your Supabase Postgres connection string.
-// Use the DIRECT connection (port 5432) for `prisma db push` / migrations.
-// For the running app you can use the connection-pooler URI (port 6543) with ?pgbouncer=true.
+// - Runtime: DATABASE_URL -> Supabase Transaction Pooler (port 6543)
+// - Migrations: DIRECT_URL -> Supabase direct connection (port 5432)
 generator client {
   provider = "prisma-client-js"
 }

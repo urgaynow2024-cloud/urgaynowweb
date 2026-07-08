@@ -8,19 +8,6 @@ import {
 
 export const runtime = "nodejs";
 
-/**
- * POST /api/upload
- *
- * Authenticated image upload to Vercel Blob.
- *
- * Graceful failure contract:
- * - Missing/invalid auth  -> 401
- * - Missing/invalid file  -> 400
- * - Any other failure      -> 500 "Upload failed. Please try again."
- *
- * Stack traces are never returned to the client; details are logged server-side only.
- */
-
 export async function POST(req: Request) {
   const session = await getSession();
   if (!session) {
@@ -47,7 +34,7 @@ export async function POST(req: Request) {
 
   if (file.size > MAX_BYTES) {
     return NextResponse.json(
-      { error: "File too large (max 8MB)." },
+      { error: `File too large (max ${MAX_BYTES / 1024 / 1024}MB).` },
       { status: 400 },
     );
   }
@@ -63,15 +50,34 @@ export async function POST(req: Request) {
     const url = await uploadFile(file, folder);
     return NextResponse.json({ url });
   } catch (err) {
+    const message = err instanceof Error ? err.message : "unknown error";
     console.error("Upload failed", {
       user: session.name,
       folder,
       filename: file.name,
       type: file.type,
       size: file.size,
-      message: err instanceof Error ? err.message : "unknown error",
+      message,
+      stack: err instanceof Error ? err.stack : undefined,
+      name: err instanceof Error ? err.name : undefined,
     });
 
-    return NextResponse.json({ error: "Upload failed. Please try again." }, { status: 500 });
+    let userMessage = "Upload failed. Please try again.";
+    const lower = message.toLowerCase();
+    if (lower.includes("token") || lower.includes("auth") || lower.includes("oidc") || lower.includes("store")) {
+      userMessage = "Image storage authentication failed. Check Blob store config.";
+    } else if (lower.includes("not found") || lower.includes("store not found")) {
+      userMessage = "Image storage bucket was not found. Check storage config.";
+    } else if (lower.includes("private")) {
+      userMessage = "Storage access denied. The uploaded file must be publicly accessible.";
+    } else if (lower.includes("path") || lower.includes("filename")) {
+      userMessage = "Invalid upload path or filename.";
+    } else if (lower.includes("too large") || lower.includes("entity too large") || lower.includes("413")) {
+      userMessage = `File too large for server upload (max ${MAX_BYTES / 1024 / 1024}MB).`;
+    } else if (lower.includes("unsupported") || lower.includes("content type")) {
+      userMessage = "Unsupported file type for storage.";
+    }
+
+    return NextResponse.json({ error: userMessage, _debug: message }, { status: 500 });
   }
 }

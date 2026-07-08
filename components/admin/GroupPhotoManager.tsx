@@ -49,6 +49,10 @@ export function GroupPhotoManager({ items }: { items: GroupPhotoItem[] }) {
       setError("Please choose an image file.");
       return;
     }
+    if (file.size > 4 * 1024 * 1024) {
+      setError("File is too large (max 4MB).");
+      return;
+    }
     setUploading(true);
     setProgress(0);
     const form = new FormData();
@@ -102,7 +106,7 @@ export function GroupPhotoManager({ items }: { items: GroupPhotoItem[] }) {
               <p className="text-sm font-semibold text-ink-900 dark:text-white">
                 {uploading ? `Uploading… ${progress}%` : "Drag & drop an image to upload"}
               </p>
-              <p className="text-xs text-ink-500 dark:text-ink-400">PNG, JPG, GIF, WebP or AVIF · up to 8MB</p>
+              <p className="text-xs text-ink-500 dark:text-ink-400">PNG, JPG, GIF, WebP or AVIF · up to 4MB</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

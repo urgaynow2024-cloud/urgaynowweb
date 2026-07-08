@@ -13,7 +13,7 @@ const ALLOWED_TYPES = [
   "image/avif",
 ];
 
-const MAX_BYTES = 8 * 1024 * 1024; // 8MB
+const MAX_BYTES = 4 * 1024 * 1024; // 4MB to stay within Vercel serverless request/upload limits
 
 export function isAllowedImageType(type: string): boolean {
   return ALLOWED_TYPES.includes(type);

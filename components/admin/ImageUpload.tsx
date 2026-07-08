@@ -73,8 +73,8 @@ export function ImageUpload({
       setError("Please choose an image file.");
       return;
     }
-    if (file.size > 8 * 1024 * 1024) {
-      setError("File is too large (max 8MB).");
+    if (file.size > 4 * 1024 * 1024) {
+      setError("File is too large (max 4MB).");
       return;
     }
     uploadFile(file);
@@ -152,7 +152,7 @@ export function ImageUpload({
             <p className="text-sm font-semibold text-ink-800 dark:text-ink-100">
               <span className="text-brand-600 dark:text-brand-300">Click to upload</span> or drag and drop
             </p>
-            <p className="mt-1 text-xs text-ink-400">PNG, JPG, GIF, WebP or AVIF · up to 8MB</p>
+            <p className="mt-1 text-xs text-ink-400">PNG, JPG, GIF, WebP or AVIF · up to 4MB</p>
           </>
         )}
       </div>

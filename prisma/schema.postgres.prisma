@@ -1,0 +1,9 @@
+// This project now uses Supabase (PostgreSQL) directly — see schema.prisma.
+// This file is kept only as a reference. No action needed here.
+//
+// Supabase setup recap:
+//   1. Create a project at https://supabase.com
+//   2. Copy the Postgres URI from Settings -> Database -> Connection string (Direct)
+//   3. Put it in DATABASE_URL in your .env (and in Vercel env vars)
+//   4. Run: npx prisma db push   (creates tables)
+//   5. Run: npm run db:seed       (sample content)

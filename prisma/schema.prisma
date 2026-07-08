@@ -1,0 +1,98 @@
+// Prisma schema configured for Supabase (PostgreSQL).
+// Set DATABASE_URL to your Supabase Postgres connection string.
+// Use the DIRECT connection (port 5432) for `prisma db push` / migrations.
+// For the running app you can use the connection-pooler URI (port 6543) with ?pgbouncer=true.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Staff {
+  id             String   @id @default(cuid())
+  name           String
+  vrchatUsername String   @unique
+  rank           String   @default("Member")
+  bio            String   @default("")
+  photoUrl       String   @default("")
+  socials        String   @default("[]") // JSON array of { label, url }
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  slug        String   @unique
+  excerpt     String   @default("")
+  content     String   @default("") // Markdown
+  coverImage  String   @default("")
+  published   Boolean  @default(true)
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Event {
+  id            String    @id @default(cuid())
+  title         String
+  description   String    @default("") // Markdown
+  location      String    @default("")
+  vrchatWorldUrl String   @default("")
+  coverImage    String    @default("")
+  startDateTime DateTime
+  endDateTime   DateTime?
+  published     Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Rule {
+  id        String @id @default(cuid())
+  category  String @default("General")
+  title     String
+  content   String @default("") // Markdown
+  sortOrder Int    @default(0)
+}
+
+model Guide {
+  id        String @id @default(cuid())
+  category  String @default("General")
+  question  String
+  answer    String @default("") // Markdown
+  sortOrder Int    @default(0)
+}
+
+model Link {
+  id        String @id @default(cuid())
+  label     String
+  url       String
+  icon      String @default("link") // emoji or icon name
+  sortOrder Int    @default(0)
+}
+
+model GalleryImage {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("")
+  imageUrl    String
+  createdAt   DateTime @default(now())
+}
+
+model GroupPhoto {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("")
+  imageUrl    String
+  createdAt   DateTime @default(now())
+}
+
+model Setting {
+  key       String   @id
+  value     String   @default("")
+  updatedAt DateTime @updatedAt
+}

@@ -47,6 +47,7 @@ export function BulkRuleEditor({
   const [importOpen, setImportOpen] = useState(false);
   const [importText, setImportText] = useState("");
   const [copied, setCopied] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
 
   function update(id: string, field: keyof RuleEntry, value: string | number) {
     setRules((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value, error: undefined } : r)));
@@ -100,7 +101,6 @@ export function BulkRuleEditor({
         }));
       }
     } catch {
-      // Treat as one-title-per-line plain text.
       parsed = text.split("\n").filter((l) => l.trim()).map((l, i) => ({
         id: newId(),
         category: "General",
@@ -112,6 +112,33 @@ export function BulkRuleEditor({
     if (parsed.length) setRules(parsed);
     setImportOpen(false);
     setImportText("");
+  }
+
+  async function handleFileDrop(file: File) {
+    if (!file.name.endsWith(".txt") && !file.name.endsWith(".json")) return;
+    const text = await file.text();
+    let parsed: RuleEntry[] = [];
+    try {
+      const json = JSON.parse(text);
+      if (Array.isArray(json)) {
+        parsed = json.map((r: any, i: number) => ({
+          id: newId(),
+          category: String(r.category || "General"),
+          title: String(r.title || ""),
+          content: String(r.content || ""),
+          sortOrder: i,
+        }));
+      }
+    } catch {
+      parsed = text.split("\n").filter((l) => l.trim()).map((l, i) => ({
+        id: newId(),
+        category: "General",
+        title: l.trim(),
+        content: "",
+        sortOrder: i,
+      }));
+    }
+    if (parsed.length) setRules(parsed);
   }
 
   function handleExport() {
@@ -157,7 +184,20 @@ export function BulkRuleEditor({
   }
 
   return (
-    <div className="space-y-5">
+    <div
+      className="space-y-5"
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragOver(true);
+      }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragOver(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file) handleFileDrop(file);
+      }}
+    >
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" onClick={addRule} className="btn-primary btn-sm">
@@ -175,6 +215,14 @@ export function BulkRuleEditor({
         </button>
         <span className="ml-auto badge badge-neutral">{rules.length} rules</span>
       </div>
+
+      {/* Drop zone */}
+      {dragOver && (
+        <div className="rounded-2xl border-2 border-dashed border-brand-400 bg-brand-50/80 p-8 text-center dark:border-brand-500 dark:bg-brand-900/30">
+          <p className="text-lg font-semibold text-brand-700 dark:text-brand-200">Drop a .txt or .json file here to import rules</p>
+          <p className="mt-1 text-sm text-brand-600 dark:text-brand-300">One rule per line, or a JSON array of rules</p>
+        </div>
+      )}
 
       {/* Rule cards */}
       <div className="space-y-4">

@@ -53,13 +53,14 @@ export async function POST(req: Request) {
     const message = err instanceof Error ? err.message : "unknown error";
     const storeIdConfigured = Boolean(process.env.BLOB_STORE_ID);
 
-    console.error("[upload] Failed", {
+    console.error("[upload] Route-level failure", {
       user: session.name,
       folder,
       filename: file.name,
       type: file.type,
       size: file.size,
       storeIdConfigured,
+      vercelEnv: process.env.VERCEL_ENV || "local",
       message,
       stack: err instanceof Error ? err.stack : undefined,
       name: err instanceof Error ? err.name : undefined,
@@ -67,7 +68,7 @@ export async function POST(req: Request) {
 
     let userMessage = "Upload failed. Please try again.";
     const lower = message.toLowerCase();
-    if (lower.includes("token") || lower.includes("auth") || lower.includes("oidc") || lower.includes("store")) {
+    if (lower.includes("credentials") || lower.includes("token") || lower.includes("auth") || lower.includes("oidc") || lower.includes("store")) {
       userMessage = "Image storage authentication failed. Check Blob store config.";
     } else if (lower.includes("not found") || lower.includes("store not found")) {
       userMessage = "Image storage bucket was not found. Check storage config.";
@@ -86,6 +87,7 @@ export async function POST(req: Request) {
         error: userMessage,
         _debug: message,
         _storeIdConfigured: storeIdConfigured,
+        _vercelEnv: process.env.VERCEL_ENV || "local",
       },
       { status: 500 },
     );

@@ -15,7 +15,7 @@ single-admin dashboard for managing all content.
 - 🌗 Light / dark mode with no flash on load
 - 📱 Fully responsive & accessible (skip link, focus styles, semantic HTML)
 - 🔍 SEO-friendly metadata on every page
-- 💾 Optional Vercel Blob storage for images (falls back to local disk in dev)
+- 💾 Vercel Blob connected store for image uploads
 
 ## Tech stack
 
@@ -25,7 +25,7 @@ single-admin dashboard for managing all content.
 | Styling        | Tailwind CSS                             |
 | Database       | Prisma + Supabase (PostgreSQL)               |
 | Auth           | Cookie session (JWT via `jose`)         |
-| Image uploads  | Vercel Blob (or local `public/uploads`)  |
+| Image uploads  | Vercel Blob connected store               |
 | Rendering      | Server Components + Server Actions       |
 
 ## Getting started (local)
@@ -108,20 +108,21 @@ session checks.
     - If a new model (e.g. `GroupPhoto`) was added after the first deploy, the production database
       may be missing its table. The next deploy’s `prisma db push` creates it automatically — or run
       `schema.sql` in the Supabase SQL Editor to add it immediately.
-5. (Required for uploads on Vercel) **Image uploads:** add a Vercel Blob store and set
-   `BLOB_READ_WRITE_TOKEN`. Without it, uploads only work on the local filesystem (not on Vercel),
-   and `/api/upload` returns a clean, user-safe error instead of crashing.
+ 5. (Required for uploads on Vercel) **Image uploads:** connect a Vercel Blob store to this
+    project. The Vercel Blob integration automatically provides `BLOB_STORE_ID` to your
+    deployments. You do **not** need a `BLOB_READ_WRITE_TOKEN` for the connected store.
 
-   **Setting up Vercel Blob:**
-   - Go to your Vercel project dashboard
-   - Navigate to Storage → Create Database → Blob
-   - Once created, open the Blob store (or its access keys) and copy `BLOB_READ_WRITE_TOKEN`
-   - Add `BLOB_READ_WRITE_TOKEN` as an environment variable in Vercel for **Production**,
-     **Preview**, and **Development** environments
-   - Group photo uploads, group banner uploads, and all other image fields depend on this token.
-   - If the token is missing, the upload route fails *gracefully* with:
-     `Image storage is not configured. Please contact support.` (HTTP 503) — no stack traces
-     are exposed to the client.
+    **Setting up Vercel Blob (connected store):**
+    - Go to your Vercel project dashboard
+    - Navigate to **Storage** → **Create Database** → **Blob**
+    - Connect the Blob store to this project
+    - Vercel will automatically set `BLOB_STORE_ID` in your project environment variables
+    - Group photo uploads, group banner uploads, and all other image fields use the connected
+      store automatically via the Vercel runtime OIDC token
+
+    **Troubleshooting uploads:**
+    - If uploads fail, check the Vercel function log for `[upload]` entries
+    - The logs indicate whether `BLOB_STORE_ID` is configured and whether the OIDC token is present
 6. Deploy. Set your Fasthosts domain in the Vercel project's **Domains** settings and follow the
    DNS instructions.
 

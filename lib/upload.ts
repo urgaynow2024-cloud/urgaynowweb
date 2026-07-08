@@ -13,14 +13,10 @@ const ALLOWED_TYPES = [
   "image/avif",
 ];
 
-const MAX_BYTES = 4 * 1024 * 1024; // 4MB to stay within Vercel serverless request/upload limits
+const MAX_BYTES = 4 * 1024 * 1024; // 4MB
 
 export function isAllowedImageType(type: string): boolean {
   return ALLOWED_TYPES.includes(type);
-}
-
-function getBlobStoreId(): string | undefined {
-  return process.env.BLOB_STORE_ID || undefined;
 }
 
 function slugifyFilename(name: string): string {
@@ -37,9 +33,19 @@ function slugifyFilename(name: string): string {
 export async function uploadFile(file: File, folder = "uploads"): Promise<string> {
   await getSession();
 
-  const storeId = getBlobStoreId();
+  const storeId = process.env.BLOB_STORE_ID || undefined;
   const safeName = slugifyFilename(file.name);
   const bytes = Buffer.from(await file.arrayBuffer());
+
+  const debugInfo = {
+    filename: file.name,
+    folder,
+    contentType: file.type,
+    size: file.size,
+    storeIdConfigured: Boolean(storeId),
+    vercelEnv: process.env.VERCEL_ENV || "local",
+    hasOidcToken: Boolean(process.env.VERCEL_OIDC_TOKEN),
+  };
 
   try {
     const blob = await put(`${folder}/${safeName}`, bytes, {
@@ -47,18 +53,25 @@ export async function uploadFile(file: File, folder = "uploads"): Promise<string
       contentType: file.type,
       ...(storeId ? { storeId } : {}),
     });
+
+    console.log("[upload] success", { ...debugInfo, url: blob.url, pathname: blob.pathname });
     return blob.url;
   } catch (err) {
-    console.error("[upload] Vercel Blob upload failed", {
-      filename: file.name,
-      folder,
-      contentType: file.type,
-      size: file.size,
-      storeIdPresent: Boolean(storeId),
-      error: err instanceof Error ? err.message : "unknown error",
-      stack: err instanceof Error ? err.stack : undefined,
+    const raw = err instanceof Error ? err : new Error(String(err));
+    console.error("[upload] Vercel Blob put failed", {
+      ...debugInfo,
+      message: raw.message,
+      stack: raw.stack,
+      name: raw.name,
+      cause: raw.cause,
     });
-    throw err;
+
+    if (raw.message.includes("No blob credentials found")) {
+      throw new Error(
+        "Image storage authentication failed. Blob store credentials were not found. This usually means the Vercel Blob integration is not attached to this deployment environment."
+      );
+    }
+    throw raw;
   }
 }
 

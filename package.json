@@ -5,7 +5,7 @@
   "description": "Official website and community hub for Ur Gay Now",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && prisma db push && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",

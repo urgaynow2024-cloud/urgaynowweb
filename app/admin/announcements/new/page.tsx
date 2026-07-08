@@ -1,17 +1,24 @@
 import Link from "next/link";
 import { createAnnouncement } from "../actions";
 import { AnnouncementForm } from "../AnnouncementForm";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
+import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
+import { IconMegaphone } from "@/components/admin/ui/icons";
 
 export default function NewAnnouncementPage() {
   return (
     <div>
-      <Link href="/admin/announcements" className="text-sm text-brand-600 hover:underline dark:text-brand-300">
-        ← Back to announcements
-      </Link>
-      <h1 className="mb-6 mt-2 text-2xl font-extrabold text-zinc-900 dark:text-white">Add announcement</h1>
-      <div className="card">
-        <AnnouncementForm action={createAnnouncement} />
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Announcements", href: "/admin/announcements" }, { label: "New" }]}
+        title="Add announcement"
+        description="Create a new post or update for your community."
+      />
+      <Card className="animate-fade-in">
+        <CardHeader title="Announcement details" subtitle="Cover images are uploaded to secure storage" icon={<IconMegaphone size={18} />} />
+        <CardBody>
+          <AnnouncementForm action={createAnnouncement} />
+        </CardBody>
+      </Card>
     </div>
   );
 }

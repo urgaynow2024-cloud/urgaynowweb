@@ -94,16 +94,34 @@ session checks.
 4. **Database (Supabase):** the project already uses the Supabase/PostgreSQL Prisma provider.
    - **For the running app:** set `DATABASE_URL` to the **pooler** connection
      (`postgres.<ref>@<region>.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1`).
-   - **For the build step (creating tables):** `npx prisma db push` / `migrate deploy` needs a
-     stable connection. On Vercel’s network the **direct** `:5432` host *is* reachable, so set the
-     build command to use the direct URL, e.g. add this as the build command:
-     `npx prisma generate && npx prisma db push && next build`
-     (with `DATABASE_URL` = direct `db.<ref>.supabase.co:5432/postgres?sslmode=require` available
-     at build time). Alternatively, run `schema.sql` once in the Supabase SQL Editor and skip the
-     build-time push.
-   - If you prefer the pooler for builds too, switch the Supabase pooler to **Session** mode first.
-5. (Recommended) **Image uploads:** add a Vercel Blob store and set
-   `BLOB_READ_WRITE_TOKEN`. Without it, uploads only work on the local filesystem (not on Vercel).
+    - **For the build step (creating tables):** the project’s `build` script already runs
+      `prisma generate && prisma db push && next build`, so the Prisma schema (including the
+      `GroupPhoto` table) is synced to the database on every deploy. `prisma db push` needs a stable
+      connection:
+        - On Vercel’s network the **direct** `:5432` host *is* reachable, so set `DATABASE_URL` to
+          the direct connection at build time: `postgresql://postgres:<pw>@db.<ref>.supabase.co:5432/postgres?sslmode=require`.
+        - **Do not** use the transaction-mode pooler (`:6543?pgbouncer=true`) for the build — it
+          deadlocks `db push`. Either use the direct `:5432` connection, or switch the Supabase
+          pooler to **Session** mode first.
+        - Bulletproof alternative: run the SQL in `schema.sql` (repo root) once in the Supabase
+          **SQL Editor**, then the build-time push is a harmless no-op.
+    - If a new model (e.g. `GroupPhoto`) was added after the first deploy, the production database
+      may be missing its table. The next deploy’s `prisma db push` creates it automatically — or run
+      `schema.sql` in the Supabase SQL Editor to add it immediately.
+5. (Required for uploads on Vercel) **Image uploads:** add a Vercel Blob store and set
+   `BLOB_READ_WRITE_TOKEN`. Without it, uploads only work on the local filesystem (not on Vercel),
+   and `/api/upload` returns a clean, user-safe error instead of crashing.
+
+   **Setting up Vercel Blob:**
+   - Go to your Vercel project dashboard
+   - Navigate to Storage → Create Database → Blob
+   - Once created, open the Blob store (or its access keys) and copy `BLOB_READ_WRITE_TOKEN`
+   - Add `BLOB_READ_WRITE_TOKEN` as an environment variable in Vercel for **Production**,
+     **Preview**, and **Development** environments
+   - Group photo uploads, group banner uploads, and all other image fields depend on this token.
+   - If the token is missing, the upload route fails *gracefully* with:
+     `Image storage is not configured. Please contact support.` (HTTP 503) — no stack traces
+     are exposed to the client.
 6. Deploy. Set your Fasthosts domain in the Vercel project's **Domains** settings and follow the
    DNS instructions.
 

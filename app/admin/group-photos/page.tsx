@@ -1,83 +1,56 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { deleteGroupPhoto } from "./actions";
-import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
+import { GroupPhotoManager, type GroupPhotoItem } from "@/components/admin/GroupPhotoManager";
+import { IconCamera, IconPlus } from "@/components/admin/ui/icons";
+
+export const metadata = { title: "Group Photos", robots: { index: false, follow: false } };
 
 export default async function AdminGroupPhotosList() {
-  let items: Array<{ id: string; title: string; description: string; imageUrl: string; bannerUrl?: string; rules?: string }> = [];
+  let items: GroupPhotoItem[] = [];
   let error: string | null = null;
 
   try {
-    items = await prisma.groupPhoto.findMany({ orderBy: { createdAt: "desc" } });
+    const rows = await prisma.groupPhoto.findMany({ orderBy: { createdAt: "desc" } });
+    items = rows.map((g) => ({
+      id: g.id,
+      title: g.title,
+      description: g.description,
+      imageUrl: g.imageUrl,
+      bannerUrl: g.bannerUrl,
+      rules: g.rules,
+      createdAt: g.createdAt.toISOString(),
+    }));
   } catch (e) {
     console.error("Failed to fetch group photos:", e);
-    error = "Failed to load group photos. Please try again.";
+    error = "We couldn't load your group photos. Please try again or contact support if the problem persists.";
   }
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold text-zinc-900 dark:text-white">Group & Team Photos</h1>
-        <Link href="/admin/group-photos/new" className="btn-primary">+ Upload photo</Link>
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Group Photos" }]}
+        title="Group Photos"
+        description="A media library of every group and team photo. Drag, drop, search and manage in one place."
+        actions={
+          <Link href="/admin/group-photos/new" className="btn-primary btn-sm">
+            <IconPlus size={16} /> Upload photo
+          </Link>
+        }
+      />
 
       {error ? (
-        <div className="card">
-          <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
-            <span className="text-xl">⚠️</span>
-            <p>{error}</p>
-          </div>
-        </div>
-      ) : items.length === 0 ? (
-        <div className="card">
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="text-4xl mb-4">📷</div>
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-white mb-2">
-              No group photos yet
-            </h3>
-            <p className="text-zinc-600 dark:text-zinc-400 mb-6">
-              Upload your first group photo to get started
-            </p>
-            <Link href="/admin/group-photos/new" className="btn-primary">
-              Upload Photo
-            </Link>
+        <div className="card flex items-start gap-4 border-red-200 p-6 dark:border-red-900/60">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50 text-red-600 dark:bg-red-500/15 dark:text-red-300">
+            <IconCamera size={20} />
+          </span>
+          <div>
+            <h3 className="font-semibold text-ink-900 dark:text-white">Something went wrong</h3>
+            <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">{error}</p>
           </div>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((g) => (
-            <div key={g.id} className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 dark:border-zinc-800 dark:bg-zinc-900">
-              <div className="relative aspect-video w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-                {g.bannerUrl ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img 
-                    src={g.bannerUrl} 
-                    alt={`${g.title} banner`} 
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={g.imageUrl} alt={g.title} className="h-full w-full object-cover" />
-                )}
-              </div>
-              <div className="flex items-center gap-2 p-3">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-zinc-900 dark:text-white">{g.title}</p>
-                  {g.rules && (
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Has rules</p>
-                  )}
-                </div>
-                <Link href={`/admin/group-photos/${g.id}`} className="btn-secondary text-sm">Edit</Link>
-                <ConfirmDeleteButton
-                  action={deleteGroupPhoto.bind(null, g.id)}
-                  message="Delete this photo?"
-                  label="Delete"
-                  className="btn-danger text-sm"
-                />
-              </div>
-            </div>
-          ))}
-        </div>
+        <GroupPhotoManager items={items} />
       )}
     </div>
   );

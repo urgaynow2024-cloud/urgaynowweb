@@ -1,9 +1,11 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { updateStaff } from "../actions";
 import { StaffForm, type StaffFormValues } from "../StaffForm";
 import { parseSocials } from "@/lib/utils";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
+import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
+import { IconUsers } from "@/components/admin/ui/icons";
 
 export default async function EditStaffPage({ params }: { params: { id: string } }) {
   const s = await prisma.staff.findUnique({ where: { id: params.id } });
@@ -22,13 +24,17 @@ export default async function EditStaffPage({ params }: { params: { id: string }
 
   return (
     <div>
-      <Link href="/admin/staff" className="text-sm text-brand-600 hover:underline dark:text-brand-300">
-        ← Back to staff
-      </Link>
-      <h1 className="mb-6 mt-2 text-2xl font-extrabold text-zinc-900 dark:text-white">Edit {s.name}</h1>
-      <div className="card">
-        <StaffForm action={updateStaff.bind(null, s.id)} initial={initial} />
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Staff", href: "/admin/staff" }, { label: "Edit" }]}
+        title={`Edit: ${s.name}`}
+        description="Update this team member's profile."
+      />
+      <Card>
+        <CardHeader title="Staff details" icon={<IconUsers size={18} />} />
+        <CardBody>
+          <StaffForm action={updateStaff.bind(null, s.id)} initial={initial} />
+        </CardBody>
+      </Card>
     </div>
   );
 }

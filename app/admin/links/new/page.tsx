@@ -1,17 +1,23 @@
-import Link from "next/link";
 import { createLink } from "../actions";
 import { LinkForm } from "../LinkForm";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
+import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
+import { IconLink } from "@/components/admin/ui/icons";
 
 export default function NewLinkPage() {
   return (
     <div>
-      <Link href="/admin/links" className="text-sm text-brand-600 hover:underline dark:text-brand-300">
-        ← Back to links
-      </Link>
-      <h1 className="mb-6 mt-2 text-2xl font-extrabold text-zinc-900 dark:text-white">Add link</h1>
-      <div className="card">
-        <LinkForm action={createLink} />
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Links", href: "/admin/links" }, { label: "New" }]}
+        title="New link"
+        description="Add an external link or quick-access button."
+      />
+      <Card className="animate-fade-in">
+        <CardHeader title="Link details" icon={<IconLink size={18} />} />
+        <CardBody>
+          <LinkForm action={createLink} />
+        </CardBody>
+      </Card>
     </div>
   );
 }

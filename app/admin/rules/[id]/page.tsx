@@ -1,8 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { updateRule } from "../actions";
 import { RuleForm, type RuleFormValues } from "../RuleForm";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
+import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
+import { IconBook } from "@/components/admin/ui/icons";
 
 export default async function EditRulePage({ params }: { params: { id: string } }) {
   const r = await prisma.rule.findUnique({ where: { id: params.id } });
@@ -17,13 +19,17 @@ export default async function EditRulePage({ params }: { params: { id: string } 
 
   return (
     <div>
-      <Link href="/admin/rules" className="text-sm text-brand-600 hover:underline dark:text-brand-300">
-        ← Back to rules
-      </Link>
-      <h1 className="mb-6 mt-2 text-2xl font-extrabold text-zinc-900 dark:text-white">Edit rule</h1>
-      <div className="card">
-        <RuleForm action={updateRule.bind(null, r.id)} initial={initial} />
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Rules", href: "/admin/rules" }, { label: "Edit" }]}
+        title={`Edit: ${r.title}`}
+        description="Update this rule's category, title, and details."
+      />
+      <Card>
+        <CardHeader title="Rule details" icon={<IconBook size={18} />} />
+        <CardBody>
+          <RuleForm action={updateRule.bind(null, r.id)} initial={initial} />
+        </CardBody>
+      </Card>
     </div>
   );
 }

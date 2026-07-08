@@ -1,8 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { updateGroupPhoto } from "../actions";
 import { GroupPhotoForm, type GroupPhotoFormValues } from "@/components/admin/GroupPhotoForm";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
+import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
+import { IconCamera } from "@/components/admin/ui/icons";
 
 export default async function EditGroupPhotoPage({ params }: { params: { id: string } }) {
   const g = await prisma.groupPhoto.findUnique({ where: { id: params.id } });
@@ -18,17 +20,17 @@ export default async function EditGroupPhotoPage({ params }: { params: { id: str
 
   return (
     <div>
-      <Link href="/admin/group-photos" className="text-sm text-brand-600 hover:underline dark:text-brand-300">
-        ← Back to group photos
-      </Link>
-      <h1 className="mb-6 mt-2 text-2xl font-extrabold text-zinc-900 dark:text-white">Edit group photo</h1>
-      <div className="card">
-        <GroupPhotoForm
-          action={updateGroupPhoto.bind(null, g.id)}
-          initial={initial}
-          folder="group-photos"
-        />
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Group Photos", href: "/admin/group-photos" }, { label: "Edit" }]}
+        title={`Edit: ${g.title}`}
+        description="Update the photo, banner, and group rules."
+      />
+      <Card>
+        <CardHeader title="Photo details" subtitle="Changes save immediately" icon={<IconCamera size={18} />} />
+        <CardBody>
+          <GroupPhotoForm action={updateGroupPhoto.bind(null, g.id)} initial={initial} folder="group-photos" />
+        </CardBody>
+      </Card>
     </div>
   );
 }

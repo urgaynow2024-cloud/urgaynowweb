@@ -1,8 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { updateAnnouncement } from "../actions";
 import { AnnouncementForm, type AnnouncementFormValues } from "../AnnouncementForm";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
+import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
+import { IconMegaphone } from "@/components/admin/ui/icons";
 
 export default async function EditAnnouncementPage({ params }: { params: { id: string } }) {
   const a = await prisma.announcement.findUnique({ where: { id: params.id } });
@@ -20,13 +22,17 @@ export default async function EditAnnouncementPage({ params }: { params: { id: s
 
   return (
     <div>
-      <Link href="/admin/announcements" className="text-sm text-brand-600 hover:underline dark:text-brand-300">
-        ← Back to announcements
-      </Link>
-      <h1 className="mb-6 mt-2 text-2xl font-extrabold text-zinc-900 dark:text-white">Edit announcement</h1>
-      <div className="card">
-        <AnnouncementForm action={updateAnnouncement.bind(null, a.id)} initial={initial} />
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Announcements", href: "/admin/announcements" }, { label: "Edit" }]}
+        title={`Edit: ${a.title}`}
+        description="Update this announcement and its settings."
+      />
+      <Card className="animate-fade-in">
+        <CardHeader title="Announcement details" icon={<IconMegaphone size={18} />} />
+        <CardBody>
+          <AnnouncementForm action={updateAnnouncement.bind(null, a.id)} initial={initial} />
+        </CardBody>
+      </Card>
     </div>
   );
 }

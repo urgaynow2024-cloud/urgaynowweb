@@ -1,17 +1,24 @@
 import Link from "next/link";
 import { createGalleryImage } from "../actions";
 import { ImageItemForm } from "@/components/admin/ImageItemForm";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
+import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
+import { IconImages } from "@/components/admin/ui/icons";
 
 export default function NewGalleryImagePage() {
   return (
     <div>
-      <Link href="/admin/gallery" className="text-sm text-brand-600 hover:underline dark:text-brand-300">
-        ← Back to gallery
-      </Link>
-      <h1 className="mb-6 mt-2 text-2xl font-extrabold text-zinc-900 dark:text-white">Add gallery image</h1>
-      <div className="card">
-        <ImageItemForm action={createGalleryImage} folder="gallery" titleLabel="Image title" />
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Gallery", href: "/admin/gallery" }, { label: "New" }]}
+        title="Add gallery image"
+        description="Upload an image to the gallery."
+      />
+      <Card>
+        <CardHeader title="Image details" subtitle="Images are uploaded to secure storage" icon={<IconImages size={18} />} />
+        <CardBody>
+          <ImageItemForm action={createGalleryImage} />
+        </CardBody>
+      </Card>
     </div>
   );
 }

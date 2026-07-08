@@ -4,6 +4,25 @@ import { randomUUID } from "crypto";
 import path from "path";
 import { getSession } from "@/lib/auth";
 
+const ALLOWED_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/gif",
+  "image/webp",
+  "image/avif",
+];
+
+const MAX_BYTES = 8 * 1024 * 1024; // 8MB
+
+export function isAllowedImageType(type: string): boolean {
+  return ALLOWED_TYPES.includes(type);
+}
+
+export function isBlobConfigured(): boolean {
+  return Boolean(process.env.BLOB_READ_WRITE_TOKEN);
+}
+
 function slugifyFilename(name: string): string {
   const ext = path.extname(name) || "";
   const base = path
@@ -16,35 +35,28 @@ function slugifyFilename(name: string): string {
 }
 
 /**
- * Upload a file. Requires Vercel Blob (BLOB_READ_WRITE_TOKEN must be set).
- * Returns a public URL.
+ * Upload a file to Vercel Blob. Requires `BLOB_READ_WRITE_TOKEN` to be set.
+ * Returns a public URL. Throws a controlled error when storage is not configured.
  */
 export async function uploadFile(file: File, folder = "uploads"): Promise<string> {
   await getSession(); // ensure caller is an admin
 
+  if (!isBlobConfigured()) {
+    // Controlled, user-safe error. Never leaks credentials or stack traces.
+    throw new Error(
+      "Image storage is not configured. Please contact support.",
+    );
+  }
+
   const safeName = slugifyFilename(file.name);
   const bytes = Buffer.from(await file.arrayBuffer());
-
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
-  if (!token) {
-    throw new Error("BLOB_READ_WRITE_TOKEN environment variable is not set. Please configure Vercel Blob storage.");
-  }
 
   const blob = await put(`${folder}/${safeName}`, bytes, {
     access: "public",
     contentType: file.type,
-    token,
+    token: process.env.BLOB_READ_WRITE_TOKEN as string,
   });
   return blob.url;
 }
 
-export function isAllowedImageType(type: string): boolean {
-  return [
-    "image/png",
-    "image/jpeg",
-    "image/jpg",
-    "image/gif",
-    "image/webp",
-    "image/avif",
-  ].includes(type);
-}
+export { MAX_BYTES, ALLOWED_TYPES };

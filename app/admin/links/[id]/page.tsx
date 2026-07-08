@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { updateLink } from "../actions";
 import { LinkForm, type LinkFormValues } from "../LinkForm";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
+import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
+import { IconLink } from "@/components/admin/ui/icons";
 
 export default async function EditLinkPage({ params }: { params: { id: string } }) {
   const l = await prisma.link.findUnique({ where: { id: params.id } });
@@ -17,13 +20,17 @@ export default async function EditLinkPage({ params }: { params: { id: string } 
 
   return (
     <div>
-      <Link href="/admin/links" className="text-sm text-brand-600 hover:underline dark:text-brand-300">
-        ← Back to links
-      </Link>
-      <h1 className="mb-6 mt-2 text-2xl font-extrabold text-zinc-900 dark:text-white">Edit link</h1>
-      <div className="card">
-        <LinkForm action={updateLink.bind(null, l.id)} initial={initial} />
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Links", href: "/admin/links" }, { label: "Edit" }]}
+        title={`Edit: ${l.label}`}
+        description="Update this link."
+      />
+      <Card className="animate-fade-in">
+        <CardHeader title="Link details" icon={<IconLink size={18} />} />
+        <CardBody>
+          <LinkForm action={updateLink.bind(null, l.id)} initial={initial} />
+        </CardBody>
+      </Card>
     </div>
   );
 }

@@ -11,13 +11,31 @@ export async function createGroupPhoto(formData: FormData) {
   const imageUrl = String(formData.get("imageUrl") || "").trim();
   const bannerUrl = String(formData.get("bannerUrl") || "").trim();
   const rules = String(formData.get("rules") || "").trim();
-  
+
   if (!imageUrl) redirect("/admin/group-photos/new?error=1");
-  
-  await prisma.groupPhoto.create({ 
-    data: { title, description, imageUrl, bannerUrl, rules } 
+
+  const created = await prisma.groupPhoto.create({
+    data: { title, description, imageUrl, bannerUrl, rules },
   });
-  redirect("/admin/group-photos");
+  redirect(`/admin/group-photos/${created.id}`);
+}
+
+/** Drag-and-drop upload entry point: creates a placeholder record and opens the editor. */
+export async function createGroupPhotoQuick(formData: FormData) {
+  await requireAdmin();
+  const imageUrl = String(formData.get("imageUrl") || "").trim();
+  const bannerUrl = String(formData.get("bannerUrl") || "").trim();
+  if (!imageUrl) return;
+  const created = await prisma.groupPhoto.create({
+    data: {
+      title: "Untitled group",
+      description: "",
+      imageUrl,
+      bannerUrl,
+      rules: "",
+    },
+  });
+  redirect(`/admin/group-photos/${created.id}`);
 }
 
 export async function updateGroupPhoto(id: string, formData: FormData) {
@@ -27,12 +45,12 @@ export async function updateGroupPhoto(id: string, formData: FormData) {
   const imageUrl = String(formData.get("imageUrl") || "").trim();
   const bannerUrl = String(formData.get("bannerUrl") || "").trim();
   const rules = String(formData.get("rules") || "").trim();
-  
+
   if (!imageUrl) redirect(`/admin/group-photos/${id}?error=1`);
-  
-  await prisma.groupPhoto.update({ 
-    where: { id }, 
-    data: { title, description, imageUrl, bannerUrl, rules } 
+
+  await prisma.groupPhoto.update({
+    where: { id },
+    data: { title, description, imageUrl, bannerUrl, rules },
   });
   redirect("/admin/group-photos");
 }

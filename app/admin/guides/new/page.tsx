@@ -1,17 +1,23 @@
-import Link from "next/link";
 import { createGuide } from "../actions";
 import { GuideForm } from "../GuideForm";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
+import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
+import { IconBook } from "@/components/admin/ui/icons";
 
 export default function NewGuidePage() {
   return (
     <div>
-      <Link href="/admin/guides" className="text-sm text-brand-600 hover:underline dark:text-brand-300">
-        ← Back to guides
-      </Link>
-      <h1 className="mb-6 mt-2 text-2xl font-extrabold text-zinc-900 dark:text-white">Add guide / FAQ</h1>
-      <div className="card">
-        <GuideForm action={createGuide} />
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Guides & FAQ", href: "/admin/guides" }, { label: "New" }]}
+        title="New guide"
+        description="Add a help article or frequently asked question."
+      />
+      <Card className="animate-fade-in">
+        <CardHeader title="Guide details" icon={<IconBook size={18} />} />
+        <CardBody>
+          <GuideForm action={createGuide} />
+        </CardBody>
+      </Card>
     </div>
   );
 }

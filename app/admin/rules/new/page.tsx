@@ -1,17 +1,24 @@
 import Link from "next/link";
 import { createRule } from "../actions";
 import { RuleForm } from "../RuleForm";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
+import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
+import { IconBook } from "@/components/admin/ui/icons";
 
 export default function NewRulePage() {
   return (
     <div>
-      <Link href="/admin/rules" className="text-sm text-brand-600 hover:underline dark:text-brand-300">
-        ← Back to rules
-      </Link>
-      <h1 className="mb-6 mt-2 text-2xl font-extrabold text-zinc-900 dark:text-white">Add rule</h1>
-      <div className="card">
-        <RuleForm action={createRule} />
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Rules", href: "/admin/rules" }, { label: "New" }]}
+        title="Add rule"
+        description="Create a single rule. For managing many at once, use the bulk editor."
+      />
+      <Card>
+        <CardHeader title="Rule details" icon={<IconBook size={18} />} />
+        <CardBody>
+          <RuleForm action={createRule} />
+        </CardBody>
+      </Card>
     </div>
   );
 }

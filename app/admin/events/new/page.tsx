@@ -1,17 +1,24 @@
 import Link from "next/link";
 import { createEvent } from "../actions";
 import { EventForm } from "../EventForm";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
+import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
+import { IconCalendar } from "@/components/admin/ui/icons";
 
 export default function NewEventPage() {
   return (
     <div>
-      <Link href="/admin/events" className="text-sm text-brand-600 hover:underline dark:text-brand-300">
-        ← Back to events
-      </Link>
-      <h1 className="mb-6 mt-2 text-2xl font-extrabold text-zinc-900 dark:text-white">Add event</h1>
-      <div className="card">
-        <EventForm action={createEvent} />
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Events", href: "/admin/events" }, { label: "New" }]}
+        title="Add event"
+        description="Schedule a new meetup, race, or community event."
+      />
+      <Card className="animate-fade-in">
+        <CardHeader title="Event details" subtitle="Cover images are uploaded to secure storage" icon={<IconCalendar size={18} />} />
+        <CardBody>
+          <EventForm action={createEvent} />
+        </CardBody>
+      </Card>
     </div>
   );
 }

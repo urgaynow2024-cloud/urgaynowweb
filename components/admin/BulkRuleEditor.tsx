@@ -1,6 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { Markdown } from "@/components/Markdown";
+import {
+  IconPlus,
+  IconTrash,
+  IconCopy,
+  IconDownload,
+  IconUpload,
+  IconGrip,
+  IconCheck,
+  IconX,
+  IconSparkles,
+  IconLayers,
+} from "@/components/admin/ui/icons";
 
 export type RuleEntry = {
   id: string;
@@ -10,6 +23,10 @@ export type RuleEntry = {
   sortOrder: number;
   error?: string;
 };
+
+function newId() {
+  return typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+}
 
 export function BulkRuleEditor({
   initialRules = [],
@@ -23,244 +40,258 @@ export function BulkRuleEditor({
   const [rules, setRules] = useState<RuleEntry[]>(
     initialRules.length > 0
       ? initialRules
-      : [{ id: crypto.randomUUID(), category: "General", title: "", content: "", sortOrder: 0 }]
+      : [{ id: newId(), category: "General", title: "", content: "", sortOrder: 0 }],
   );
-  const [showPasteModal, setShowPasteModal] = useState(false);
-  const [pasteText, setPasteText] = useState("");
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importText, setImportText] = useState("");
+  const [copied, setCopied] = useState(false);
 
-  const addRule = () => {
-    const maxSort = Math.max(...rules.map((r) => r.sortOrder), 0);
-    setRules([
-      ...rules,
-      {
-        id: crypto.randomUUID(),
-        category: "General",
-        title: "",
-        content: "",
-        sortOrder: maxSort + 1,
-      },
+  function update(id: string, field: keyof RuleEntry, value: string | number) {
+    setRules((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value, error: undefined } : r)));
+  }
+
+  function addRule() {
+    setRules((prev) => [
+      ...prev,
+      { id: newId(), category: "General", title: "", content: "", sortOrder: prev.length },
     ]);
-  };
+  }
 
-  const removeRule = (id: string) => {
-    if (rules.length === 1) return;
-    setRules(rules.filter((r) => r.id !== id));
-  };
-
-  const updateRule = (id: string, field: keyof RuleEntry, value: string | number) => {
-    setRules(
-      rules.map((r) => (r.id === id ? { ...r, [field]: value, error: undefined } : r))
-    );
-  };
-
-  const moveRule = (index: number, direction: "up" | "down") => {
-    const newRules = [...rules];
-    const newIndex = direction === "up" ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= newRules.length) return;
-
-    // Swap
-    [newRules[index], newRules[newIndex]] = [newRules[newIndex], newRules[index]];
-    
-    // Update sort orders
-    newRules.forEach((r, i) => {
-      r.sortOrder = i;
+  function duplicateRule(id: string) {
+    setRules((prev) => {
+      const i = prev.findIndex((r) => r.id === id);
+      if (i === -1) return prev;
+      const copy = { ...prev[i], id: newId(), title: `${prev[i].title} (copy)` };
+      const next = [...prev];
+      next.splice(i + 1, 0, copy);
+      return next.map((r, idx) => ({ ...r, sortOrder: idx }));
     });
-    
-    setRules(newRules);
-  };
+  }
 
-  const handlePaste = () => {
-    const lines = pasteText.split("\n").filter((line) => line.trim());
-    const newRules: RuleEntry[] = lines.map((line, i) => ({
-      id: crypto.randomUUID(),
-      category: "General",
-      title: line.trim(),
-      content: "",
-      sortOrder: rules.length + i,
-    }));
-    setRules([...rules, ...newRules]);
-    setShowPasteModal(false);
-    setPasteText("");
-  };
+  function removeRule(id: string) {
+    setRules((prev) => prev.filter((r) => r.id !== id).map((r, idx) => ({ ...r, sortOrder: idx })));
+  }
 
-  const handleSave = () => {
-    // Validate
-    const validatedRules = rules.map((r) => {
-      const errors: string[] = [];
-      if (!r.title.trim()) errors.push("Title is required");
-      if (!r.content.trim()) errors.push("Details are required");
-      return { ...r, error: errors.join(", ") };
+  function reorder(from: number, to: number) {
+    if (from === to) return;
+    setRules((prev) => {
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next.map((r, idx) => ({ ...r, sortOrder: idx }));
     });
+  }
 
-    const hasErrors = validatedRules.some((r) => r.error);
-    if (hasErrors) {
-      setRules(validatedRules);
+  function handleImport() {
+    const text = importText.trim();
+    if (!text) return;
+    let parsed: RuleEntry[] = [];
+    try {
+      const json = JSON.parse(text);
+      if (Array.isArray(json)) {
+        parsed = json.map((r: any, i: number) => ({
+          id: newId(),
+          category: String(r.category || "General"),
+          title: String(r.title || ""),
+          content: String(r.content || ""),
+          sortOrder: i,
+        }));
+      }
+    } catch {
+      // Treat as one-title-per-line plain text.
+      parsed = text.split("\n").filter((l) => l.trim()).map((l, i) => ({
+        id: newId(),
+        category: "General",
+        title: l.trim(),
+        content: "",
+        sortOrder: i,
+      }));
+    }
+    if (parsed.length) setRules(parsed);
+    setImportOpen(false);
+    setImportText("");
+  }
+
+  function handleExport() {
+    const data = rules.map(({ category, title, content, sortOrder }) => ({ category, title, content, sortOrder }));
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "community-rules.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  async function handleCopyAll() {
+    const grouped = rules.reduce<Record<string, RuleEntry[]>>((acc, r) => {
+      (acc[r.category] ||= []).push(r);
+      return acc;
+    }, {});
+    const md = Object.entries(grouped)
+      .map(([cat, rs]) => `## ${cat}\n\n` + rs.map((r) => `### ${r.title}\n${r.content}`).join("\n\n"))
+      .join("\n\n");
+    try {
+      await navigator.clipboard.writeText(md);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      /* clipboard unavailable */
+    }
+  }
+
+  function handleSave() {
+    const validated = rules.map((r) => {
+      const errs: string[] = [];
+      if (!r.title.trim()) errs.push("Title required");
+      if (!r.content.trim()) errs.push("Details required");
+      return { ...r, error: errs.join(" · ") };
+    });
+    if (validated.some((r) => r.error)) {
+      setRules(validated);
       return;
     }
-
-    onSave(validatedRules);
-  };
+    onSave(validated);
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Header actions */}
-      <div className="flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          onClick={addRule}
-          className="btn-secondary"
-        >
-          + Add Rule
+    <div className="space-y-5">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" onClick={addRule} className="btn-primary btn-sm">
+          <IconPlus size={15} /> Add rule
         </button>
-        <button
-          type="button"
-          onClick={() => setShowPasteModal(true)}
-          className="btn-secondary"
-        >
-          📋 Paste Multiple Rules
+        <button type="button" onClick={() => setImportOpen(true)} className="btn-secondary btn-sm">
+          <IconUpload size={15} /> Import
         </button>
+        <button type="button" onClick={handleExport} className="btn-secondary btn-sm">
+          <IconDownload size={15} /> Export
+        </button>
+        <button type="button" onClick={handleCopyAll} className="btn-ghost btn-sm">
+          {copied ? <IconCheck size={15} /> : <IconCopy size={15} />}
+          {copied ? "Copied!" : "Copy all"}
+        </button>
+        <span className="ml-auto badge badge-neutral">{rules.length} rules</span>
       </div>
 
-      {/* Rules list */}
+      {/* Rule cards */}
       <div className="space-y-4">
         {rules.map((rule, index) => (
           <div
             key={rule.id}
-            className={`card relative transition-all duration-200 ${
-              rule.error ? "border-red-300 dark:border-red-800" : ""
-            }`}
+            draggable
+            onDragStart={() => setDragIndex(index)}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setOverIndex(index);
+            }}
+            onDragEnd={() => {
+              if (dragIndex !== null && overIndex !== null) reorder(dragIndex, overIndex);
+              setDragIndex(null);
+              setOverIndex(null);
+            }}
+            className={`card overflow-visible transition-all duration-200 ${
+              overIndex === index && dragIndex !== null && dragIndex !== index ? "ring-2 ring-brand-400" : ""
+            } ${rule.error ? "border-red-300 dark:border-red-800" : ""}`}
           >
-            {/* Reorder controls */}
-            <div className="absolute left-2 top-2 flex flex-col gap-1 lg:left-3 lg:top-3">
-              <button
-                type="button"
-                onClick={() => moveRule(index, "up")}
-                disabled={index === 0}
-                className="rounded bg-zinc-100 p-1 text-zinc-600 hover:bg-zinc-200 disabled:opacity-30 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
-                aria-label="Move up"
+            <div className="flex items-start gap-3 p-4">
+              <span
+                className="mt-1 cursor-grab text-ink-300 transition-colors hover:text-ink-500 active:cursor-grabbing dark:text-ink-600"
+                title="Drag to reorder"
               >
-                ↑
-              </button>
-              <button
-                type="button"
-                onClick={() => moveRule(index, "down")}
-                disabled={index === rules.length - 1}
-                className="rounded bg-zinc-100 p-1 text-zinc-600 hover:bg-zinc-200 disabled:opacity-30 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-700"
-                aria-label="Move down"
-              >
-                ↓
-              </button>
-            </div>
+                <IconGrip size={20} />
+              </span>
+              <span className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-50 text-xs font-bold text-brand-600 dark:bg-brand-900/40 dark:text-brand-200">
+                {index + 1}
+              </span>
 
-            {/* Rule content */}
-            <div className="pl-10 lg:pl-16">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="label" htmlFor={`category-${rule.id}`}>
-                    Category
-                  </label>
-                  <input
-                    id={`category-${rule.id}`}
-                    type="text"
-                    className="input"
-                    value={rule.category}
-                    onChange={(e) => updateRule(rule.id, "category", e.target.value)}
-                  />
+              <div className="min-w-0 flex-1">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="field-label" htmlFor={`cat-${rule.id}`}>Category</label>
+                    <input id={`cat-${rule.id}`} className="input" value={rule.category} onChange={(e) => update(rule.id, "category", e.target.value)} placeholder="General" />
+                  </div>
+                  <div>
+                    <label className="field-label" htmlFor={`title-${rule.id}`}>Title *</label>
+                    <input id={`title-${rule.id}`} className="input" value={rule.title} onChange={(e) => update(rule.id, "title", e.target.value)} placeholder="Rule title" />
+                  </div>
                 </div>
-                <div>
-                  <label className="label" htmlFor={`title-${rule.id}`}>
-                    Title *
-                  </label>
-                  <input
-                    id={`title-${rule.id}`}
-                    type="text"
-                    className="input"
-                    value={rule.title}
-                    onChange={(e) => updateRule(rule.id, "title", e.target.value)}
-                    placeholder="Rule title"
-                  />
+
+                <div className="mt-3 grid gap-3 lg:grid-cols-2">
+                  <div>
+                    <label className="field-label" htmlFor={`content-${rule.id}`}>Details (Markdown) *</label>
+                    <textarea
+                      id={`content-${rule.id}`}
+                      rows={6}
+                      className="textarea font-mono text-sm"
+                      value={rule.content}
+                      onChange={(e) => update(rule.id, "content", e.target.value)}
+                      placeholder="Rule details in **Markdown**…"
+                    />
+                  </div>
+                  <div>
+                    <label className="field-label">
+                      <IconSparkles size={14} /> Live preview
+                    </label>
+                    <div className="h-[148px] overflow-y-auto rounded-xl border border-ink-200 bg-ink-50/60 p-3 text-sm dark:border-ink-700 dark:bg-ink-800/40">
+                      {rule.content.trim() ? (
+                        <Markdown content={rule.content} />
+                      ) : (
+                        <p className="text-ink-400">Preview appears as you type…</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
+
+                {rule.error && <p className="field-error mt-2">{rule.error}</p>}
               </div>
-              <div className="mt-4">
-                <label className="label" htmlFor={`content-${rule.id}`}>
-                  Details (Markdown) *
-                </label>
-                <textarea
-                  id={`content-${rule.id}`}
-                  rows={4}
-                  className="input font-mono text-sm"
-                  value={rule.content}
-                  onChange={(e) => updateRule(rule.id, "content", e.target.value)}
-                  placeholder="Rule details..."
-                />
+
+              <div className="flex shrink-0 flex-col gap-1.5">
+                <button type="button" onClick={() => duplicateRule(rule.id)} className="btn-icon" title="Duplicate" aria-label="Duplicate">
+                  <IconCopy size={16} />
+                </button>
+                <button type="button" onClick={() => removeRule(rule.id)} className="btn-icon hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10" title="Delete" aria-label="Delete" disabled={rules.length === 1}>
+                  <IconTrash size={16} />
+                </button>
               </div>
-              <div className="mt-4 flex items-center justify-between">
-                <div className="text-xs text-zinc-500">
-                  Order: {rule.sortOrder}
-                </div>
-                {rules.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeRule(rule.id)}
-                    className="text-sm text-red-600 hover:text-red-700 dark:text-red-400"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-              {rule.error && (
-                <p className="mt-2 text-sm text-red-600 dark:text-red-400">{rule.error}</p>
-              )}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Save button */}
-      <button
-        type="button"
-        onClick={handleSave}
-        disabled={saving}
-        className="btn-primary w-full sm:w-auto"
-      >
-        {saving ? "Saving..." : `Save ${rules.length} Rule${rules.length !== 1 ? "s" : ""}`}
-      </button>
+      <div className="sticky bottom-4 flex items-center justify-between gap-3 rounded-2xl border border-ink-200 bg-white/90 p-3 shadow-card-hover backdrop-blur dark:border-ink-700 dark:bg-ink-900/90">
+        <p className="hidden text-sm text-ink-500 dark:text-ink-400 sm:block">
+          <IconLayers size={14} className="mr-1 inline" /> {rules.length} rules · drag cards to reorder
+        </p>
+        <button type="button" onClick={handleSave} disabled={saving} className="btn-primary ml-auto">
+          {saving ? "Saving…" : `Save ${rules.length} rule${rules.length !== 1 ? "s" : ""}`}
+        </button>
+      </div>
 
-      {/* Paste modal */}
-      {showPasteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="card max-w-lg w-full mx-4">
-            <h3 className="text-lg font-bold text-zinc-900 dark:text-white mb-4">
-              Paste Multiple Rules
-            </h3>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-              Paste one rule per line. Each line will become a new rule title.
+      {/* Import modal */}
+      {importOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 animate-fade-in bg-ink-950/50 backdrop-blur-sm" onClick={() => setImportOpen(false)} />
+          <div className="relative w-full max-w-lg animate-scale-in rounded-2xl border border-ink-200 bg-white p-6 shadow-card-hover dark:border-ink-700 dark:bg-ink-900">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-ink-900 dark:text-white">Import rules</h3>
+              <button type="button" onClick={() => setImportOpen(false)} className="btn-icon"><IconX size={18} /></button>
+            </div>
+            <p className="mb-3 text-sm text-ink-500 dark:text-ink-400">
+              Paste a JSON array <code className="rounded bg-ink-100 px-1 dark:bg-ink-800">[{"{"}title, content, category{"}"}]</code> or one rule title per line.
             </p>
             <textarea
-              rows={10}
-              className="input font-mono text-sm mb-4"
-              value={pasteText}
-              onChange={(e) => setPasteText(e.target.value)}
-              placeholder="Rule 1&#10;Rule 2&#10;Rule 3"
+              rows={9}
+              className="textarea font-mono text-sm"
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+              placeholder={'[{"title":"Be respectful","content":"**Be kind** to everyone.","category":"General"}]'}
             />
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowPasteModal(false);
-                  setPasteText("");
-                }}
-                className="btn-secondary"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handlePaste}
-                className="btn-primary"
-              >
-                Add Rules
-              </button>
+            <div className="mt-4 flex justify-end gap-3">
+              <button type="button" onClick={() => setImportOpen(false)} className="btn-secondary">Cancel</button>
+              <button type="button" onClick={handleImport} className="btn-primary">Import rules</button>
             </div>
           </div>
         </div>

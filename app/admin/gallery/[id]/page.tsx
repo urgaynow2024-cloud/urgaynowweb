@@ -1,8 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { updateGalleryImage } from "../actions";
 import { ImageItemForm, type ImageItemFormValues } from "@/components/admin/ImageItemForm";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
+import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
+import { IconImages } from "@/components/admin/ui/icons";
 
 export default async function EditGalleryImagePage({ params }: { params: { id: string } }) {
   const g = await prisma.galleryImage.findUnique({ where: { id: params.id } });
@@ -16,18 +18,17 @@ export default async function EditGalleryImagePage({ params }: { params: { id: s
 
   return (
     <div>
-      <Link href="/admin/gallery" className="text-sm text-brand-600 hover:underline dark:text-brand-300">
-        ← Back to gallery
-      </Link>
-      <h1 className="mb-6 mt-2 text-2xl font-extrabold text-zinc-900 dark:text-white">Edit gallery image</h1>
-      <div className="card">
-        <ImageItemForm
-          action={updateGalleryImage.bind(null, g.id)}
-          initial={initial}
-          folder="gallery"
-          titleLabel="Image title"
-        />
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Gallery", href: "/admin/gallery" }, { label: "Edit" }]}
+        title={`Edit: ${g.title}`}
+        description="Update this gallery image."
+      />
+      <Card>
+        <CardHeader title="Image details" icon={<IconImages size={18} />} />
+        <CardBody>
+          <ImageItemForm action={updateGalleryImage.bind(null, g.id)} initial={initial} />
+        </CardBody>
+      </Card>
     </div>
   );
 }

@@ -18,25 +18,27 @@ export function LinkForm({
     <form action={action} className="space-y-5">
       <div className="grid gap-5 sm:grid-cols-3">
         <div>
-          <label className="label" htmlFor="label">Label *</label>
+          <label className="field-label" htmlFor="label">Label *</label>
           <input id="label" name="label" className="input" required defaultValue={initial?.label ?? ""} />
         </div>
         <div className="sm:col-span-2">
-          <label className="label" htmlFor="url">URL *</label>
+          <label className="field-label" htmlFor="url">URL *</label>
           <input id="url" name="url" className="input" required type="url" placeholder="https://…" defaultValue={initial?.url ?? ""} />
         </div>
       </div>
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
-          <label className="label" htmlFor="icon">Icon (emoji or text)</label>
+          <label className="field-label" htmlFor="icon">Icon (emoji or text)</label>
           <input id="icon" name="icon" className="input" placeholder="💜" defaultValue={initial?.icon ?? ""} />
         </div>
         <div>
-          <label className="label" htmlFor="sortOrder">Display order</label>
+          <label className="field-label" htmlFor="sortOrder">Display order</label>
           <input id="sortOrder" name="sortOrder" type="number" className="input w-32" defaultValue={initial?.sortOrder ?? 0} />
         </div>
       </div>
-      <button type="submit" className="btn-primary">Save</button>
+      <div className="flex gap-3 border-t border-ink-100 pt-5 dark:border-ink-800">
+        <button type="submit" className="btn-primary">Save</button>
+      </div>
     </form>
   );
 }

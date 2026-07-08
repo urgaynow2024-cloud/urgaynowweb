@@ -1,29 +1,53 @@
 "use client";
 
-import type { FormEventHandler } from "react";
-
-type Props = {
-  action: (formData: FormData) => void | Promise<void>;
-  message: string;
-  label?: string;
-  className?: string;
-};
+import { useState } from "react";
+import { ConfirmDialog } from "./ui/Dialog";
+import { IconTrash } from "./ui/icons";
 
 export function ConfirmDeleteButton({
   action,
   message,
   label = "Delete",
+  confirmLabel = "Delete",
   className = "btn-danger text-sm",
-}: Props) {
-  const handleClick: FormEventHandler<HTMLButtonElement> = (e) => {
-    if (!confirm(message)) e.preventDefault();
-  };
+}: {
+  action: (formData: FormData) => void | Promise<void>;
+  message: string;
+  label?: string;
+  confirmLabel?: string;
+  className?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function handleConfirm() {
+    setLoading(true);
+    try {
+      await action(new FormData());
+    } catch {
+      setOpen(false);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
-    <form action={action}>
-      <button type="submit" className={className} onClick={handleClick}>
-        {label}
+    <>
+      <button type="button" className={className} onClick={() => setOpen(true)}>
+        <span className="flex items-center gap-1.5">
+          <IconTrash size={15} />
+          {label}
+        </span>
       </button>
-    </form>
+      <ConfirmDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        onConfirm={handleConfirm}
+        title="Delete item?"
+        message={message}
+        confirmLabel={confirmLabel}
+        loading={loading}
+      />
+    </>
   );
 }

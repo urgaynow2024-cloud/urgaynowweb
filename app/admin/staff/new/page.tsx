@@ -1,17 +1,24 @@
 import Link from "next/link";
 import { createStaff } from "../actions";
 import { StaffForm } from "../StaffForm";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
+import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
+import { IconUsers } from "@/components/admin/ui/icons";
 
 export default function NewStaffPage() {
   return (
     <div>
-      <Link href="/admin/staff" className="text-sm text-brand-600 hover:underline dark:text-brand-300">
-        ← Back to staff
-      </Link>
-      <h1 className="mb-6 mt-2 text-2xl font-extrabold text-zinc-900 dark:text-white">Add staff member</h1>
-      <div className="card">
-        <StaffForm action={createStaff} />
-      </div>
+      <PageHeader
+        breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Staff", href: "/admin/staff" }, { label: "New" }]}
+        title="Add staff member"
+        description="Add a new person to the team directory."
+      />
+      <Card>
+        <CardHeader title="Staff details" subtitle="Photos are uploaded to secure storage" icon={<IconUsers size={18} />} />
+        <CardBody>
+          <StaffForm action={createStaff} />
+        </CardBody>
+      </Card>
     </div>
   );
 }

@@ -11,12 +11,12 @@ html {
 }
 
 body {
-  @apply bg-white text-zinc-800 antialiased dark:bg-zinc-950 dark:text-zinc-200;
+  @apply bg-white text-ink-800 antialiased dark:bg-ink-950 dark:text-ink-200;
 }
 
 /* Accessible focus ring */
 *:focus-visible {
-  @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-950;
+  @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-white dark:ring-offset-ink-950;
 }
 
 /* Skip link */
@@ -24,29 +24,163 @@ body {
   @apply sr-only;
 }
 .skip-link:focus {
-  @apply not-sr-only fixed left-4 top-4 z-50 rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white;
+  @apply not-sr-only fixed left-4 top-4 z-50 rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white;
+}
+
+/* Custom scrollbar for the admin shell */
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(150, 150, 170, 0.4) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  @apply rounded-full bg-ink-300/60 dark:bg-ink-700/70;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 @layer components {
+  /* ---------- Buttons ---------- */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-950;
+    @apply inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-semibold leading-none transition-all duration-200 ease-spring focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:focus-visible:ring-offset-ink-950;
   }
   .btn-primary {
-    @apply btn bg-gradient-to-r from-brand-600 to-brand-700 text-white shadow-md shadow-brand-500/25 hover:from-brand-700 hover:to-brand-800 hover:shadow-lg hover:shadow-brand-500/30 active:scale-95;
+    @apply btn bg-gradient-to-r from-brand-600 to-brand-700 text-white shadow-glow hover:from-brand-700 hover:to-brand-800 hover:shadow-lg active:scale-[0.98];
   }
   .btn-secondary {
-    @apply btn border border-zinc-300 bg-white text-zinc-700 shadow-sm hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-brand-600 dark:hover:bg-brand-900/40 dark:hover:text-brand-200 active:scale-95;
+    @apply btn border border-ink-200 bg-white text-ink-700 shadow-sm hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700 active:scale-[0.98] dark:border-ink-700 dark:bg-ink-800 dark:text-ink-100 dark:hover:border-brand-600 dark:hover:bg-brand-900/40 dark:hover:text-brand-200;
+  }
+  .btn-outline {
+    @apply btn border border-brand-300 bg-transparent text-brand-700 hover:bg-brand-50 active:scale-[0.98] dark:border-brand-700 dark:text-brand-200 dark:hover:bg-brand-900/30;
+  }
+  .btn-ghost {
+    @apply btn bg-transparent text-ink-600 hover:bg-ink-100 hover:text-ink-900 active:scale-[0.98] dark:text-ink-300 dark:hover:bg-ink-800 dark:hover:text-white;
   }
   .btn-danger {
-    @apply btn bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md shadow-red-500/25 hover:from-red-700 hover:to-red-800 hover:shadow-lg hover:shadow-red-500/30 active:scale-95;
+    @apply btn bg-gradient-to-r from-red-600 to-red-700 text-white shadow-md shadow-red-500/25 hover:from-red-700 hover:to-red-800 active:scale-[0.98];
   }
-  .input {
-    @apply w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 transition-all duration-200 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-400/40 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white;
+  .btn-success {
+    @apply btn bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-500/25 hover:from-emerald-600 hover:to-emerald-700 active:scale-[0.98];
   }
-  .label {
-    @apply mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300;
+  .btn-icon {
+    @apply inline-flex h-9 w-9 items-center justify-center rounded-xl text-ink-500 transition-all duration-200 hover:bg-ink-100 hover:text-ink-900 active:scale-95 dark:text-ink-300 dark:hover:bg-ink-800 dark:hover:text-white;
   }
+  .btn-icon-active {
+    @apply btn-icon bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-200;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+  .btn-lg {
+    @apply px-5 py-3 text-base;
+  }
+
+  /* ---------- Form fields ---------- */
+  .input,
+  .textarea,
+  .select {
+    @apply w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm text-ink-900 placeholder:text-ink-400 transition-all duration-200 focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/15 dark:border-ink-700 dark:bg-ink-900 dark:text-white dark:placeholder:text-ink-500;
+  }
+  .field-label {
+    @apply mb-1.5 flex items-center gap-1.5 text-sm font-medium text-ink-700 dark:text-ink-200;
+  }
+  .textarea {
+    @apply resize-y leading-relaxed;
+  }
+  .select {
+    @apply cursor-pointer appearance-none bg-[length:1.25rem] bg-[right_0.75rem_center] bg-no-repeat pr-10;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%239aa2b4' stroke-width='2'%3E%3Cpath d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  }
+  .field-help {
+    @apply mt-1.5 text-xs text-ink-500 dark:text-ink-400;
+  }
+  .field-error {
+    @apply mt-1.5 text-xs font-medium text-red-600 dark:text-red-400;
+  }
+
+  /* ---------- Card ---------- */
   .card {
-    @apply rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 dark:border-zinc-800 dark:bg-zinc-900;
+    @apply rounded-2xl border border-ink-200/80 bg-white shadow-card transition-all duration-300 ease-spring dark:border-ink-800 dark:bg-ink-900;
+  }
+  .card-hover {
+    @apply hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card-hover dark:hover:border-brand-700;
+  }
+  .card-header {
+    @apply flex items-center justify-between gap-4 border-b border-ink-100 px-5 py-4 dark:border-ink-800;
+  }
+  .card-title {
+    @apply text-base font-semibold text-ink-900 dark:text-white;
+  }
+  .card-subtitle {
+    @apply mt-0.5 text-sm text-ink-500 dark:text-ink-400;
+  }
+  .card-body {
+    @apply p-5;
+  }
+  .card-footer {
+    @apply flex items-center justify-end gap-3 border-t border-ink-100 px-5 py-4 dark:border-ink-800;
+  }
+
+  /* ---------- Badges & pills ---------- */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  .badge-neutral {
+    @apply badge bg-ink-100 text-ink-600 dark:bg-ink-800 dark:text-ink-200;
+  }
+  .badge-brand {
+    @apply badge bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-200;
+  }
+  .badge-success {
+    @apply badge bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300;
+  }
+  .badge-warning {
+    @apply badge bg-amber-50 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300;
+  }
+  .badge-danger {
+    @apply badge bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-300;
+  }
+
+  /* ---------- Glass ---------- */
+  .glass {
+    @apply border border-white/60 bg-white/70 backdrop-blur-xl dark:border-white/10 dark:bg-ink-900/70;
+  }
+
+  /* ---------- Skeleton ---------- */
+  .skeleton {
+    @apply relative overflow-hidden rounded-md bg-ink-100 dark:bg-ink-800;
+  }
+  .skeleton::after {
+    @apply absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/60 to-transparent dark:via-white/10;
+    content: "";
+  }
+
+  /* ---------- Admin app background ---------- */
+  .admin-bg {
+    @apply bg-ink-50 dark:bg-ink-950;
+    background-image:
+      radial-gradient(60rem 60rem at 110% -10%, rgba(189,127,206,0.10), transparent 60%),
+      radial-gradient(50rem 50rem at -10% 110%, rgba(117,7,135,0.08), transparent 55%);
+  }
+
+  /* ---------- Sidebar link ---------- */
+  .nav-link {
+    @apply relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink-300 transition-all duration-200 hover:bg-white/5 hover:text-white;
+  }
+  .nav-link-active {
+    @apply bg-white/10 text-white hover:bg-white/10;
+  }
+  .nav-link-active::before {
+    content: "";
+    @apply absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-pride-gradient;
+  }
+
+  /* ---------- Section divider text ---------- */
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-wider text-ink-400 dark:text-ink-500;
   }
 }

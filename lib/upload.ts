@@ -1,7 +1,5 @@
 import "server-only";
 import { put } from "@vercel/blob";
-import { randomUUID } from "crypto";
-import path from "path";
 import { getSession } from "@/lib/auth";
 
 const ALLOWED_TYPES = [
@@ -19,27 +17,18 @@ export function isAllowedImageType(type: string): boolean {
   return ALLOWED_TYPES.includes(type);
 }
 
-function slugifyFilename(name: string): string {
-  const ext = path.extname(name) || "";
-  const base = path
-    .basename(name, ext)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 40);
-  return `${base || "file"}-${randomUUID().slice(0, 8)}${ext}`;
-}
-
 export async function uploadFile(file: File, folder = "uploads"): Promise<string> {
   await getSession();
 
-  const safeName = slugifyFilename(file.name);
-  const bytes = Buffer.from(await file.arrayBuffer());
+  const storeId = process.env.BLOB_STORE_ID;
+  const oidcToken = process.env.VERCEL_OIDC_TOKEN;
 
   try {
-    const blob = await put(`${folder}/${safeName}`, bytes, {
+    const blob = await put(`${folder}/${Date.now()}-${file.name}`, file, {
       access: "public",
       contentType: file.type,
+      ...(storeId ? { storeId } : {}),
+      ...(oidcToken ? { oidcToken } : {}),
     });
 
     console.log("[upload] success", {
@@ -54,9 +43,12 @@ export async function uploadFile(file: File, folder = "uploads"): Promise<string
       stack: err instanceof Error ? err.stack : undefined,
       name: err instanceof Error ? err.name : undefined,
       cause: err instanceof Error ? (err as Error & { cause?: unknown }).cause : undefined,
+      storeIdPresent: Boolean(storeId),
+      oidcTokenPresent: Boolean(oidcToken),
     });
     throw err;
   }
 }
 
 export { MAX_BYTES, ALLOWED_TYPES };
+

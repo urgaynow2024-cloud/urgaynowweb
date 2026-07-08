@@ -35,7 +35,7 @@ export function AnnouncementCard({ item }: { item: AnnouncementCardData }) {
           {item.title}
         </h3>
         {item.excerpt && (
-          <p className="mt-2 line-clamp-3 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
             {item.excerpt}
           </p>
         )}

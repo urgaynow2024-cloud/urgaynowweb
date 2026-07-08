@@ -35,12 +35,12 @@ export function StaffCard({ staff }: { staff: StaffCardData }) {
           @{staff.vrchatUsername}
         </p>
         {staff.bio && (
-          <p className="mt-3 line-clamp-3 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
             {staff.bio}
           </p>
         )}
         {socials.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2 pt-2">
+          <div className="mt-auto flex flex-wrap gap-2 pt-4">
             {socials.map((s, i) => (
               <a
                 key={i}

@@ -45,11 +45,11 @@ export function EventCard({ event }: { event: EventCardData }) {
           <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">📍 {event.location}</p>
         )}
         {event.description && (
-          <p className="mt-2 line-clamp-2 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
             {event.description.replace(/[#*_`>\-]/g, "")}
           </p>
         )}
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-auto flex flex-wrap gap-2 pt-3">
           <Link
             href={`/events#${event.id}`}
             className="rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white hover:bg-brand-700"

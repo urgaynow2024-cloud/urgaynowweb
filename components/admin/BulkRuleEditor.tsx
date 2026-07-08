@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Markdown } from "@/components/Markdown";
 import {
   IconPlus,
@@ -48,6 +48,7 @@ export function BulkRuleEditor({
   const [importText, setImportText] = useState("");
   const [copied, setCopied] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function update(id: string, field: keyof RuleEntry, value: string | number) {
     setRules((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value, error: undefined } : r)));
@@ -115,8 +116,27 @@ export function BulkRuleEditor({
   }
 
   async function handleFileDrop(file: File) {
-    if (!file.name.endsWith(".txt") && !file.name.endsWith(".json")) return;
+    if (!file.name.endsWith(".txt") && !file.name.endsWith(".json")) {
+      alert("Please drop a .txt or .json file.");
+      return;
+    }
     const text = await file.text();
+    await parseAndSetRules(text);
+  }
+
+  async function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith(".txt") && !file.name.endsWith(".json")) {
+      alert("Please select a .txt or .json file.");
+      return;
+    }
+    const text = await file.text();
+    await parseAndSetRules(text);
+    e.target.value = "";
+  }
+
+  async function parseAndSetRules(text: string) {
     let parsed: RuleEntry[] = [];
     try {
       const json = JSON.parse(text);
@@ -188,23 +208,43 @@ export function BulkRuleEditor({
       className="space-y-5"
       onDragOver={(e) => {
         e.preventDefault();
+        e.stopPropagation();
         setDragOver(true);
       }}
-      onDragLeave={() => setDragOver(false)}
+      onDragLeave={(e) => {
+        e.stopPropagation();
+        setDragOver(false);
+      }}
       onDrop={(e) => {
         e.preventDefault();
+        e.stopPropagation();
         setDragOver(false);
         const file = e.dataTransfer.files?.[0];
         if (file) handleFileDrop(file);
       }}
     >
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".txt,.json"
+        className="hidden"
+        onChange={handleFileInput}
+      />
+
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" onClick={addRule} className="btn-primary btn-sm">
           <IconPlus size={15} /> Add rule
         </button>
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="btn-secondary btn-sm"
+        >
+          <IconUpload size={15} /> Import file
+        </button>
         <button type="button" onClick={() => setImportOpen(true)} className="btn-secondary btn-sm">
-          <IconUpload size={15} /> Import
+          <IconUpload size={15} /> Import text
         </button>
         <button type="button" onClick={handleExport} className="btn-secondary btn-sm">
           <IconDownload size={15} /> Export
@@ -217,12 +257,31 @@ export function BulkRuleEditor({
       </div>
 
       {/* Drop zone */}
-      {dragOver && (
-        <div className="rounded-2xl border-2 border-dashed border-brand-400 bg-brand-50/80 p-8 text-center dark:border-brand-500 dark:bg-brand-900/30">
-          <p className="text-lg font-semibold text-brand-700 dark:text-brand-200">Drop a .txt or .json file here to import rules</p>
-          <p className="mt-1 text-sm text-brand-600 dark:text-brand-300">One rule per line, or a JSON array of rules</p>
-        </div>
-      )}
+      <div
+        onClick={() => fileInputRef.current?.click()}
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const file = e.dataTransfer.files?.[0];
+          if (file) handleFileDrop(file);
+        }}
+        className={`cursor-pointer rounded-2xl border-2 border-dashed p-8 text-center transition-colors ${
+          dragOver
+            ? "border-brand-400 bg-brand-50/80 dark:border-brand-500 dark:bg-brand-900/30"
+            : "border-ink-200 bg-ink-50/40 hover:border-brand-300 dark:border-ink-700 dark:bg-ink-800/30 dark:hover:border-brand-500"
+        }`}
+      >
+        <p className="text-lg font-semibold text-ink-700 dark:text-ink-200">
+          {dragOver ? "Drop to import rules" : "Drag & drop a .txt or .json file here to import rules"}
+        </p>
+        <p className="mt-1 text-sm text-ink-500 dark:text-ink-400">
+          One rule per line, or a JSON array of rules — or click to browse
+        </p>
+      </div>
 
       {/* Rule cards */}
       <div className="space-y-4">
@@ -230,12 +289,17 @@ export function BulkRuleEditor({
           <div
             key={rule.id}
             draggable
-            onDragStart={() => setDragIndex(index)}
+            onDragStart={(e) => {
+              e.stopPropagation();
+              setDragIndex(index);
+            }}
             onDragOver={(e) => {
               e.preventDefault();
+              e.stopPropagation();
               setOverIndex(index);
             }}
-            onDragEnd={() => {
+            onDragEnd={(e) => {
+              e.stopPropagation();
               if (dragIndex !== null && overIndex !== null) reorder(dragIndex, overIndex);
               setDragIndex(null);
               setOverIndex(null);

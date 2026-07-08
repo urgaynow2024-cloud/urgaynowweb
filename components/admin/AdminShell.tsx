@@ -38,6 +38,7 @@ const NAV: NavItem[] = [
   { label: "Rules", href: "/admin/rules", icon: <IconBook size={19} /> },
   { label: "Guides / FAQ", href: "/admin/guides", icon: <IconBook size={19} /> },
   { label: "Links", href: "/admin/links", icon: <IconLink size={19} /> },
+  { label: "Partners", href: "/admin/partners", icon: <IconLink size={19} /> },
   { label: "Gallery", href: "/admin/gallery", icon: <IconImages size={19} /> },
   { label: "Group Photos", href: "/admin/group-photos", icon: <IconCamera size={19} /> },
   { label: "Moderation", href: "/admin/moderation", icon: <IconShield size={19} /> },
@@ -53,6 +54,7 @@ const QUICK_CREATE: { label: string; href: string }[] = [
   { label: "Upload gallery image", href: "/admin/gallery/new" },
   { label: "Upload group photo", href: "/admin/group-photos/new" },
   { label: "New link", href: "/admin/links/new" },
+  { label: "New partner", href: "/admin/partners/new" },
 ];
 
 const SECTION_LABELS: Record<string, string> = {
@@ -62,6 +64,7 @@ const SECTION_LABELS: Record<string, string> = {
   rules: "Rules",
   guides: "Guides / FAQ",
   links: "Links",
+  partners: "Partners",
   gallery: "Gallery",
   "group-photos": "Group Photos",
   moderation: "Moderation",

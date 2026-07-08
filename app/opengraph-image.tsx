@@ -12,7 +12,6 @@ const PRIDE_BAR =
   "linear-gradient(90deg, #e40303 0%, #ff8c00 16.66%, #ffed00 33.33%, #008026 50%, #004dff 66.66%, #750787 100%)";
 const BG =
   "linear-gradient(135deg, #0c0d12 0%, #1b1020 55%, #221231 100%)";
-const PRIDE_DOTS = ["#e40303", "#ff8c00", "#ffed00", "#008026", "#004dff", "#750787"];
 
 export default async function Image() {
   const fontData = await readFile(
@@ -33,69 +32,81 @@ export default async function Image() {
           fontFamily: "Noto Sans",
         }}
       >
-        <div style={{ height: "20px", width: "100%", backgroundImage: PRIDE_BAR }} />
+        <div style={{ height: "16px", width: "100%", backgroundImage: PRIDE_BAR }} />
 
         <div
           style={{
             flex: 1,
             display: "flex",
-            flexDirection: "column",
+            flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
-            padding: "0 90px",
+            padding: "0 84px",
+            gap: "64px",
           }}
         >
           <div
             style={{
               display: "flex",
-              color: "#d6abe0",
-              fontSize: 32,
-              letterSpacing: 8,
-              textTransform: "uppercase",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "320px",
+              height: "320px",
+              borderRadius: "52px",
+              backgroundImage: PRIDE_BAR,
+              boxShadow: "0 24px 70px -24px rgba(117,7,135,0.65)",
             }}
           >
-            VRChat · LGBTQ+ Community
+            <div style={{ display: "flex", color: "#ffffff", fontSize: "140px" }}>UGN</div>
           </div>
 
           <div
             style={{
               display: "flex",
-              color: "#ffffff",
-              fontSize: 116,
-              marginTop: 14,
-              lineHeight: 1.05,
+              flexDirection: "column",
+              alignItems: "flex-start",
+              maxWidth: "660px",
             }}
           >
-            Ur Gay Now
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              color: "#cdd2dd",
-              fontSize: 38,
-              marginTop: 22,
-            }}
-          >
-            Events · Staff · Guides · News · Gallery
-          </div>
-
-          <div style={{ display: "flex", gap: 16, marginTop: 44 }}>
-            {PRIDE_DOTS.map((c) => (
-              <div
-                key={c}
-                style={{
-                  width: 58,
-                  height: 12,
-                  borderRadius: 999,
-                  backgroundColor: c,
-                }}
-              />
-            ))}
+            <div
+              style={{
+                display: "flex",
+                color: "#d6abe0",
+                fontSize: "28px",
+                letterSpacing: "5px",
+              }}
+            >
+              VRCHAT · LGBTQ+ COMMUNITY
+            </div>
+            <div
+              style={{
+                display: "flex",
+                color: "#ffffff",
+                fontSize: "104px",
+                marginTop: "16px",
+                lineHeight: 1.02,
+              }}
+            >
+              Ur Gay Now
+            </div>
+            <div
+              style={{
+                display: "flex",
+                color: "#cdd2dd",
+                fontSize: "34px",
+                marginTop: "18px",
+              }}
+            >
+              Events · Staff · Guides · News · Gallery
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "14px", marginTop: "30px" }}>
+              <div style={{ width: "14px", height: "14px", borderRadius: "999px", backgroundColor: "#750787" }} />
+              <div style={{ display: "flex", color: "#9aa2b4", fontSize: "28px" }}>urgaynow.com</div>
+            </div>
           </div>
         </div>
 
-        <div style={{ height: "20px", width: "100%", backgroundImage: PRIDE_BAR }} />
+        <div style={{ height: "16px", width: "100%", backgroundImage: PRIDE_BAR }} />
       </div>
     ),
     {

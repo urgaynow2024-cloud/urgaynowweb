@@ -12,8 +12,8 @@ export default async function EditGroupPhotoPage({ params }: { params: { id: str
     title: g.title,
     description: g.description,
     imageUrl: g.imageUrl,
-    bannerUrl: (g as any).bannerUrl || "",
-    rules: (g as any).rules || "",
+    bannerUrl: g.bannerUrl || "",
+    rules: g.rules || "",
   };
 
   return (

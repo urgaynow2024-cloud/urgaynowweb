@@ -15,6 +15,8 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   socialInstagram: "",
   socialTiktok: "",
   socialYoutube: "",
+  discordBotToken: "",
+  discordAnnouncementChannelId: "",
 };
 
 export async function getSetting(key: string): Promise<string> {

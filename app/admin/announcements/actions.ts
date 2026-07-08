@@ -4,9 +4,57 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
+import { fetchDiscordMessages } from "@/lib/discord";
 
 function fail(path: string) {
   redirect(`${path}?error=1`);
+}
+
+function uniqueSlug(base: string): string {
+  const slug = slugify(base) || "discord-announcement";
+  return `${slug}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+export async function importFromDiscord() {
+  await requireAdmin();
+  try {
+    const messages = await fetchDiscordMessages(20);
+    let imported = 0;
+
+    for (const m of messages) {
+      const existing = await prisma.announcement.findFirst({
+        where: { discordMessageId: m.id },
+      });
+      if (existing) continue;
+
+      const content = m.content.trim();
+      if (!content) continue;
+
+      const firstLine = content.split("\n").find((l) => l.trim().length > 0)?.trim() ?? "Discord announcement";
+      const title = firstLine.length > 100 ? `${firstLine.slice(0, 97)}…` : firstLine;
+      const excerpt = content.replace(/\s+/g, " ").slice(0, 160);
+      const image = m.attachments.find((a) => (a.contentType ?? "").startsWith("image/"));
+
+      await prisma.announcement.create({
+        data: {
+          title,
+          slug: uniqueSlug(title),
+          excerpt,
+          content,
+          coverImage: image?.url ?? "",
+          published: true,
+          publishedAt: new Date(m.timestamp),
+          discordMessageId: m.id,
+        },
+      });
+      imported++;
+    }
+
+    redirect(`/admin/announcements?imported=${imported}`);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Unknown error";
+    redirect(`/admin/announcements?importError=${encodeURIComponent(message)}`);
+  }
 }
 
 export async function createAnnouncement(formData: FormData) {

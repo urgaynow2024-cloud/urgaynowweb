@@ -1,20 +1,20 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { deleteAnnouncement } from "./actions";
+import { deleteAnnouncement, importFromDiscord } from "./actions";
 import { formatDate } from "@/lib/utils";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { Card } from "@/components/admin/ui/Card";
 import { Badge, StatusPill } from "@/components/admin/ui/Badge";
 import { EmptyState } from "@/components/admin/ui/Avatar";
-import { IconMegaphone, IconPlus, IconSearch, IconEdit, IconFilter } from "@/components/admin/ui/icons";
+import { IconMegaphone, IconPlus, IconSearch, IconEdit, IconFilter, IconDownload } from "@/components/admin/ui/icons";
 
 export const metadata = { title: "Announcements", robots: { index: false, follow: false } };
 
 export default async function AdminAnnouncementsList({
   searchParams,
 }: {
-  searchParams: { q?: string; status?: string; error?: string };
+  searchParams: { q?: string; status?: string; error?: string; imported?: string; importError?: string };
 }) {
   const q = searchParams.q?.trim() || "";
   const status = searchParams.status?.trim() || "";
@@ -46,9 +46,16 @@ export default async function AdminAnnouncementsList({
         title="Announcements"
         description="Manage posts, updates, and news for your community."
         actions={
-          <Link href="/admin/announcements/new" className="btn-primary btn-sm">
-            <IconPlus size={16} /> Add announcement
-          </Link>
+          <>
+            <form action={importFromDiscord}>
+              <button type="submit" className="btn-secondary btn-sm">
+                <IconDownload size={16} /> Import from Discord
+              </button>
+            </form>
+            <Link href="/admin/announcements/new" className="btn-primary btn-sm">
+              <IconPlus size={16} /> Add announcement
+            </Link>
+          </>
         }
       />
 
@@ -74,6 +81,20 @@ export default async function AdminAnnouncementsList({
         {searchParams.error && (
           <div role="alert" className="m-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
             Could not save — the slug may already be in use. Use a different title or slug.
+          </div>
+        )}
+
+        {searchParams.imported !== undefined && (
+          <div role="status" className="m-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700 dark:border-green-900 dark:bg-green-950/40 dark:text-green-300">
+            {searchParams.imported === "0"
+              ? "Nothing new to import — all recent Discord announcements are already on the site."
+              : `Imported ${searchParams.imported} announcement${searchParams.imported === "1" ? "" : "s"} from Discord.`}
+          </div>
+        )}
+
+        {searchParams.importError && (
+          <div role="alert" className="m-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300">
+            Discord import failed: {decodeURIComponent(searchParams.importError)}
           </div>
         )}
 

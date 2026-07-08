@@ -17,6 +17,8 @@ const KEYS = [
   "socialInstagram",
   "socialTiktok",
   "socialYoutube",
+  "discordBotToken",
+  "discordAnnouncementChannelId",
 ];
 
 export async function updateSettings(formData: FormData) {

@@ -52,6 +52,24 @@ export function SettingsForm({
       </Card>
 
       <Card className="animate-fade-in">
+        <CardHeader title="Discord import" icon={<IconSettings size={18} />} />
+        <CardBody className="space-y-4">
+          <p className="text-sm text-ink-500 dark:text-ink-400">
+            Connect a Discord bot to import announcements from a Discord channel into the website.
+            The bot needs the <code className="rounded bg-ink-100 px-1 dark:bg-ink-800">Read Message History</code> permission in your server.
+          </p>
+          <div>
+            <label className="field-label" htmlFor="discordBotToken">Discord bot token</label>
+            <input id="discordBotToken" name="discordBotToken" type="password" autoComplete="off" className="input" defaultValue={v("discordBotToken")} placeholder="Bot token (kept secret)" />
+          </div>
+          <div>
+            <label className="field-label" htmlFor="discordAnnouncementChannelId">Announcement channel ID</label>
+            <input id="discordAnnouncementChannelId" name="discordAnnouncementChannelId" className="input" defaultValue={v("discordAnnouncementChannelId")} placeholder="e.g. 123456789012345678" />
+          </div>
+        </CardBody>
+      </Card>
+
+      <Card className="animate-fade-in">
         <CardHeader title="Socials & Links" icon={<IconSettings size={18} />} />
         <CardBody>
           <div className="grid gap-4 sm:grid-cols-2">

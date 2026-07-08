@@ -5,6 +5,8 @@ import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { ThemeProvider, themeInitScript } from "@/components/ThemeProvider";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Ur Gay Now";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://urgaynow.com";
@@ -46,6 +48,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </main>
           <Footer />
         </ThemeProvider>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

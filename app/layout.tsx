@@ -14,20 +14,27 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://urgaynow.com";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: `${siteName} — Official Community Hub`,
+    default: `${siteName} — VRChat LGBTQ+ Community`,
     template: `%s · ${siteName}`,
   },
   description:
-    "The official community hub for Ur Gay Now. Announcements, events, rules, staff, guides, and more — welcoming, colourful, and LGBTQ+ friendly.",
+    "Join the official Ur Gay Now community for events, staff, guides, news, galleries, and more. A welcoming place to connect, socialize, and celebrate together.",
   keywords: ["Ur Gay Now", "LGBTQ+", "VRChat", "community", "events", "announcements"],
   openGraph: {
-    title: siteName,
-    description: "The official community hub for Ur Gay Now.",
+    title: `${siteName} — VRChat LGBTQ+ Community`,
+    description:
+      "Join the official Ur Gay Now community for events, staff, guides, news, galleries, and more. A welcoming place to connect, socialize, and celebrate together.",
     url: siteUrl,
     siteName,
     type: "website",
+    locale: "en_US",
   },
-  twitter: { card: "summary_large_image" },
+  twitter: {
+    card: "summary_large_image",
+    title: `${siteName} — VRChat LGBTQ+ Community`,
+    description:
+      "Join the official Ur Gay Now community for events, staff, guides, news, galleries, and more. A welcoming place to connect, socialize, and celebrate together.",
+  },
   robots: { index: true, follow: true },
 };
 

@@ -9,8 +9,14 @@ export async function createGroupPhoto(formData: FormData) {
   const title = String(formData.get("title") || "").trim();
   const description = String(formData.get("description") || "").trim();
   const imageUrl = String(formData.get("imageUrl") || "").trim();
+  const bannerUrl = String(formData.get("bannerUrl") || "").trim();
+  const rules = String(formData.get("rules") || "").trim();
+  
   if (!imageUrl) redirect("/admin/group-photos/new?error=1");
-  await prisma.groupPhoto.create({ data: { title, description, imageUrl } });
+  
+  await prisma.groupPhoto.create({ 
+    data: { title, description, imageUrl, bannerUrl, rules } 
+  });
   redirect("/admin/group-photos");
 }
 
@@ -19,8 +25,15 @@ export async function updateGroupPhoto(id: string, formData: FormData) {
   const title = String(formData.get("title") || "").trim();
   const description = String(formData.get("description") || "").trim();
   const imageUrl = String(formData.get("imageUrl") || "").trim();
+  const bannerUrl = String(formData.get("bannerUrl") || "").trim();
+  const rules = String(formData.get("rules") || "").trim();
+  
   if (!imageUrl) redirect(`/admin/group-photos/${id}?error=1`);
-  await prisma.groupPhoto.update({ where: { id }, data: { title, description, imageUrl } });
+  
+  await prisma.groupPhoto.update({ 
+    where: { id }, 
+    data: { title, description, imageUrl, bannerUrl, rules } 
+  });
   redirect("/admin/group-photos");
 }
 

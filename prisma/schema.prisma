@@ -88,7 +88,10 @@ model GroupPhoto {
   title       String
   description String   @default("")
   imageUrl    String
+  bannerUrl   String   @default("")
+  rules       String   @default("")
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model Setting {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createGroupPhoto } from "../actions";
-import { ImageItemForm } from "@/components/admin/ImageItemForm";
+import { GroupPhotoForm } from "@/components/admin/GroupPhotoForm";
 
 export default function NewGroupPhotoPage() {
   return (
@@ -10,7 +10,7 @@ export default function NewGroupPhotoPage() {
       </Link>
       <h1 className="mb-6 mt-2 text-2xl font-extrabold text-zinc-900 dark:text-white">Upload group photo</h1>
       <div className="card">
-        <ImageItemForm action={createGroupPhoto} folder="group-photos" titleLabel="Photo title" />
+        <GroupPhotoForm action={createGroupPhoto} folder="group-photos" />
       </div>
     </div>
   );

@@ -51,15 +51,21 @@ export function ImageField({
           id={`file-${label}`}
           className="hidden"
           onChange={(e) => handleFile(e.target.files?.[0])}
+          disabled={uploading}
         />
         <label
           htmlFor={`file-${label}`}
-          className="btn-secondary cursor-pointer"
+          className={`btn-secondary cursor-pointer ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           {uploading ? "Uploading…" : value ? "Change image" : "Upload image"}
         </label>
         {value && (
-          <button type="button" className="btn-danger" onClick={() => onChange("")}>
+          <button 
+            type="button" 
+            className="btn-danger" 
+            onClick={() => onChange("")}
+            disabled={uploading}
+          >
             Remove
           </button>
         )}

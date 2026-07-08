@@ -2,16 +2,18 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { updateGroupPhoto } from "../actions";
-import { ImageItemForm, type ImageItemFormValues } from "@/components/admin/ImageItemForm";
+import { GroupPhotoForm, type GroupPhotoFormValues } from "@/components/admin/GroupPhotoForm";
 
 export default async function EditGroupPhotoPage({ params }: { params: { id: string } }) {
   const g = await prisma.groupPhoto.findUnique({ where: { id: params.id } });
   if (!g) notFound();
 
-  const initial: ImageItemFormValues = {
+  const initial: GroupPhotoFormValues = {
     title: g.title,
     description: g.description,
     imageUrl: g.imageUrl,
+    bannerUrl: (g as any).bannerUrl || "",
+    rules: (g as any).rules || "",
   };
 
   return (
@@ -21,11 +23,10 @@ export default async function EditGroupPhotoPage({ params }: { params: { id: str
       </Link>
       <h1 className="mb-6 mt-2 text-2xl font-extrabold text-zinc-900 dark:text-white">Edit group photo</h1>
       <div className="card">
-        <ImageItemForm
+        <GroupPhotoForm
           action={updateGroupPhoto.bind(null, g.id)}
           initial={initial}
           folder="group-photos"
-          titleLabel="Photo title"
         />
       </div>
     </div>

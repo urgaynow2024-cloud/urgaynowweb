@@ -20,12 +20,26 @@ export default async function AdminGroupPhotosList() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {items.map((g) => (
-            <div key={g.id} className="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={g.imageUrl} alt={g.title} className="aspect-video w-full object-cover" />
+            <div key={g.id} className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="relative aspect-video w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                {(g as any).bannerUrl ? (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img 
+                    src={(g as any).bannerUrl} 
+                    alt={`${g.title} banner`} 
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  /* eslint-disable-next-line @next/next/no-img-element */
+                  <img src={g.imageUrl} alt={g.title} className="h-full w-full object-cover" />
+                )}
+              </div>
               <div className="flex items-center gap-2 p-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-zinc-900 dark:text-white">{g.title}</p>
+                  {(g as any).rules && (
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">Has rules</p>
+                  )}
                 </div>
                 <Link href={`/admin/group-photos/${g.id}`} className="btn-secondary text-sm">Edit</Link>
                 <ConfirmDeleteButton

@@ -1,7 +1,6 @@
 import "server-only";
 import { put } from "@vercel/blob";
 import { randomUUID } from "crypto";
-import { mkdir, writeFile } from "fs/promises";
 import path from "path";
 import { getSession } from "@/lib/auth";
 
@@ -17,8 +16,7 @@ function slugifyFilename(name: string): string {
 }
 
 /**
- * Upload a file. Uses Vercel Blob when BLOB_READ_WRITE_TOKEN is configured,
- * otherwise writes to ./public/uploads (local dev only — not persistent on Vercel).
+ * Upload a file. Requires Vercel Blob (BLOB_READ_WRITE_TOKEN must be set).
  * Returns a public URL.
  */
 export async function uploadFile(file: File, folder = "uploads"): Promise<string> {
@@ -28,20 +26,16 @@ export async function uploadFile(file: File, folder = "uploads"): Promise<string
   const bytes = Buffer.from(await file.arrayBuffer());
 
   const token = process.env.BLOB_READ_WRITE_TOKEN;
-  if (token) {
-    const blob = await put(`${folder}/${safeName}`, bytes, {
-      access: "public",
-      contentType: file.type,
-      token,
-    });
-    return blob.url;
+  if (!token) {
+    throw new Error("BLOB_READ_WRITE_TOKEN environment variable is not set. Please configure Vercel Blob storage.");
   }
 
-  // Local fallback (development)
-  const dir = path.join(process.cwd(), "public", folder);
-  await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, safeName), bytes);
-  return `/${folder}/${safeName}`;
+  const blob = await put(`${folder}/${safeName}`, bytes, {
+    access: "public",
+    contentType: file.type,
+    token,
+  });
+  return blob.url;
 }
 
 export function isAllowedImageType(type: string): boolean {

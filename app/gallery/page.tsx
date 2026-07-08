@@ -2,6 +2,7 @@ import { Container, PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { GalleryGrid } from "@/components/GalleryGrid";
 import { getSetting } from "@/lib/settings";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -18,8 +19,21 @@ export default async function GalleryPage() {
   const discord = await getSetting("discordInvite");
 
   const all = [
-    ...groupPhotos.map((g) => ({ id: g.id, title: g.title, description: g.description, imageUrl: g.imageUrl })),
-    ...images.map((g) => ({ id: g.id, title: g.title, description: g.description, imageUrl: g.imageUrl })),
+    ...groupPhotos.map((g) => ({ 
+      id: g.id, 
+      title: g.title, 
+      description: g.description, 
+      imageUrl: g.imageUrl,
+      isGroup: true,
+      groupId: g.id
+    })),
+    ...images.map((g) => ({ 
+      id: g.id, 
+      title: g.title, 
+      description: g.description, 
+      imageUrl: g.imageUrl,
+      isGroup: false
+    })),
   ];
 
   return (

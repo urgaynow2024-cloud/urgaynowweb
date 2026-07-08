@@ -1,8 +1,12 @@
+import Link from "next/link";
+
 export type GalleryImageData = {
   id: string;
   title: string;
   description: string;
   imageUrl: string;
+  isGroup?: boolean;
+  groupId?: string;
 };
 
 export function GalleryGrid({ images }: { images: GalleryImageData[] }) {
@@ -16,34 +20,59 @@ export function GalleryGrid({ images }: { images: GalleryImageData[] }) {
 
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-      {images.map((img) => (
-        <figure
-          key={img.id}
-          className="group overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:shadow-brand-500/5"
-        >
-          <div className="aspect-square overflow-hidden">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={img.imageUrl}
-              alt={img.title}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-              loading="lazy"
-            />
-          </div>
-          {(img.title || img.description) && (
-            <figcaption className="p-3">
-              {img.title && (
-                <p className="text-sm font-semibold text-zinc-900 dark:text-white">{img.title}</p>
-              )}
-              {img.description && (
-                <p className="mt-0.5 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">
-                  {img.description}
-                </p>
-              )}
-            </figcaption>
-          )}
-        </figure>
-      ))}
+      {images.map((img) => {
+        const content = (
+          <>
+            <div className="aspect-square overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={img.imageUrl}
+                alt={img.title}
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                loading="lazy"
+              />
+            </div>
+            {(img.title || img.description) && (
+              <figcaption className="p-3">
+                {img.title && (
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-white">{img.title}</p>
+                )}
+                {img.description && (
+                  <p className="mt-0.5 line-clamp-2 text-xs text-zinc-500 dark:text-zinc-400">
+                    {img.description}
+                  </p>
+                )}
+                {img.isGroup && (
+                  <p className="mt-1 text-xs font-medium text-brand-600 dark:text-brand-300">
+                    View group →
+                  </p>
+                )}
+              </figcaption>
+            )}
+          </>
+        );
+
+        if (img.isGroup && img.groupId) {
+          return (
+            <Link
+              key={img.id}
+              href={`/groups/${img.groupId}`}
+              className="group block overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:shadow-brand-500/5"
+            >
+              {content}
+            </Link>
+          );
+        }
+
+        return (
+          <figure
+            key={img.id}
+            className="group overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:shadow-brand-500/5"
+          >
+            {content}
+          </figure>
+        );
+      })}
     </div>
   );
 }

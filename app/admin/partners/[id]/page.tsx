@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { updatePartner } from "../actions";
 import { PartnerForm, type PartnerFormValues } from "../PartnerForm";
+import { parseSocials } from "@/lib/utils";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
 import { IconLink } from "@/components/admin/ui/icons";
@@ -14,7 +15,7 @@ export default async function EditPartnerPage({ params }: { params: { id: string
     name: p.name,
     logoUrl: p.logoUrl,
     description: p.description,
-    link: p.link,
+    links: parseSocials(p.links),
     tag: p.tag,
     sortOrder: p.sortOrder,
   };

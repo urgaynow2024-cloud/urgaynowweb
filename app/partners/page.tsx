@@ -1,5 +1,6 @@
 import { Container, PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
+import { parseSocials } from "@/lib/utils";
 import { PartnerCard } from "@/components/PartnerCard";
 
 export const dynamic = "force-dynamic";
@@ -54,7 +55,7 @@ export default async function PartnersPage() {
                           name: p.name,
                           logoUrl: p.logoUrl,
                           description: p.description,
-                          link: p.link,
+                          links: parseSocials(p.links),
                           tag: p.tag,
                         }}
                       />

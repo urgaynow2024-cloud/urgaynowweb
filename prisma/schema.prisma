@@ -29,7 +29,7 @@ model Partner {
   name        String
   logoUrl     String   @default("")
   description String   @default("")
-  link        String   @default("")
+  links       String   @default("[]") // JSON array of { label, url }
   tag         String   @default("Partner") // Partner | Affiliate | Friend Community
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())

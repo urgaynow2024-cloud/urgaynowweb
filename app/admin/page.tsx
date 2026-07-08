@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
 import { StatCard } from "@/components/admin/ui/StatCard";
-import { Badge, StatusPill } from "@/components/admin/ui/Badge";
+import { Badge } from "@/components/admin/ui/Badge";
 import { Avatar } from "@/components/admin/ui/Avatar";
 import { Dropdown } from "@/components/admin/ui/Dropdown";
 import { BarChart, MiniAreaChart } from "@/components/admin/ui/Chart";
@@ -15,7 +15,6 @@ import {
   IconImages,
   IconBook,
   IconLink,
-  IconFlag,
   IconPlus,
   IconActivity,
   IconArrowRight,
@@ -63,7 +62,6 @@ export default async function AdminDashboard() {
     recentAnnouncements,
     recentEvents,
     recentGroups,
-    pendingGroups,
   ] = await Promise.all([
     prisma.staff.count(),
     prisma.announcement.count(),
@@ -76,7 +74,6 @@ export default async function AdminDashboard() {
     prisma.announcement.findMany({ orderBy: { publishedAt: "desc" }, take: 4 }),
     prisma.event.findMany({ orderBy: { startDateTime: "desc" }, take: 4 }),
     prisma.groupPhoto.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
-    prisma.groupPhoto.count({ where: { bannerUrl: "" } }),
   ]);
 
   const totalContent = staffCount + announcementCount + eventCount + guideCount + linkCount + galleryCount + groupCount;
@@ -100,14 +97,13 @@ export default async function AdminDashboard() {
   const distMax = Math.max(1, ...distribution.map((d) => d.value));
 
   const stats = [
-    { label: "Total Users", value: staffCount, icon: <IconUsers size={20} />, accent: "brand" as const, spark: growthSeries(staffCount), trend: 12 },
-    { label: "Group Photos", value: groupCount, icon: <IconCamera size={20} />, accent: "emerald" as const, spark: growthSeries(groupCount), trend: 8 },
-    { label: "Announcements", value: announcementCount, icon: <IconMegaphone size={20} />, accent: "amber" as const, trend: 4 },
-    { label: "Events", value: eventCount, icon: <IconCalendar size={20} />, accent: "blue" as const, trend: -3 },
-    { label: "Uploaded Photos", value: galleryCount, icon: <IconImages size={20} />, accent: "brand" as const, trend: 15 },
-    { label: "Guides", value: guideCount, icon: <IconBook size={20} />, accent: "emerald" as const },
-    { label: "Links", value: linkCount, icon: <IconLink size={20} />, accent: "blue" as const },
-    { label: "Pending Reports", value: pendingGroups, icon: <IconFlag size={20} />, accent: "red" as const, hint: "Group photos need review" },
+    { label: "Total Users", value: staffCount, icon: <IconUsers size={20} />, accent: "brand" as const, spark: growthSeries(staffCount), trend: 12, hint: "Registered staff" },
+    { label: "Group Photos", value: groupCount, icon: <IconCamera size={20} />, accent: "emerald" as const, spark: growthSeries(groupCount), trend: 8, hint: "Community moments" },
+    { label: "Announcements", value: announcementCount, icon: <IconMegaphone size={20} />, accent: "amber" as const, trend: 4, hint: "Published posts" },
+    { label: "Events", value: eventCount, icon: <IconCalendar size={20} />, accent: "blue" as const, trend: -3, hint: "Scheduled events" },
+    { label: "Uploaded Photos", value: galleryCount, icon: <IconImages size={20} />, accent: "brand" as const, trend: 15, hint: "Gallery uploads" },
+    { label: "Guides", value: guideCount, icon: <IconBook size={20} />, accent: "emerald" as const, hint: "Help articles" },
+    { label: "Links", value: linkCount, icon: <IconLink size={20} />, accent: "blue" as const, hint: "Quick links" },
   ];
 
   return (
@@ -227,10 +223,9 @@ export default async function AdminDashboard() {
 
         <Card>
           <CardHeader
-            title="Moderation queue"
-            subtitle="Group photos that need attention"
+            title="Recent group photos"
+            subtitle="Banners and rules are optional"
             icon={<IconShield size={18} />}
-            actions={pendingGroups > 0 ? <Badge tone="danger">{pendingGroups} pending</Badge> : <Badge tone="success">Clear</Badge>}
           />
           <CardBody className="p-0">
             {recentGroups.length === 0 ? (
@@ -240,23 +235,22 @@ export default async function AdminDashboard() {
               </div>
             ) : (
               <ul className="divide-y divide-ink-100 dark:divide-ink-800">
-                {recentGroups.map((g) => {
-                  const needsReview = !g.bannerUrl;
-                  return (
-                    <li key={g.id} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-ink-50 dark:hover:bg-ink-800/50">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={g.bannerUrl || g.imageUrl} alt="" className="h-10 w-14 shrink-0 rounded-lg object-cover" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-ink-800 dark:text-ink-100">{g.title}</p>
-                        <p className="text-xs text-ink-400">{relativeTime(g.createdAt)}</p>
-                      </div>
-                      {needsReview ? <StatusPill tone="warning">Needs review</StatusPill> : <StatusPill tone="success">Ready</StatusPill>}
-                      <Link href={`/admin/group-photos/${g.id}`} className="btn-ghost btn-sm">
-                        Review <IconArrowRight size={14} />
-                      </Link>
-                    </li>
-                  );
-                })}
+                {recentGroups.map((g) => (
+                  <li key={g.id} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-ink-50 dark:hover:bg-ink-800/50">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={g.bannerUrl || g.imageUrl} alt="" className="h-10 w-14 shrink-0 rounded-lg object-cover" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-ink-800 dark:text-ink-100">{g.title}</p>
+                      <p className="text-xs text-ink-400">{relativeTime(g.createdAt)}</p>
+                    </div>
+                    <span className={`badge ${g.bannerUrl ? "badge-success" : "badge-warning"}`}>
+                      {g.bannerUrl ? "Has banner" : "No banner"}
+                    </span>
+                    <Link href={`/admin/group-photos/${g.id}`} className="btn-ghost btn-sm">
+                      Edit <IconArrowRight size={14} />
+                    </Link>
+                  </li>
+                ))}
               </ul>
             )}
           </CardBody>

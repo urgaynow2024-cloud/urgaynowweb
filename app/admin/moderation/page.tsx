@@ -3,11 +3,9 @@ import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
 import { StatCard } from "@/components/admin/ui/StatCard";
-import { StatusPill } from "@/components/admin/ui/Badge";
 import { EmptyState } from "@/components/admin/ui/Avatar";
 import {
   IconShield,
-  IconFlag,
   IconCamera,
   IconArrowRight,
 } from "@/components/admin/ui/icons";
@@ -27,18 +25,14 @@ function relativeTime(date: Date): string {
 }
 
 export default async function ModerationPage() {
-  const [totalPhotos, pending, groupPhotos] = await Promise.all([
+  const [totalPhotos, groupPhotos] = await Promise.all([
     prisma.groupPhoto.count(),
-    prisma.groupPhoto.count({ where: { bannerUrl: "" } }),
     prisma.groupPhoto.findMany({ orderBy: { createdAt: "desc" }, take: 12 }),
   ]);
 
-  const reviewed = totalPhotos - pending;
-
   const stats = [
     { label: "Total group photos", value: totalPhotos, icon: <IconCamera size={20} />, accent: "brand" as const, hint: "All submitted photos" },
-    { label: "Pending review", value: pending, icon: <IconFlag size={20} />, accent: "red" as const, hint: "Missing banner" },
-    { label: "Reviewed", value: reviewed, icon: <IconShield size={20} />, accent: "emerald" as const, hint: "Complete and ready" },
+    { label: "Banners set", value: await prisma.groupPhoto.count({ where: { bannerUrl: { not: "" } } }), icon: <IconShield size={20} />, accent: "emerald" as const, hint: "Photos with custom banner" },
   ];
 
   return (
@@ -46,10 +40,10 @@ export default async function ModerationPage() {
       <PageHeader
         breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Moderation" }]}
         title="Moderation"
-        description="Review group photos and content that need attention."
+        description="Review group photos. Banners and rules are optional."
       />
 
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {stats.map((s, i) => (
           <div key={s.label} style={{ animationDelay: `${i * 40}ms` }} className="animate-fade-in">
             <StatCard label={s.label} value={s.value} icon={s.icon} accent={s.accent} hint={s.hint} />
@@ -60,10 +54,9 @@ export default async function ModerationPage() {
       <section className="mt-5">
         <Card className="animate-fade-in">
           <CardHeader
-            title="Moderation queue"
-            subtitle="Group photos ordered by most recent"
+            title="Recent group photos"
+            subtitle="Everything is considered ready by default"
             icon={<IconShield size={18} />}
-            actions={pending > 0 ? <StatusPill tone="warning">{pending} pending</StatusPill> : <StatusPill tone="success">All clear</StatusPill>}
           />
           <CardBody className="p-0">
             {groupPhotos.length === 0 ? (
@@ -71,13 +64,12 @@ export default async function ModerationPage() {
                 <EmptyState
                   icon={<IconCamera size={26} />}
                   title="No group photos to review"
-                  description="When members upload group photos, they'll appear here for moderation."
+                  description="When members upload group photos, they'll appear here."
                 />
               </div>
             ) : (
               <ul className="divide-y divide-ink-100 dark:divide-ink-800">
                 {groupPhotos.map((g) => {
-                  const needsReview = !g.bannerUrl;
                   return (
                     <li key={g.id} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-ink-50 dark:hover:bg-ink-800/50">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -86,9 +78,11 @@ export default async function ModerationPage() {
                         <p className="truncate text-sm font-medium text-ink-800 dark:text-ink-100">{g.title}</p>
                         <p className="text-xs text-ink-400">{relativeTime(g.createdAt)}</p>
                       </div>
-                      {needsReview ? <StatusPill tone="warning">Needs review</StatusPill> : <StatusPill tone="success">Ready</StatusPill>}
+                      <span className={`badge ${g.bannerUrl ? "badge-success" : "badge-warning"}`}>
+                        {g.bannerUrl ? "Has banner" : "No banner"}
+                      </span>
                       <Link href={`/admin/group-photos/${g.id}`} className="btn-ghost btn-sm">
-                        Review <IconArrowRight size={14} />
+                        Edit <IconArrowRight size={14} />
                       </Link>
                     </li>
                   );

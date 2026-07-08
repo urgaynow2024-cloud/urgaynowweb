@@ -35,3 +35,34 @@ export async function deleteRule(id: string) {
   await prisma.rule.delete({ where: { id } });
   redirect("/admin/rules");
 }
+
+export async function bulkSaveRules(rulesJson: string) {
+  await requireAdmin();
+  
+  const rules = JSON.parse(rulesJson) as Array<{
+    id?: string;
+    category: string;
+    title: string;
+    content: string;
+    sortOrder: number;
+  }>;
+
+  await prisma.$transaction(async (tx) => {
+    // Delete all existing rules
+    await tx.rule.deleteMany({});
+    
+    // Create all new rules
+    for (const rule of rules) {
+      await tx.rule.create({
+        data: {
+          category: rule.category,
+          title: rule.title,
+          content: rule.content,
+          sortOrder: rule.sortOrder,
+        },
+      });
+    }
+  });
+
+  redirect("/admin/rules");
+}

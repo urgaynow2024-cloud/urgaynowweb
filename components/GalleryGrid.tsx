@@ -19,14 +19,14 @@ export function GalleryGrid({ images }: { images: GalleryImageData[] }) {
       {images.map((img) => (
         <figure
           key={img.id}
-          className="group overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+          className="group overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:shadow-brand-500/5"
         >
           <div className="aspect-square overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={img.imageUrl}
               alt={img.title}
-              className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
             />
           </div>

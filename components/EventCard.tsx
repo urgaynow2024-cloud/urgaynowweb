@@ -19,8 +19,8 @@ export function EventCard({ event }: { event: EventCardData }) {
   const day = start.getDate();
 
   return (
-    <article className="flex overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
-      <div className="flex w-20 flex-col items-center justify-center bg-pride-gradient text-white">
+    <article className="flex overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-brand-500/10 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:shadow-brand-500/5">
+      <div className="flex w-20 flex-col items-center justify-center bg-gradient-to-br from-brand-600 to-brand-700 text-white shadow-inner">
         <span className="text-sm font-bold">{month}</span>
         <span className="text-3xl font-extrabold leading-none">{day}</span>
       </div>

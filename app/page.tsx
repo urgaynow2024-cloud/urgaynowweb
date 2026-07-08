@@ -35,30 +35,33 @@ export default async function HomePage() {
   return (
     <>
       {/* Hero */}
-      <div className="relative overflow-hidden border-b border-zinc-200 bg-pride-gradient-soft dark:border-zinc-800">
-        <Container className="py-16 sm:py-24">
-          <p className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-1.5 text-sm font-semibold text-brand-700 dark:bg-zinc-900/70 dark:text-brand-200">
-            🏳️‍🌈 LGBTQ+ friendly community
-          </p>
-          <h1 className="mt-4 max-w-3xl text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-white sm:text-6xl">
-            Welcome to <span className="bg-pride-gradient bg-clip-text text-transparent">Ur Gay Now</span>
-          </h1>
-          <p className="mt-4 max-w-2xl text-lg text-zinc-700 dark:text-zinc-300">
-            {intro || tagline}
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link href="/events" className="btn-primary">See upcoming events</Link>
-            <Link href="/about" className="btn-secondary">Learn about us</Link>
-            {discord && (
-              <a href={discord} target="_blank" rel="noopener noreferrer" className="btn-secondary">
-                Join our Discord
-              </a>
-            )}
-            {vrchat && (
-              <a href={vrchat} target="_blank" rel="noopener noreferrer" className="btn-secondary">
-                VRChat Group
-              </a>
-            )}
+      <div className="relative overflow-hidden border-b border-zinc-200 bg-gradient-to-br from-pride-gradient-soft via-white to-brand-50/30 dark:border-zinc-800 dark:from-zinc-950 dark:via-zinc-900 dark:to-brand-950/20">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtOS45NDEgMC0xOCA4LjA1OS0xOCAxOHM4LjA1OSAxOCAxOCAxOGM5Ljk0MSAwIDE4LTguMDU5IDE4LTE4cy04LjA1OS0xOC0xOC0xOHptMCAzMmMtNy43MzIgMC0xNC02LjI2OC0xNC0xNHM2LjI2OC0xNCAxNC0xNHMxNCA2LjI2OCAxNCAxNC02LjI2OCAxNC0xNCAxNHoiIGZpbGw9IiM3NTA3ODciIGZpbGwtb3BhY2l0eT0iMC4wNSIvPjwvZz48L3N2Zz4=')] opacity-50 dark:opacity-20" />
+        <Container className="relative py-20 sm:py-32">
+          <div className="animate-fade-in">
+            <p className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-1.5 text-sm font-semibold text-brand-700 shadow-sm backdrop-blur-sm dark:bg-zinc-900/80 dark:text-brand-200">
+              🏳️‍🌈 LGBTQ+ friendly community
+            </p>
+            <h1 className="mt-6 max-w-3xl text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-white sm:text-6xl sm:leading-tight">
+              Welcome to <span className="bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 bg-clip-text text-transparent">Ur Gay Now</span>
+            </h1>
+            <p className="mt-6 max-w-2xl text-xl text-zinc-700 dark:text-zinc-300 leading-relaxed">
+              {intro || tagline}
+            </p>
+            <div className="mt-10 flex flex-wrap gap-3">
+              <Link href="/events" className="btn-primary">See upcoming events</Link>
+              <Link href="/about" className="btn-secondary">Learn about us</Link>
+              {discord && (
+                <a href={discord} target="_blank" rel="noopener noreferrer" className="btn-secondary">
+                  Join our Discord
+                </a>
+              )}
+              {vrchat && (
+                <a href={vrchat} target="_blank" rel="noopener noreferrer" className="btn-secondary">
+                  VRChat Group
+                </a>
+              )}
+            </div>
           </div>
         </Container>
       </div>

@@ -32,7 +32,7 @@ export default async function AdminGalleryList({
       <PageHeader
         breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Media" }]}
         title="Media"
-        description="Manage gallery images and group photos. Uploads, banners, and rules are all optional."
+        description="Manage gallery images and group photos. Uploads and banners are optional."
         actions={
           <div className="flex items-center gap-2">
             <Link href="/admin/group-photos" className="btn-secondary btn-sm">
@@ -50,7 +50,7 @@ export default async function AdminGalleryList({
           <StatCard label="Gallery images" value={images.length} icon={<IconImages size={20} />} accent="brand" hint="Standalone gallery uploads" />
         </div>
         <div className="animate-fade-in">
-          <StatCard label="Group photos" value={groupPhotos.length} icon={<IconCamera size={20} />} accent="emerald" hint="Community moments with optional banners/rules" />
+          <StatCard label="Group photos" value={groupPhotos.length} icon={<IconCamera size={20} />} accent="emerald" hint="Community moments with optional banners" />
         </div>
         <div className="animate-fade-in">
           <StatCard label="Missing banners" value={pendingGroups} icon={<IconUpload size={20} />} accent="amber" hint="Group photos without banners" />

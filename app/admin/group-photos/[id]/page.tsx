@@ -15,7 +15,6 @@ export default async function EditGroupPhotoPage({ params }: { params: { id: str
     description: g.description,
     imageUrl: g.imageUrl,
     bannerUrl: g.bannerUrl || "",
-    rules: g.rules || "",
   };
 
   return (
@@ -23,7 +22,7 @@ export default async function EditGroupPhotoPage({ params }: { params: { id: str
       <PageHeader
         breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Group Photos", href: "/admin/group-photos" }, { label: "Edit" }]}
         title={`Edit: ${g.title}`}
-        description="Update the photo, banner, and group rules."
+        description="Update the photo and banner."
       />
       <Card>
         <CardHeader title="Photo details" subtitle="Changes save immediately" icon={<IconCamera size={18} />} />

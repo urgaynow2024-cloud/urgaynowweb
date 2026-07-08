@@ -9,7 +9,6 @@ export type GroupPhotoFormValues = {
   description: string;
   imageUrl: string;
   bannerUrl: string;
-  rules: string;
 };
 
 export function GroupPhotoForm({
@@ -57,19 +56,6 @@ export function GroupPhotoForm({
       <div className="grid gap-6 md:grid-cols-2">
         <ImageUpload label="Group photo / avatar *" value={imageUrl} onChange={setImageUrl} folder={folder} help="This is the main image shown for the group." />
         <ImageUpload label="Group banner (optional)" value={bannerUrl} onChange={setBannerUrl} folder={folder} name="bannerUrl" help="A wide banner image for the group header." />
-      </div>
-
-      <div>
-        <label className="field-label" htmlFor="rules">Group rules (optional)</label>
-        <textarea
-          id="rules"
-          name="rules"
-          rows={6}
-          className="textarea"
-          defaultValue={initial?.rules ?? ""}
-          placeholder="Enter your group rules here. Each rule on a new line."
-        />
-        <p className="field-help">Members will be able to copy these rules with one click.</p>
       </div>
 
       <div className="flex items-center gap-3 border-t border-ink-100 pt-5 dark:border-ink-800">

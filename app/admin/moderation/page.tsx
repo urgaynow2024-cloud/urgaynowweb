@@ -40,7 +40,7 @@ export default async function ModerationPage() {
       <PageHeader
         breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Moderation" }]}
         title="Moderation"
-        description="Review group photos. Banners and rules are optional."
+        description="Review group photos. Banners are optional."
       />
 
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">

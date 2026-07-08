@@ -10,7 +10,7 @@ export default function NewGroupPhotoPage() {
       <PageHeader
         breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Group Photos", href: "/admin/group-photos" }, { label: "New" }]}
         title="Upload group photo"
-        description="Add a new group or team photo. You can set a banner and rules."
+        description="Add a new group or team photo with an optional banner."
       />
       <Card>
         <CardHeader title="Photo details" subtitle="Fill in the information below" icon={<IconCamera size={18} />} />

@@ -29,7 +29,7 @@ function relativeTime(date: Date): string {
 export default async function ModerationPage() {
   const [totalPhotos, pending, groupPhotos] = await Promise.all([
     prisma.groupPhoto.count(),
-    prisma.groupPhoto.count({ where: { OR: [{ bannerUrl: "" }, { rules: "" }] } }),
+    prisma.groupPhoto.count({ where: { bannerUrl: "" } }),
     prisma.groupPhoto.findMany({ orderBy: { createdAt: "desc" }, take: 12 }),
   ]);
 
@@ -37,7 +37,7 @@ export default async function ModerationPage() {
 
   const stats = [
     { label: "Total group photos", value: totalPhotos, icon: <IconCamera size={20} />, accent: "brand" as const, hint: "All submitted photos" },
-    { label: "Pending review", value: pending, icon: <IconFlag size={20} />, accent: "red" as const, hint: "Missing banner or rules" },
+    { label: "Pending review", value: pending, icon: <IconFlag size={20} />, accent: "red" as const, hint: "Missing banner" },
     { label: "Reviewed", value: reviewed, icon: <IconShield size={20} />, accent: "emerald" as const, hint: "Complete and ready" },
   ];
 
@@ -77,7 +77,7 @@ export default async function ModerationPage() {
             ) : (
               <ul className="divide-y divide-ink-100 dark:divide-ink-800">
                 {groupPhotos.map((g) => {
-                  const needsReview = !g.bannerUrl || !g.rules;
+                  const needsReview = !g.bannerUrl;
                   return (
                     <li key={g.id} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-ink-50 dark:hover:bg-ink-800/50">
                       {/* eslint-disable-next-line @next/next/no-img-element */}

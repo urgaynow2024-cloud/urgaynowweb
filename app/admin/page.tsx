@@ -76,7 +76,7 @@ export default async function AdminDashboard() {
     prisma.announcement.findMany({ orderBy: { publishedAt: "desc" }, take: 4 }),
     prisma.event.findMany({ orderBy: { startDateTime: "desc" }, take: 4 }),
     prisma.groupPhoto.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
-    prisma.groupPhoto.count({ where: { OR: [{ bannerUrl: "" }, { rules: "" }] } }),
+    prisma.groupPhoto.count({ where: { bannerUrl: "" } }),
   ]);
 
   const totalContent = staffCount + announcementCount + eventCount + guideCount + linkCount + galleryCount + groupCount;
@@ -241,7 +241,7 @@ export default async function AdminDashboard() {
             ) : (
               <ul className="divide-y divide-ink-100 dark:divide-ink-800">
                 {recentGroups.map((g) => {
-                  const needsReview = !g.bannerUrl || !g.rules;
+                  const needsReview = !g.bannerUrl;
                   return (
                     <li key={g.id} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-ink-50 dark:hover:bg-ink-800/50">
                       {/* eslint-disable-next-line @next/next/no-img-element */}

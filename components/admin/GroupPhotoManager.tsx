@@ -37,7 +37,7 @@ export function GroupPhotoManager({ items }: { items: GroupPhotoItem[] }) {
 
   const filtered = useMemo(() => {
     return items.filter((g) => {
-      if (filter === "review" && g.bannerUrl && g.rules) return false;
+      if (filter === "review" && g.bannerUrl) return false;
       if (query && !g.title.toLowerCase().includes(query.toLowerCase())) return false;
       return true;
     });
@@ -165,7 +165,7 @@ export function GroupPhotoManager({ items }: { items: GroupPhotoItem[] }) {
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {filtered.map((g) => {
-            const needsReview = !g.bannerUrl || !g.rules;
+            const needsReview = !g.bannerUrl;
             return (
               <div key={g.id} className="card group overflow-hidden card-hover">
                 <div className="relative aspect-[4/3] overflow-hidden bg-ink-100 dark:bg-ink-800">

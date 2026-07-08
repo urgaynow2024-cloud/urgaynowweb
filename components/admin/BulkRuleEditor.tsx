@@ -49,6 +49,7 @@ export function BulkRuleEditor({
   const [copied, setCopied] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dragCounterRef = useRef(0);
 
   function update(id: string, field: keyof RuleEntry, value: string | number) {
     setRules((prev) => prev.map((r) => (r.id === id ? { ...r, [field]: value, error: undefined } : r)));
@@ -209,15 +210,22 @@ export function BulkRuleEditor({
       onDragOver={(e) => {
         e.preventDefault();
         e.stopPropagation();
+      }}
+      onDragEnter={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dragCounterRef.current += 1;
         setDragOver(true);
       }}
       onDragLeave={(e) => {
         e.stopPropagation();
-        setDragOver(false);
+        dragCounterRef.current -= 1;
+        if (dragCounterRef.current === 0) setDragOver(false);
       }}
       onDrop={(e) => {
         e.preventDefault();
         e.stopPropagation();
+        dragCounterRef.current = 0;
         setDragOver(false);
         const file = e.dataTransfer.files?.[0];
         if (file) handleFileDrop(file);

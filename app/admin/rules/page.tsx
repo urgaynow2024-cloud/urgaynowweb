@@ -2,7 +2,6 @@ import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
 import { RulesEditor } from "@/components/admin/RulesEditor";
-import { EmptyState } from "@/components/admin/ui/Avatar";
 import { IconBook, IconPlus } from "@/components/admin/ui/icons";
 import Link from "next/link";
 
@@ -23,7 +22,7 @@ export default async function AdminRulesList() {
       <PageHeader
         breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Rules" }]}
         title="Community Rules"
-        description="Edit every rule in one place. Drag to reorder, duplicate, preview markdown, and import or export in bulk."
+        description={initial.length === 0 ? "Import rules in bulk by dragging a .txt or .json file, or add them manually below." : "Edit every rule in one place. Drag to reorder, duplicate, preview markdown, and import or export in bulk."}
         actions={
           <Link href="/admin/rules/new" className="btn-secondary btn-sm">
             <IconPlus size={16} /> Single rule
@@ -31,25 +30,16 @@ export default async function AdminRulesList() {
         }
       />
 
-      {initial.length === 0 ? (
-        <Card>
-          <CardBody>
-            <EmptyState
-              icon={<IconBook size={28} />}
-              title="No rules yet"
-              description="Create your first rule or import a list in bulk."
-              action={<Link href="/admin/rules/new" className="btn-primary"><IconPlus size={16} /> Add rule</Link>}
-            />
-          </CardBody>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader title="Bulk rule editor" subtitle="All changes save together" icon={<IconBook size={18} />} />
-          <CardBody>
-            <RulesEditor initial={initial} />
-          </CardBody>
-        </Card>
-      )}
+      <Card>
+        <CardHeader
+          title={initial.length === 0 ? "Import or create rules" : "Bulk rule editor"}
+          subtitle="All changes save together"
+          icon={<IconBook size={18} />}
+        />
+        <CardBody>
+          <RulesEditor initial={initial} />
+        </CardBody>
+      </Card>
     </div>
   );
 }

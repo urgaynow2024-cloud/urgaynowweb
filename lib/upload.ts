@@ -19,6 +19,10 @@ export function isAllowedImageType(type: string): boolean {
   return ALLOWED_TYPES.includes(type);
 }
 
+function getBlobStoreId(): string | undefined {
+  return process.env.BLOB_STORE_ID || undefined;
+}
+
 function slugifyFilename(name: string): string {
   const ext = path.extname(name) || "";
   const base = path
@@ -33,14 +37,29 @@ function slugifyFilename(name: string): string {
 export async function uploadFile(file: File, folder = "uploads"): Promise<string> {
   await getSession();
 
+  const storeId = getBlobStoreId();
   const safeName = slugifyFilename(file.name);
   const bytes = Buffer.from(await file.arrayBuffer());
 
-  const blob = await put(`${folder}/${safeName}`, bytes, {
-    access: "public",
-    contentType: file.type,
-  });
-  return blob.url;
+  try {
+    const blob = await put(`${folder}/${safeName}`, bytes, {
+      access: "public",
+      contentType: file.type,
+      ...(storeId ? { storeId } : {}),
+    });
+    return blob.url;
+  } catch (err) {
+    console.error("[upload] Vercel Blob upload failed", {
+      filename: file.name,
+      folder,
+      contentType: file.type,
+      size: file.size,
+      storeIdPresent: Boolean(storeId),
+      error: err instanceof Error ? err.message : "unknown error",
+      stack: err instanceof Error ? err.stack : undefined,
+    });
+    throw err;
+  }
 }
 
 export { MAX_BYTES, ALLOWED_TYPES };

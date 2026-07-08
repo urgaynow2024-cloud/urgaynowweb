@@ -51,12 +51,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ url });
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown error";
-    console.error("Upload failed", {
+    const storeIdConfigured = Boolean(process.env.BLOB_STORE_ID);
+
+    console.error("[upload] Failed", {
       user: session.name,
       folder,
       filename: file.name,
       type: file.type,
       size: file.size,
+      storeIdConfigured,
       message,
       stack: err instanceof Error ? err.stack : undefined,
       name: err instanceof Error ? err.name : undefined,
@@ -78,6 +81,13 @@ export async function POST(req: Request) {
       userMessage = "Unsupported file type for storage.";
     }
 
-    return NextResponse.json({ error: userMessage, _debug: message }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: userMessage,
+        _debug: message,
+        _storeIdConfigured: storeIdConfigured,
+      },
+      { status: 500 },
+    );
   }
 }

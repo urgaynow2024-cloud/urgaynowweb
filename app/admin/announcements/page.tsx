@@ -8,6 +8,7 @@ import { Card } from "@/components/admin/ui/Card";
 import { Badge, StatusPill } from "@/components/admin/ui/Badge";
 import { EmptyState } from "@/components/admin/ui/Avatar";
 import { IconMegaphone, IconPlus, IconSearch, IconEdit, IconFilter, IconDownload } from "@/components/admin/ui/icons";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 export const metadata = { title: "Announcements", robots: { index: false, follow: false } };
 
@@ -40,7 +41,7 @@ export default async function AdminAnnouncementsList({
   }
 
   return (
-    <div>
+    <AdminLayout>
       <PageHeader
         breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Announcements" }]}
         title="Announcements"
@@ -153,6 +154,6 @@ export default async function AdminAnnouncementsList({
           </div>
         )}
       </Card>
-    </div>
+    </AdminLayout>
   );
 }

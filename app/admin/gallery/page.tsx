@@ -8,6 +8,7 @@ import { StatCard } from "@/components/admin/ui/StatCard";
 import { EmptyState } from "@/components/admin/ui/Avatar";
 import { Badge } from "@/components/admin/ui/Badge";
 import { IconImages, IconPlus, IconSearch, IconEdit, IconCamera, IconUpload } from "@/components/admin/ui/icons";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 export const metadata = { title: "Media", robots: { index: false, follow: false } };
 
@@ -28,7 +29,7 @@ export default async function AdminGalleryList({
   ]);
 
   return (
-    <div>
+    <AdminLayout>
       <PageHeader
         breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Media" }]}
         title="Media"
@@ -145,6 +146,6 @@ export default async function AdminGalleryList({
           )}
         </div>
       </Card>
-    </div>
+    </AdminLayout>
   );
 }

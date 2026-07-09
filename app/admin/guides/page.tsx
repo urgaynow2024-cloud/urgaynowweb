@@ -7,6 +7,7 @@ import { Card } from "@/components/admin/ui/Card";
 import { Badge } from "@/components/admin/ui/Badge";
 import { EmptyState } from "@/components/admin/ui/Avatar";
 import { IconBook, IconPlus, IconSearch, IconEdit } from "@/components/admin/ui/icons";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 export const metadata = { title: "Guides & FAQ", robots: { index: false, follow: false } };
 
@@ -30,7 +31,7 @@ export default async function AdminGuidesList({
   }
 
   return (
-    <div>
+    <AdminLayout>
       <PageHeader
         breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Guides & FAQ" }]}
         title="Guides & FAQ"
@@ -103,6 +104,6 @@ export default async function AdminGuidesList({
           </div>
         )}
       </Card>
-    </div>
+    </AdminLayout>
   );
 }

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { GroupPhotoManager, type GroupPhotoItem } from "@/components/admin/GroupPhotoManager";
 import { IconCamera, IconPlus } from "@/components/admin/ui/icons";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 export const metadata = { title: "Group Photos", robots: { index: false, follow: false } };
 
@@ -27,7 +28,7 @@ export default async function AdminGroupPhotosList() {
   }
 
   return (
-    <div>
+    <AdminLayout>
       <PageHeader
         breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Group Photos" }]}
         title="Group Photos"
@@ -52,6 +53,6 @@ export default async function AdminGroupPhotosList() {
       ) : (
         <GroupPhotoManager items={items} />
       )}
-    </div>
+    </AdminLayout>
   );
 }

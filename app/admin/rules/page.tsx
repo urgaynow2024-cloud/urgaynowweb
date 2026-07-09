@@ -4,6 +4,7 @@ import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
 import { RulesEditor } from "@/components/admin/RulesEditor";
 import { IconBook, IconPlus } from "@/components/admin/ui/icons";
 import Link from "next/link";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 export const metadata = { title: "Rules", robots: { index: false, follow: false } };
 
@@ -18,7 +19,7 @@ export default async function AdminRulesList() {
   }));
 
   return (
-    <div>
+    <AdminLayout>
       <PageHeader
         breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Rules" }]}
         title="Community Rules"
@@ -40,6 +41,6 @@ export default async function AdminRulesList() {
           <RulesEditor initial={initial} />
         </CardBody>
       </Card>
-    </div>
+    </AdminLayout>
   );
 }

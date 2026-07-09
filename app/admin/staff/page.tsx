@@ -8,6 +8,7 @@ import { Avatar } from "@/components/admin/ui/Avatar";
 import { Badge } from "@/components/admin/ui/Badge";
 import { EmptyState } from "@/components/admin/ui/Avatar";
 import { IconUsers, IconPlus, IconSearch, IconEdit, IconFilter } from "@/components/admin/ui/icons";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 export const metadata = { title: "Staff", robots: { index: false, follow: false } };
 
@@ -35,7 +36,7 @@ export default async function AdminStaffList({
   const ranks = Array.from(new Set(staff.map((s) => s.rank).filter(Boolean)));
 
   return (
-    <div>
+    <AdminLayout>
       <PageHeader
         breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Staff" }]}
         title="Staff"
@@ -128,6 +129,6 @@ export default async function AdminStaffList({
           </div>
         )}
       </Card>
-    </div>
+    </AdminLayout>
   );
 }

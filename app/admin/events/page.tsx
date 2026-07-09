@@ -8,6 +8,7 @@ import { Card } from "@/components/admin/ui/Card";
 import { Badge } from "@/components/admin/ui/Badge";
 import { EmptyState } from "@/components/admin/ui/Avatar";
 import { IconCalendar, IconPlus, IconSearch, IconEdit } from "@/components/admin/ui/icons";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 export const metadata = { title: "Events", robots: { index: false, follow: false } };
 
@@ -38,7 +39,7 @@ export default async function AdminEventsList({
   }
 
   return (
-    <div>
+    <AdminLayout>
       <PageHeader
         breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Events" }]}
         title="Events"
@@ -116,6 +117,6 @@ export default async function AdminEventsList({
           </div>
         )}
       </Card>
-    </div>
+    </AdminLayout>
   );
 }

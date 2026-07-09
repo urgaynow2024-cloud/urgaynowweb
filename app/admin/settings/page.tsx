@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
 import { IconFileText, IconShield, IconBook, IconSettings } from "@/components/admin/ui/icons";
 import { SettingsForm } from "./SettingsForm";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 export const metadata = { title: "Settings", robots: { index: false, follow: false } };
 
@@ -15,7 +16,7 @@ export default async function AdminSettingsPage({
   const settings = await getAllSettings();
 
   return (
-    <div>
+    <AdminLayout>
       <PageHeader
         breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Settings" }]}
         title="Site settings"
@@ -29,6 +30,6 @@ export default async function AdminSettingsPage({
       )}
 
       <SettingsForm action={updateSettings} initial={settings} />
-    </div>
+    </AdminLayout>
   );
 }

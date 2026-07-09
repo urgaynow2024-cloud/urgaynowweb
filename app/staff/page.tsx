@@ -1,6 +1,7 @@
 import { Container, PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { StaffCard } from "@/components/StaffCard";
+import { getSetting } from "@/lib/settings";
 
 export const revalidate = 300;
 
@@ -10,9 +11,13 @@ export const metadata = {
 };
 
 export default async function StaffPage() {
-  const staff = await prisma.staff.findMany({
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-  });
+  const [staff, discord, vrchat] = await Promise.all([
+    prisma.staff.findMany({
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    }),
+    getSetting("discordInvite"),
+    getSetting("vrchatGroupUrl"),
+  ]);
 
   const ranks = Array.from(new Set(staff.map((s) => s.rank)));
 
@@ -22,17 +27,17 @@ export default async function StaffPage() {
         title="Staff & Team"
         description="The wonderful people who help keep Ur Gay Now a safe, fun, and welcoming place."
       />
-      <Container className="py-12">
+      <Container className="py-16">
         {staff.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-zinc-300 p-8 text-center text-zinc-500 dark:border-zinc-700">
-            Our team directory is being set up. Check back soon!
-          </p>
+          <div className="rounded-2xl border-2 border-dashed border-zinc-300 p-12 text-center dark:border-zinc-700">
+            <p className="text-xl text-zinc-500 dark:text-zinc-400">Our team directory is being set up. Check back soon!</p>
+          </div>
         ) : (
-          <div className="space-y-12">
+          <div className="space-y-16">
             {ranks.map((rank) => (
               <section key={rank}>
-                <h2 className="mb-5 text-2xl font-bold text-zinc-900 dark:text-white">{rank}</h2>
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                <h2 className="mb-6 text-3xl font-bold text-zinc-900 dark:text-white">{rank}</h2>
+                <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
                   {staff
                     .filter((s) => s.rank === rank)
                     .map((s) => (
@@ -52,6 +57,20 @@ export default async function StaffPage() {
                 </div>
               </section>
             ))}
+          </div>
+        )}}
+        {(discord || vrchat) && (
+          <div className="mt-16 flex flex-wrap justify-center gap-4">
+            {discord && (
+              <a href={discord} target="_blank" rel="noopener noreferrer" className="btn-primary text-lg px-8 py-3">
+                Join our Discord
+              </a>
+            )}
+            {vrchat && (
+              <a href={vrchat} target="_blank" rel="noopener noreferrer" className="btn-secondary text-lg px-8 py-3">
+                VRChat Group
+              </a>
+            )}
           </div>
         )}
       </Container>

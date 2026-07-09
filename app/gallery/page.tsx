@@ -39,15 +39,15 @@ export default async function GalleryPage() {
   return (
     <>
       <PageHeader title="Gallery" description="Snapshots of our favourite community moments." />
-      <Container className="py-12">
+      <Container className="py-16">
         {discord && (
-          <p className="mb-6 rounded-xl border border-brand-200 bg-brand-50 px-4 py-3 text-sm text-brand-800 dark:border-brand-900 dark:bg-brand-900/30 dark:text-brand-100">
+          <div className="mb-8 rounded-2xl border-2 border-brand-200 bg-brand-50 px-6 py-4 text-base text-brand-800 dark:border-brand-900 dark:bg-brand-900/30 dark:text-brand-100">
             Want to see your photo here? Share it in our{" "}
             <a href={discord} target="_blank" rel="noopener noreferrer" className="font-semibold underline">
               Discord
             </a>
             !
-          </p>
+          </div>
         )}
         <GalleryGrid images={all} />
       </Container>

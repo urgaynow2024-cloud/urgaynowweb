@@ -14,7 +14,7 @@ export const metadata = {
 
 function EventList({ events }: { events: { id: string; title: string; description: string; location: string; vrchatWorldUrl: string; coverImage: string; startDateTime: Date; endDateTime: Date | null }[] }) {
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-6 lg:grid-cols-2">
       {events.map((e) => (
         <div key={e.id} id={e.id}>
           <EventCard event={e} />
@@ -44,18 +44,18 @@ async function EventsContent() {
 
   return (
     <>
-      <h2 className="mb-5 text-2xl font-bold text-zinc-900 dark:text-white">Upcoming</h2>
+      <h2 className="mb-6 text-3xl font-bold text-zinc-900 dark:text-white">Upcoming</h2>
       {upcoming.length > 0 ? (
         <EventList events={upcoming} />
       ) : (
-        <p className="rounded-xl border border-dashed border-zinc-300 p-8 text-center text-zinc-500 dark:border-zinc-700">
-          No upcoming events scheduled right now — follow us on socials for announcements!
-        </p>
+        <div className="rounded-2xl border-2 border-dashed border-zinc-300 p-12 text-center dark:border-zinc-700">
+          <p className="text-xl text-zinc-500 dark:text-zinc-400">No upcoming events scheduled right now — follow us on socials for announcements!</p>
+        </div>
       )}
 
       {past.length > 0 && (
         <>
-          <h2 className="mb-5 mt-12 text-2xl font-bold text-zinc-900 dark:text-white">Past events</h2>
+          <h2 className="mb-6 mt-16 text-3xl font-bold text-zinc-900 dark:text-white">Past events</h2>
           <EventList events={past} />
         </>
       )}
@@ -70,7 +70,7 @@ export default function EventsPage() {
         title="Events"
         description="Hang out, play, and celebrate together. Here's what's coming up."
       />
-      <Container className="py-12">
+      <Container className="py-16">
         <Suspense
           fallback={
             <div className="space-y-4">

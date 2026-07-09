@@ -21,28 +21,28 @@ export default async function RulesPage() {
         title="Community Rules"
         description="These rules keep our community safe and welcoming for everyone. By participating, you agree to follow them."
       />
-      <Container className="py-12">
+      <Container className="py-16">
         {rules.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-zinc-300 p-8 text-center text-zinc-500 dark:border-zinc-700">
-            Rules will be published soon.
-          </p>
+          <div className="rounded-2xl border-2 border-dashed border-zinc-300 p-12 text-center dark:border-zinc-700">
+            <p className="text-xl text-zinc-500 dark:text-zinc-400">Rules will be published soon.</p>
+          </div>
         ) : (
-          <div className="space-y-10">
+          <div className="space-y-12">
             {categories.map((cat) => (
               <section key={cat}>
-                <h2 className="mb-4 flex items-center gap-3 text-2xl font-bold text-zinc-900 dark:text-white">
-                  <span className="h-3 w-8 rounded-full bg-pride-gradient" aria-hidden />
+                <h2 className="mb-6 flex items-center gap-3 text-3xl font-bold text-zinc-900 dark:text-white">
+                  <span className="h-4 w-12 rounded-full bg-gradient-to-r from-brand-600 to-brand-700" aria-hidden />
                   {cat}
                 </h2>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-6 md:grid-cols-2">
                   {rules
                     .filter((r) => r.category === cat)
                     .map((r, i) => (
-                      <div key={r.id} className="card">
-                        <h3 className={cn("text-lg font-semibold text-brand-700 dark:text-brand-200")}>
+                      <div key={r.id} className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700">
+                        <h3 className={cn("text-xl font-semibold text-brand-700 dark:text-brand-200")}>
                           {i + 1}. {r.title}
                         </h3>
-                        <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                        <div className="mt-3 text-base text-zinc-600 dark:text-zinc-400">
                           <Markdown content={r.content} />
                         </div>
                       </div>

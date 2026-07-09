@@ -40,7 +40,10 @@ export function parseSocials(json: string): Social[] {
     if (Array.isArray(parsed)) {
       return parsed
         .filter((s) => s && typeof s.url === "string" && s.url.trim() !== "")
-        .map((s) => ({ label: String(s.label ?? ""), url: String(s.url) }));
+        .map((s) => ({
+          label: String(s.label ?? "").trim(),
+          url: String(s.url).trim(),
+        }));
     }
   } catch {
     /* ignore */

@@ -27,7 +27,7 @@ async function HeroContent() {
 
   return (
     <>
-      <p className="mt-6 max-w-2xl text-xl text-zinc-700 dark:text-zinc-300 leading-relaxed">
+      <p className="mt-6 max-w-2xl text-pretty text-xl text-zinc-700 dark:text-zinc-300 leading-relaxed">
         {lead}
       </p>
       <div className="mt-10 flex flex-wrap gap-3">
@@ -205,7 +205,7 @@ export default function HomePage() {
             <p className="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-1.5 text-sm font-semibold text-brand-700 shadow-sm backdrop-blur-sm dark:bg-zinc-900/80 dark:text-brand-200">
               🏳️‍🌈 LGBTQ+ friendly community
             </p>
-            <h1 className="mt-6 max-w-3xl text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-white sm:text-6xl sm:leading-tight">
+            <h1 className="mt-6 max-w-3xl text-balance text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-white sm:text-6xl sm:leading-tight">
               Welcome to <span className="bg-gradient-to-r from-brand-600 via-brand-700 to-brand-800 bg-clip-text text-transparent">Ur Gay Now</span>
             </h1>
             <Suspense

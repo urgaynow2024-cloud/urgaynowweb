@@ -4,6 +4,7 @@
 
 :root {
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light dark;
 }
 
 html {
@@ -12,6 +13,20 @@ html {
 
 body {
   @apply bg-white text-ink-800 antialiased dark:bg-ink-950 dark:text-ink-200;
+}
+
+/* Brand-tinted text selection instead of the default blue. */
+::selection {
+  background-color: rgba(117, 7, 135, 0.18);
+}
+
+/* Nicer heading wrapping and anchor offset under the sticky header. */
+h1, h2, h3, h4 {
+  text-wrap: balance;
+}
+
+[id] {
+  scroll-margin-top: 5rem;
 }
 
 /* Accessible focus ring */

@@ -4,7 +4,7 @@ import { GalleryGrid } from "@/components/GalleryGrid";
 import { getSetting } from "@/lib/settings";
 import Link from "next/link";
 
-export const revalidate = 120;
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Gallery",

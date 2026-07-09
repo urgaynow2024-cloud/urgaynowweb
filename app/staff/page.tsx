@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { StaffCard } from "@/components/StaffCard";
 import { getSetting } from "@/lib/settings";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Staff",
@@ -58,7 +58,7 @@ export default async function StaffPage() {
               </section>
             ))}
           </div>
-        )}}
+        )}
         {(discord || vrchat) && (
           <div className="mt-16 flex flex-wrap justify-center gap-4">
             {discord && (

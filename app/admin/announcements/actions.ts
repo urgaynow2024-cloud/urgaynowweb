@@ -1,10 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
-import { fetchDiscordMessages } from "@/lib/discord";
+import { fetchDiscordMessages, renderDiscordMessage } from "@/lib/discord";
 
 function fail(path: string) {
   redirect(`${path}?error=1`);
@@ -26,11 +27,15 @@ export async function importFromDiscord() {
     }
 
     const m = messages[0];
-    const content = m.content.trim();
-    if (!content) {
+    const raw = m.content.trim();
+    if (!raw) {
       result = `/admin/announcements?importError=${encodeURIComponent("The latest Discord message has no text content.")}`;
       return;
     }
+
+    // Resolve Discord tokens (@role, #channel, :emoji:) and keep all
+    // standard markdown (# headings, **bold**, > quotes, lists) intact.
+    const content = await renderDiscordMessage(raw);
 
     const firstLine = content.split("\n").find((l) => l.trim().length > 0)?.trim() ?? "Discord announcement";
     const title = firstLine.length > 100 ? `${firstLine.slice(0, 97)}…` : firstLine;
@@ -48,10 +53,13 @@ export async function importFromDiscord() {
         content,
         coverImage: image?.url ?? "",
         published: true,
+        // Use the message's own (unix) timestamp as the publish date.
         publishedAt: new Date(m.timestamp),
         discordMessageId: m.id,
       },
     });
+    revalidatePath("/", "layout");
+    revalidatePath("/news");
   } catch (e) {
     const message = e instanceof Error ? e.message : "Unknown error";
     result = `/admin/announcements?importError=${encodeURIComponent(message)}`;
@@ -80,6 +88,8 @@ export async function createAnnouncement(formData: FormData) {
   } catch {
     fail("/admin/announcements/new");
   }
+  revalidatePath("/", "layout");
+  revalidatePath("/news");
   redirect("/admin/announcements");
 }
 
@@ -105,11 +115,16 @@ export async function updateAnnouncement(id: string, formData: FormData) {
   } catch {
     fail(`/admin/announcements/${id}`);
   }
+  revalidatePath("/", "layout");
+  revalidatePath("/news");
+  revalidatePath(`/news/${slug}`);
   redirect("/admin/announcements");
 }
 
 export async function deleteAnnouncement(id: string) {
   await requireAdmin();
   await prisma.announcement.delete({ where: { id } });
+  revalidatePath("/", "layout");
+  revalidatePath("/news");
   redirect("/admin/announcements");
 }

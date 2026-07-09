@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 
@@ -30,6 +31,8 @@ export async function createEvent(formData: FormData) {
   } catch {
     fail("/admin/events/new");
   }
+  revalidatePath("/", "layout");
+  revalidatePath("/events");
   redirect("/admin/events");
 }
 
@@ -56,11 +59,15 @@ export async function updateEvent(id: string, formData: FormData) {
   } catch {
     fail(`/admin/events/${id}`);
   }
+  revalidatePath("/", "layout");
+  revalidatePath("/events");
   redirect("/admin/events");
 }
 
 export async function deleteEvent(id: string) {
   await requireAdmin();
   await prisma.event.delete({ where: { id } });
+  revalidatePath("/", "layout");
+  revalidatePath("/events");
   redirect("/admin/events");
 }

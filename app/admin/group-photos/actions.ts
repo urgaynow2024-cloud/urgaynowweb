@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 
@@ -17,6 +18,8 @@ export async function createGroupPhoto(formData: FormData) {
   const created = await prisma.groupPhoto.create({
     data: { title, description, imageUrl, bannerUrl, rules },
   });
+  revalidatePath("/", "layout");
+  revalidatePath("/groups", "layout");
   redirect(`/admin/group-photos/${created.id}`);
 }
 
@@ -35,6 +38,8 @@ export async function createGroupPhotoQuick(formData: FormData) {
       rules: "",
     },
   });
+  revalidatePath("/", "layout");
+  revalidatePath("/groups", "layout");
   redirect(`/admin/group-photos/${created.id}`);
 }
 
@@ -52,11 +57,16 @@ export async function updateGroupPhoto(id: string, formData: FormData) {
     where: { id },
     data: { title, description, imageUrl, bannerUrl, rules },
   });
+  revalidatePath("/", "layout");
+  revalidatePath("/groups", "layout");
+  revalidatePath(`/groups/${id}`);
   redirect("/admin/group-photos");
 }
 
 export async function deleteGroupPhoto(id: string) {
   await requireAdmin();
   await prisma.groupPhoto.delete({ where: { id } });
+  revalidatePath("/", "layout");
+  revalidatePath("/groups", "layout");
   redirect("/admin/group-photos");
 }

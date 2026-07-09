@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { parseSocials, stringifySocials } from "@/lib/utils";
@@ -27,6 +28,8 @@ export async function createPartner(formData: FormData) {
   } catch {
     fail("/admin/partners/new");
   }
+  revalidatePath("/", "layout");
+  revalidatePath("/partners");
   redirect("/admin/partners");
 }
 
@@ -49,11 +52,15 @@ export async function updatePartner(id: string, formData: FormData) {
   } catch {
     fail(`/admin/partners/${id}`);
   }
+  revalidatePath("/", "layout");
+  revalidatePath("/partners");
   redirect("/admin/partners");
 }
 
 export async function deletePartner(id: string) {
   await requireAdmin();
   await prisma.partner.delete({ where: { id } });
+  revalidatePath("/", "layout");
+  revalidatePath("/partners");
   redirect("/admin/partners");
 }

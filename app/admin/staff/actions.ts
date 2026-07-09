@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { parseSocials, stringifySocials } from "@/lib/utils";
@@ -36,6 +37,8 @@ export async function createStaff(formData: FormData) {
   } catch {
     fail("/admin/staff/new");
   }
+  revalidatePath("/", "layout");
+  revalidatePath("/staff");
   redirect("/admin/staff");
 }
 
@@ -59,11 +62,15 @@ export async function updateStaff(id: string, formData: FormData) {
   } catch {
     fail(`/admin/staff/${id}`);
   }
+  revalidatePath("/", "layout");
+  revalidatePath("/staff");
   redirect("/admin/staff");
 }
 
 export async function deleteStaff(id: string) {
   await requireAdmin();
   await prisma.staff.delete({ where: { id } });
+  revalidatePath("/", "layout");
+  revalidatePath("/staff");
   redirect("/admin/staff");
 }

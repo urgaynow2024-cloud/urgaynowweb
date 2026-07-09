@@ -1,19 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { BulkRuleEditor, type RuleEntry } from "@/components/admin/BulkRuleEditor";
 import { bulkSaveRules } from "@/app/admin/rules/actions";
 
 export function RulesEditor({ initial }: { initial: RuleEntry[] }) {
-  const [saving, setSaving] = useState(false);
+  const [pending, startTransition] = useTransition();
   return (
     <BulkRuleEditor
       initialRules={initial}
-      saving={saving}
+      saving={pending}
       onSave={async (rules: RuleEntry[]) => {
-        setSaving(true);
         // bulkSaveRules redirects on success; do not swallow the redirect.
-        await bulkSaveRules(JSON.stringify(rules));
+        startTransition(() => {
+          bulkSaveRules(JSON.stringify(rules));
+        });
       }}
     />
   );

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { parseSocials } from "@/lib/utils";
 import { PartnerCard } from "@/components/PartnerCard";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Partners & Affiliates",

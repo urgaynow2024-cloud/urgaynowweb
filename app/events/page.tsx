@@ -5,7 +5,7 @@ import { safeQuery } from "@/lib/safeQuery";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/Skeleton";
 
-export const revalidate = 120;
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Events",

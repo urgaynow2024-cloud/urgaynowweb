@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/Skeleton";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "About",

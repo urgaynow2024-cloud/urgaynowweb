@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import { IconCheck } from "@/components/admin/ui/icons";
 
@@ -22,19 +22,15 @@ export function GroupPhotoForm({
 }) {
   const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? "");
   const [bannerUrl, setBannerUrl] = useState(initial?.bannerUrl ?? "");
-  const [uploading, setUploading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [pending, startTransition] = useTransition();
 
-  const handleSubmit = async (formData: FormData) => {
-    if (uploading) return;
-    setUploading(true);
+  const handleSubmit = (formData: FormData) => {
     setSaved(false);
-    try {
+    startTransition(async () => {
       await action(formData);
       setSaved(true);
-    } finally {
-      setUploading(false);
-    }
+    });
   };
 
   return (
@@ -59,8 +55,8 @@ export function GroupPhotoForm({
       </div>
 
       <div className="flex items-center gap-3 border-t border-ink-100 pt-5 dark:border-ink-800">
-        <button type="submit" className="btn-primary" disabled={uploading}>
-          {uploading ? "Saving…" : "Save group photo"}
+        <button type="submit" className="btn-primary" disabled={pending}>
+          {pending ? "Saving…" : "Save group photo"}
         </button>
         {saved && (
           <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">

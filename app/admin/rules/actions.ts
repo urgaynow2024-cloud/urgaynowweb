@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 
@@ -16,6 +17,8 @@ export async function createRule(formData: FormData) {
   const sortOrder = Number(formData.get("sortOrder") || 0) || 0;
   if (!title) fail("/admin/rules/new");
   await prisma.rule.create({ data: { category, title, content, sortOrder } });
+  revalidatePath("/", "layout");
+  revalidatePath("/rules");
   redirect("/admin/rules");
 }
 
@@ -27,12 +30,16 @@ export async function updateRule(id: string, formData: FormData) {
   const sortOrder = Number(formData.get("sortOrder") || 0) || 0;
   if (!title) fail(`/admin/rules/${id}`);
   await prisma.rule.update({ where: { id }, data: { category, title, content, sortOrder } });
+  revalidatePath("/", "layout");
+  revalidatePath("/rules");
   redirect("/admin/rules");
 }
 
 export async function deleteRule(id: string) {
   await requireAdmin();
   await prisma.rule.delete({ where: { id } });
+  revalidatePath("/", "layout");
+  revalidatePath("/rules");
   redirect("/admin/rules");
 }
 
@@ -64,5 +71,7 @@ export async function bulkSaveRules(rulesJson: string) {
     }
   });
 
+  revalidatePath("/", "layout");
+  revalidatePath("/rules");
   redirect("/admin/rules");
 }

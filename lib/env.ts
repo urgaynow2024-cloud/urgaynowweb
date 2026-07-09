@@ -17,6 +17,7 @@ export const env = {
   siteName: str("NEXT_PUBLIC_SITE_NAME", "Ur Gay Now"),
   blobStoreId: str("BLOB_STORE_ID"),
   vercelOidc: str("VERCEL_OIDC_TOKEN"),
+  webhookSecret: str("DISCORD_WEBHOOK_SECRET"),
 };
 
 if (!env.databaseUrl) {
@@ -25,5 +26,10 @@ if (!env.databaseUrl) {
 if (!env.adminUser || !env.adminPass) {
   console.warn(
     "[env] ADMIN_USERNAME / ADMIN_PASSWORD are not set — admin login will be unavailable.",
+  );
+}
+if (!env.webhookSecret) {
+  console.warn(
+    "[env] DISCORD_WEBHOOK_SECRET is not set — the /api/discord/webhook auto-import endpoint is disabled.",
   );
 }

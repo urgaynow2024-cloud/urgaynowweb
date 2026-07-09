@@ -9,6 +9,8 @@ import { Card } from "@/components/admin/ui/Card";
 import { Badge, StatusPill } from "@/components/admin/ui/Badge";
 import { EmptyState } from "@/components/admin/ui/Avatar";
 import { IconMegaphone, IconPlus, IconSearch, IconEdit, IconFilter, IconDownload } from "@/components/admin/ui/icons";
+import { CopyButton } from "@/components/admin/CopyButton";
+import { env } from "@/lib/env";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 
 export const metadata = { title: "Announcements", robots: { index: false, follow: false } };
@@ -20,6 +22,11 @@ export default async function AdminAnnouncementsList({
 }) {
   const q = searchParams.q?.trim() || "";
   const status = searchParams.status?.trim() || "";
+
+  const webhookSecret = env.webhookSecret;
+  const webhookUrl = webhookSecret
+    ? `${env.siteUrl.replace(/\/$/, "")}/api/discord/webhook?secret=${encodeURIComponent(webhookSecret)}`
+    : "";
 
   let items: Awaited<ReturnType<typeof prisma.announcement.findMany>> = [];
   try {
@@ -60,6 +67,31 @@ export default async function AdminAnnouncementsList({
           </>
         }
       />
+
+      <Card className="animate-fade-in border-brand-200 dark:border-brand-900">
+        <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="flex items-center gap-2 text-lg font-semibold text-ink-900 dark:text-white">
+              <IconDownload size={18} className="text-brand-600 dark:text-brand-300" /> Auto-import from Discord
+            </h3>
+            <p className="mt-1 text-sm text-ink-600 dark:text-ink-400">
+              Point a Discord webhook at the URL below. New messages post here automatically as the latest announcement.
+            </p>
+          </div>
+          {webhookUrl ? (
+            <div className="flex shrink-0 items-center gap-2">
+              <code className="max-w-[260px] truncate rounded-lg bg-ink-100 px-3 py-2 text-xs text-ink-700 dark:bg-ink-800 dark:text-ink-200">
+                {webhookUrl}
+              </code>
+              <CopyButton text={webhookUrl} label="Copy URL" />
+            </div>
+          ) : (
+            <span className="shrink-0 badge badge-neutral">
+              Set DISCORD_WEBHOOK_SECRET to enable
+            </span>
+          )}
+        </div>
+      </Card>
 
       <Card className="animate-fade-in overflow-visible">
         <form method="get" className="flex flex-col gap-3 border-b border-ink-100 p-4 dark:border-ink-800 sm:flex-row sm:items-center">

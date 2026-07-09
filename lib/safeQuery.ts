@@ -7,7 +7,11 @@
 export async function safeQuery<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
   try {
     return await fn();
-  } catch {
+  } catch (err) {
+    // Surface the failure instead of silently rendering empty content — a DB
+    // error here looks exactly like "content disappeared" to visitors.
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[safeQuery] Query failed, using fallback:", message);
     return fallback;
   }
 }

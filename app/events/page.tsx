@@ -2,6 +2,7 @@ import { Container, PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { EventCard } from "@/components/EventCard";
 import { safeQuery } from "@/lib/safeQuery";
+import { Pagination } from "@/components/Pagination";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/Skeleton";
 
@@ -24,23 +25,29 @@ function EventList({ events }: { events: { id: string; title: string; descriptio
   );
 }
 
-async function EventsContent() {
+async function EventsContent({ page = 1 }: { page?: number }) {
+  const PAGE_SIZE = 6;
   const now = new Date();
-  const [upcoming, past] = await safeQuery(
+  const [upcoming, total, past] = await safeQuery(
     () =>
       Promise.all([
         prisma.event.findMany({
           where: { published: true, startDateTime: { gte: now } },
           orderBy: { startDateTime: "asc" },
+          skip: (page - 1) * PAGE_SIZE,
+          take: PAGE_SIZE,
         }),
+        prisma.event.count({ where: { published: true, startDateTime: { gte: now } } }),
         prisma.event.findMany({
           where: { published: true, startDateTime: { lt: now } },
           orderBy: { startDateTime: "desc" },
-          take: 10,
+          take: 6,
         }),
       ]),
-    [[], []],
+    [[], 0, []],
   );
+
+  const totalPages = Math.max(1, Math.ceil((total as number) / PAGE_SIZE));
 
   return (
     <>
@@ -59,11 +66,18 @@ async function EventsContent() {
           <EventList events={past} />
         </>
       )}
+
+      <Pagination page={page} totalPages={totalPages} basePath="/events" />
     </>
   );
 }
 
-export default function EventsPage() {
+export default function EventsPage({
+  searchParams,
+}: {
+  searchParams: { page?: string };
+}) {
+  const page = Math.max(1, Number(searchParams.page) || 1);
   return (
     <>
       <PageHeader
@@ -84,7 +98,7 @@ export default function EventsPage() {
             </div>
           }
         >
-          <EventsContent />
+          <EventsContent page={page} />
         </Suspense>
       </Container>
     </>

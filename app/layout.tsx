@@ -34,6 +34,11 @@ export const metadata: Metadata = {
       "Join the official Ur Gay Now community for events, staff, guides, news, galleries, and more. A welcoming place to connect, socialize, and celebrate together.",
   },
   robots: { index: true, follow: true },
+  alternates: {
+    types: {
+      "application/rss+xml": "/feed.xml",
+    },
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Container } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { Markdown } from "@/components/Markdown";
 import { formatDate } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const item = await prisma.announcement.findUnique({ where: { slug: params.slug } });
@@ -20,9 +21,14 @@ export default async function AnnouncementPage({ params }: { params: { slug: str
   return (
     <article>
       {item.coverImage && (
-        <div className="h-56 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800 sm:h-72">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={item.coverImage} alt={item.title} className="h-full w-full object-cover" />
+        <div className="relative h-56 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800 sm:h-72">
+          <Image
+            src={item.coverImage}
+            alt={item.title}
+            fill
+            sizes="100vw"
+            className="object-cover"
+          />
         </div>
       )}
       <Container className="max-w-3xl py-12">

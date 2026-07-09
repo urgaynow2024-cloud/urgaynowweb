@@ -1,16 +1,36 @@
 import "server-only";
 import { prisma } from "@/lib/db";
-import { getAllSettings } from "@/lib/settings";
 import type { SocialLink } from "@/lib/nav-links";
 
+const SOCIAL_KEYS = [
+  "socialDiscord",
+  "socialTwitter",
+  "socialInstagram",
+  "socialTiktok",
+  "socialYoutube",
+] as const;
+
+const SOCIAL_LABELS: Record<(typeof SOCIAL_KEYS)[number], string> = {
+  socialDiscord: "Discord",
+  socialTwitter: "Twitter / X",
+  socialInstagram: "Instagram",
+  socialTiktok: "TikTok",
+  socialYoutube: "YouTube",
+};
+
 export async function getFooterSocials(): Promise<SocialLink[]> {
-  const socials = await prisma.link.findMany({ orderBy: { sortOrder: "asc" } });
-  const extras = await getAllSettings();
-  const out: SocialLink[] = socials.map((s) => ({ label: s.label, url: s.url }));
-  if (extras.socialDiscord) out.push({ label: "Discord", url: extras.socialDiscord });
-  if (extras.socialTwitter) out.push({ label: "Twitter / X", url: extras.socialTwitter });
-  if (extras.socialInstagram) out.push({ label: "Instagram", url: extras.socialInstagram });
-  if (extras.socialTiktok) out.push({ label: "TikTok", url: extras.socialTiktok });
-  if (extras.socialYoutube) out.push({ label: "YouTube", url: extras.socialYoutube });
+  const [linkRows, settingRows] = await Promise.all([
+    prisma.link.findMany({ orderBy: { sortOrder: "asc" } }),
+    prisma.setting.findMany({
+      where: { key: { in: [...SOCIAL_KEYS] } },
+      select: { key: true, value: true },
+    }),
+  ]);
+  const socialMap = Object.fromEntries(settingRows.map((s) => [s.key, s.value]));
+  const out: SocialLink[] = linkRows.map((s) => ({ label: s.label, url: s.url }));
+  for (const key of SOCIAL_KEYS) {
+    const value = socialMap[key];
+    if (value) out.push({ label: SOCIAL_LABELS[key], url: value });
+  }
   return out;
 }

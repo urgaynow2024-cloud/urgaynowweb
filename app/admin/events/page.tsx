@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { deleteEvent } from "./actions";
@@ -83,7 +84,7 @@ export default async function AdminEventsList({
               <Card key={e.id} className="flex flex-col transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-card-hover">
                 <div className="relative aspect-[16/9] overflow-hidden bg-ink-100 dark:bg-ink-800">
                   {e.coverImage ? (
-                    <img src={e.coverImage} alt={e.title} className="h-full w-full object-cover" />
+                    <Image src={e.coverImage} alt={e.title} fill className="h-full w-full object-cover" />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center text-ink-400">
                       <IconCalendar size={28} />

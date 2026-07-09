@@ -2,7 +2,7 @@ import { Container, PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { StaffCard } from "@/components/StaffCard";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata = {
   title: "Staff",

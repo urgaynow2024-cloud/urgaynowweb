@@ -2,7 +2,7 @@ import { Container, PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export default async function GroupPhotoPage({ params }: { params: { id: string } }) {
   const group = await prisma.groupPhoto.findUnique({ where: { id: params.id } });

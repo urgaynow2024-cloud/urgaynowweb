@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { Markdown } from "@/components/Markdown";
 import { cn } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata = {
   title: "Rules",

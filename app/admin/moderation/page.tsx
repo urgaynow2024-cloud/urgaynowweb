@@ -1,9 +1,12 @@
 import Link from "next/link";
+import Image from "next/image";
+import { Suspense } from "react";
 import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
 import { StatCard } from "@/components/admin/ui/StatCard";
 import { EmptyState } from "@/components/admin/ui/Avatar";
+import { ListSkeleton } from "@/components/Skeleton";
 import {
   IconShield,
   IconCamera,
@@ -11,6 +14,8 @@ import {
 } from "@/components/admin/ui/icons";
 
 export const metadata = { title: "Moderation", robots: { index: false, follow: false } };
+
+export const revalidate = 60;
 
 function relativeTime(date: Date): string {
   const diff = Date.now() - new Date(date).getTime();
@@ -24,25 +29,20 @@ function relativeTime(date: Date): string {
   return `${Math.floor(d / 30)}mo ago`;
 }
 
-export default async function ModerationPage() {
-  const [totalPhotos, groupPhotos] = await Promise.all([
+async function ModerationContent() {
+  const [totalPhotos, groupPhotos, bannersCount] = await Promise.all([
     prisma.groupPhoto.count(),
     prisma.groupPhoto.findMany({ orderBy: { createdAt: "desc" }, take: 12 }),
+    prisma.groupPhoto.count({ where: { bannerUrl: { not: "" } } }),
   ]);
 
   const stats = [
     { label: "Total group photos", value: totalPhotos, icon: <IconCamera size={20} />, accent: "brand" as const, hint: "All submitted photos" },
-    { label: "Banners set", value: await prisma.groupPhoto.count({ where: { bannerUrl: { not: "" } } }), icon: <IconShield size={20} />, accent: "emerald" as const, hint: "Photos with custom banner" },
+    { label: "Banners set", value: bannersCount, icon: <IconShield size={20} />, accent: "emerald" as const, hint: "Photos with custom banner" },
   ];
 
   return (
-    <div>
-      <PageHeader
-        breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Moderation" }]}
-        title="Moderation"
-        description="Review group photos. Banners are optional."
-      />
-
+    <>
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {stats.map((s, i) => (
           <div key={s.label} style={{ animationDelay: `${i * 40}ms` }} className="animate-fade-in">
@@ -69,11 +69,18 @@ export default async function ModerationPage() {
               </div>
             ) : (
               <ul className="divide-y divide-ink-100 dark:divide-ink-800">
-                {groupPhotos.map((g) => {
+                {groupPhotos.map((g, i) => {
                   return (
                     <li key={g.id} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-ink-50 dark:hover:bg-ink-800/50">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={g.bannerUrl || g.imageUrl} alt="" className="h-10 w-14 shrink-0 rounded-lg object-cover" />
+                      <Image
+                        src={g.bannerUrl || g.imageUrl}
+                        alt=""
+                        width={56}
+                        height={40}
+                        priority={i === 0}
+                        sizes="56px"
+                        className="h-10 w-14 shrink-0 rounded-lg object-cover"
+                      />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-ink-800 dark:text-ink-100">{g.title}</p>
                         <p className="text-xs text-ink-400">{relativeTime(g.createdAt)}</p>
@@ -92,6 +99,22 @@ export default async function ModerationPage() {
           </CardBody>
         </Card>
       </section>
+    </>
+  );
+}
+
+export default function ModerationPage() {
+  return (
+    <div>
+      <PageHeader
+        breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Moderation" }]}
+        title="Moderation"
+        description="Review group photos. Banners are optional."
+      />
+
+      <Suspense fallback={<ListSkeleton rows={12} />}>
+        <ModerationContent />
+      </Suspense>
     </div>
   );
 }

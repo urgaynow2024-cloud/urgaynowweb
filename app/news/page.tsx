@@ -3,7 +3,7 @@ import { Container, PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { AnnouncementCard } from "@/components/AnnouncementCard";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 export const metadata = {
   title: "News & Announcements",

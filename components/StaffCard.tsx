@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { parseSocials } from "@/lib/utils";
 
@@ -16,13 +17,14 @@ export function StaffCard({ staff }: { staff: StaffCardData }) {
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:shadow-brand-500/5">
-      <div className="relative h-48 bg-gradient-to-br from-brand-50 to-brand-100 dark:from-brand-900/30 dark:to-brand-800/30">
+      <div className="relative aspect-[4/3] bg-gradient-to-br from-brand-50 to-brand-100 dark:from-brand-900/30 dark:to-brand-800/30">
         {staff.photoUrl && (
-          <img
+          <Image
             src={staff.photoUrl}
             alt={`${staff.name} avatar`}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
           />
         )}
         <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-brand-700 shadow-sm backdrop-blur-sm dark:bg-zinc-900/90 dark:text-brand-200">

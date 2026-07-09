@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { deleteAnnouncement, importFromDiscord } from "./actions";
@@ -123,9 +124,9 @@ export default async function AdminAnnouncementsList({
                   <tr key={a.id} className="group transition-colors hover:bg-ink-50 dark:hover:bg-ink-800/50">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
-                        {a.coverImage && (
-                          <img src={a.coverImage} alt={a.title} className="h-10 w-10 shrink-0 rounded-lg object-cover" />
-                        )}
+                      {a.coverImage && (
+                        <Image src={a.coverImage} alt={a.title} width={40} height={40} className="h-10 w-10 shrink-0 rounded-lg object-cover" />
+                      )}
                         <span className="font-medium text-ink-900 dark:text-white">{a.title}</span>
                       </div>
                     </td>

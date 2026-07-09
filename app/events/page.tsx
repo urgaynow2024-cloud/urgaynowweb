@@ -1,6 +1,7 @@
 import { Container, PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { EventCard } from "@/components/EventCard";
+import { safeQuery } from "@/lib/safeQuery";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/Skeleton";
 
@@ -25,17 +26,21 @@ function EventList({ events }: { events: { id: string; title: string; descriptio
 
 async function EventsContent() {
   const now = new Date();
-  const [upcoming, past] = await Promise.all([
-    prisma.event.findMany({
-      where: { published: true, startDateTime: { gte: now } },
-      orderBy: { startDateTime: "asc" },
-    }),
-    prisma.event.findMany({
-      where: { published: true, startDateTime: { lt: now } },
-      orderBy: { startDateTime: "desc" },
-      take: 10,
-    }),
-  ]);
+  const [upcoming, past] = await safeQuery(
+    () =>
+      Promise.all([
+        prisma.event.findMany({
+          where: { published: true, startDateTime: { gte: now } },
+          orderBy: { startDateTime: "asc" },
+        }),
+        prisma.event.findMany({
+          where: { published: true, startDateTime: { lt: now } },
+          orderBy: { startDateTime: "desc" },
+          take: 10,
+        }),
+      ]),
+    [[], []],
+  );
 
   return (
     <>

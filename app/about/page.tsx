@@ -1,5 +1,6 @@
 import { Container, PageHeader } from "@/components/Container";
 import { getSetting } from "@/lib/settings";
+import { safeQuery } from "@/lib/safeQuery";
 import { Markdown } from "@/components/Markdown";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -13,9 +14,15 @@ export const metadata = {
 };
 
 async function AboutContent() {
-  const content = await getSetting("aboutContent");
-  const discord = await getSetting("discordInvite");
-  const vrchat = await getSetting("vrchatGroupUrl");
+  const [content, discord, vrchat] = await safeQuery(
+    () =>
+      Promise.all([
+        getSetting("aboutContent"),
+        getSetting("discordInvite"),
+        getSetting("vrchatGroupUrl"),
+      ]),
+    ["", "", ""],
+  );
 
   return (
     <>

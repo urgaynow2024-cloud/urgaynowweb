@@ -7,17 +7,22 @@ import { AnnouncementCard } from "@/components/AnnouncementCard";
 import { EventCard } from "@/components/EventCard";
 import { StaffCard } from "@/components/StaffCard";
 import { getSetting } from "@/lib/settings";
+import { safeQuery } from "@/lib/safeQuery";
 import { Skeleton, CardGridSkeleton } from "@/components/Skeleton";
 
 export const revalidate = 120;
 
 async function HeroContent() {
-  const [intro, tagline, discord, vrchat] = await Promise.all([
-    getSetting("homeIntro"),
-    getSetting("siteTagline"),
-    getSetting("discordInvite"),
-    getSetting("vrchatGroupUrl"),
-  ]);
+  const [intro, tagline, discord, vrchat] = await safeQuery(
+    () =>
+      Promise.all([
+        getSetting("homeIntro"),
+        getSetting("siteTagline"),
+        getSetting("discordInvite"),
+        getSetting("vrchatGroupUrl"),
+      ]),
+    ["", "", "", ""],
+  );
   const lead = intro || tagline;
 
   return (
@@ -45,11 +50,15 @@ async function HeroContent() {
 
 async function HomeAnnouncements() {
   const now = new Date();
-  const announcements = await prisma.announcement.findMany({
-    where: { published: true },
-    orderBy: { publishedAt: "desc" },
-    take: 3,
-  });
+  const announcements = await safeQuery(
+    () =>
+      prisma.announcement.findMany({
+        where: { published: true },
+        orderBy: { publishedAt: "desc" },
+        take: 3,
+      }),
+    [],
+  );
 
   return announcements.length > 0 ? (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -76,11 +85,15 @@ async function HomeAnnouncements() {
 
 async function HomeEvents() {
   const now = new Date();
-  const events = await prisma.event.findMany({
-    where: { published: true, startDateTime: { gte: now } },
-    orderBy: { startDateTime: "asc" },
-    take: 3,
-  });
+  const events = await safeQuery(
+    () =>
+      prisma.event.findMany({
+        where: { published: true, startDateTime: { gte: now } },
+        orderBy: { startDateTime: "asc" },
+        take: 3,
+      }),
+    [],
+  );
 
   return events.length > 0 ? (
     <div className="grid gap-4">
@@ -108,10 +121,14 @@ async function HomeEvents() {
 }
 
 async function HomeStaff() {
-  const staff = await prisma.staff.findMany({
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-    take: 6,
-  });
+  const staff = await safeQuery(
+    () =>
+      prisma.staff.findMany({
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+        take: 6,
+      }),
+    [],
+  );
 
   return staff.length > 0 ? (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -138,10 +155,14 @@ async function HomeStaff() {
 }
 
 async function HomeGallery() {
-  const gallery = await prisma.galleryImage.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 4,
-  });
+  const gallery = await safeQuery(
+    () =>
+      prisma.galleryImage.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 4,
+      }),
+    [],
+  );
   if (gallery.length === 0) return null;
 
   return (

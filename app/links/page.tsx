@@ -1,4 +1,4 @@
-import { Container, PageHeader } from "@/components/Container";
+import { PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
 
@@ -24,16 +24,16 @@ export default async function LinksPage() {
   return (
     <>
       <PageHeader title="Links" description="Everything in one place — find us across the web." />
-      <Container className="py-16">
+      <div className="mx-auto w-full max-w-6xl px-6 py-16">
         {featured.length > 0 && (
-          <div className="mb-12 grid gap-6 sm:grid-cols-2">
+          <div className="mb-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
             {featured.map((f) => (
               <a
                 key={f.url}
                 href={f.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700"
+                className="group w-full min-w-0 rounded-2xl border-2 border-zinc-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700"
               >
                 <div className="flex items-center gap-4">
                   <span className="text-4xl" aria-hidden>{f.icon}</span>
@@ -46,14 +46,14 @@ export default async function LinksPage() {
         )}
 
         {links.length > 0 ? (
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {links.map((l) => (
-              <li key={l.id}>
+              <li key={l.id} className="w-full min-w-0">
                 <a
                   href={l.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700"
+                  className="group block w-full min-w-0 rounded-2xl border-2 border-zinc-200 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700"
                 >
                   <div className="flex items-center gap-3">
                     {l.icon && <span className="text-2xl" aria-hidden>{l.icon}</span>}
@@ -69,7 +69,7 @@ export default async function LinksPage() {
             <p className="text-xl text-zinc-500 dark:text-zinc-400">No links have been added.</p>
           </div>
         )}
-      </Container>
+      </div>
     </>
   );
 }

@@ -15,6 +15,7 @@ export async function createShopDesign(formData: FormData) {
   await requireAdmin();
   const name = String(formData.get("name") || "").trim();
   const description = String(formData.get("description") || "").trim();
+  const creator = String(formData.get("creator") || "").trim() || null;
   const category = String(formData.get("category") || "").trim() || null;
   const imageUrl = String(formData.get("imageUrl") || "").trim();
   const imageAlt = String(formData.get("imageAlt") || "").trim() || null;
@@ -29,6 +30,7 @@ export async function createShopDesign(formData: FormData) {
     data: {
       name,
       description: description || null,
+      creator,
       category,
       imageUrl,
       imageAlt,
@@ -49,6 +51,7 @@ export async function updateShopDesign(id: string, formData: FormData) {
   await requireAdmin();
   const name = String(formData.get("name") || "").trim();
   const description = String(formData.get("description") || "").trim();
+  const creator = String(formData.get("creator") || "").trim() || null;
   const category = String(formData.get("category") || "").trim() || null;
   const imageUrl = String(formData.get("imageUrl") || "").trim();
   const imageAlt = String(formData.get("imageAlt") || "").trim() || null;
@@ -64,6 +67,7 @@ export async function updateShopDesign(id: string, formData: FormData) {
     data: {
       name,
       description: description || null,
+      creator,
       category,
       imageUrl,
       imageAlt,

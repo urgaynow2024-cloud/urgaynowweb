@@ -166,6 +166,9 @@ export default async function AdminShopList({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate text-sm font-semibold text-ink-900 dark:text-white">{d.name}</p>
+                    {d.creator && (
+                      <p className="truncate text-xs text-ink-400">by {d.creator}</p>
+                    )}
                     {d.featured && (
                       <Badge tone="brand">
                         <IconStar size={12} /> Featured

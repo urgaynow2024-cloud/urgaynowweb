@@ -126,6 +126,7 @@ CREATE TABLE IF NOT EXISTS "ShopDesign" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
+    "creator" TEXT,
     "category" TEXT,
     "imageUrl" TEXT NOT NULL,
     "imageAlt" TEXT,

@@ -198,4 +198,14 @@ h1, h2, h3, h4 {
   .eyebrow {
     @apply text-xs font-semibold uppercase tracking-wider text-ink-400 dark:text-ink-500;
   }
+
+  /* ---------- Gallery responsive grid ----------
+     Cards resize and wrap automatically to the available width, with no
+     horizontal scrolling. auto-fit + minmax(260px, 1fr) yields roughly
+     4 per row on large screens, 2–3 on tablets, and 1 on mobile. */
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+  }
 }

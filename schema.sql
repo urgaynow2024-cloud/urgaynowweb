@@ -1,5 +1,11 @@
-﻿-- CreateTable
-CREATE TABLE "Staff" (
+-- Baseline schema for a fresh Supabase/PostgreSQL database.
+-- Idempotent: safe to re-run (CREATE TABLE/INDEX IF NOT EXISTS) so it can be
+-- applied repeatedly without "relation already exists" errors. For an existing
+-- database that is missing only the ShopDesign table, prefer the incremental
+-- migration in prisma/migrations/<timestamp>_add_shop_designs/migration.sql.
+
+-- CreateTable
+CREATE TABLE IF NOT EXISTS "Staff" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "vrchatUsername" TEXT NOT NULL,
@@ -15,7 +21,7 @@ CREATE TABLE "Staff" (
 );
 
 -- CreateTable
-CREATE TABLE "Announcement" (
+CREATE TABLE IF NOT EXISTS "Announcement" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
@@ -24,6 +30,7 @@ CREATE TABLE "Announcement" (
     "coverImage" TEXT NOT NULL DEFAULT '',
     "published" BOOLEAN NOT NULL DEFAULT true,
     "publishedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "discordMessageId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -31,7 +38,7 @@ CREATE TABLE "Announcement" (
 );
 
 -- CreateTable
-CREATE TABLE "Event" (
+CREATE TABLE IF NOT EXISTS "Event" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL DEFAULT '',
@@ -48,7 +55,7 @@ CREATE TABLE "Event" (
 );
 
 -- CreateTable
-CREATE TABLE "Rule" (
+CREATE TABLE IF NOT EXISTS "Rule" (
     "id" TEXT NOT NULL,
     "category" TEXT NOT NULL DEFAULT 'General',
     "title" TEXT NOT NULL,
@@ -59,7 +66,7 @@ CREATE TABLE "Rule" (
 );
 
 -- CreateTable
-CREATE TABLE "Guide" (
+CREATE TABLE IF NOT EXISTS "Guide" (
     "id" TEXT NOT NULL,
     "category" TEXT NOT NULL DEFAULT 'General',
     "question" TEXT NOT NULL,
@@ -70,7 +77,7 @@ CREATE TABLE "Guide" (
 );
 
 -- CreateTable
-CREATE TABLE "Link" (
+CREATE TABLE IF NOT EXISTS "Link" (
     "id" TEXT NOT NULL,
     "label" TEXT NOT NULL,
     "url" TEXT NOT NULL,
@@ -81,7 +88,7 @@ CREATE TABLE "Link" (
 );
 
 -- CreateTable
-CREATE TABLE "GalleryImage" (
+CREATE TABLE IF NOT EXISTS "GalleryImage" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL DEFAULT '',
@@ -92,18 +99,7 @@ CREATE TABLE "GalleryImage" (
 );
 
 -- CreateTable
-CREATE TABLE "GroupPhoto" (
-    "id" TEXT NOT NULL,
-    "title" TEXT NOT NULL,
-    "description" TEXT NOT NULL DEFAULT '',
-    "imageUrl" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT "GroupPhoto_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "GroupPhoto" (
+CREATE TABLE IF NOT EXISTS "GroupPhoto" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL DEFAULT '',
@@ -117,7 +113,7 @@ CREATE TABLE "GroupPhoto" (
 );
 
 -- CreateTable
-CREATE TABLE "Setting" (
+CREATE TABLE IF NOT EXISTS "Setting" (
     "key" TEXT NOT NULL,
     "value" TEXT NOT NULL DEFAULT '',
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -126,7 +122,7 @@ CREATE TABLE "Setting" (
 );
 
 -- CreateTable
-CREATE TABLE "ShopDesign" (
+CREATE TABLE IF NOT EXISTS "ShopDesign" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -144,8 +140,13 @@ CREATE TABLE "ShopDesign" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Staff_vrchatUsername_key" ON "Staff"("vrchatUsername");
+CREATE UNIQUE INDEX IF NOT EXISTS "Staff_vrchatUsername_key" ON "Staff"("vrchatUsername");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Announcement_slug_key" ON "Announcement"("slug");
+CREATE UNIQUE INDEX IF NOT EXISTS "Announcement_slug_key" ON "Announcement"("slug");
 
+-- CreateIndex
+CREATE INDEX IF NOT EXISTS "ShopDesign_published_idx" ON "ShopDesign"("published");
+
+-- CreateIndex
+CREATE INDEX IF NOT EXISTS "ShopDesign_featured_idx" ON "ShopDesign"("featured");

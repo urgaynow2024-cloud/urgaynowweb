@@ -111,7 +111,7 @@ export function ShopGallery({ designs }: { designs: ShopDesignPublic[] }) {
             return (
               <article
                 key={d.id}
-                className={`group flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10 dark:bg-zinc-900 ${
+                className={`group flex flex-col overflow-hidden rounded-2xl border bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:bg-zinc-900 dark:focus-visible:ring-offset-ink-950 ${
                   d.featured
                     ? "border-brand-300 dark:border-brand-700"
                     : "border-zinc-200 dark:border-zinc-800"
@@ -120,14 +120,14 @@ export function ShopGallery({ designs }: { designs: ShopDesignPublic[] }) {
                 <button
                   type="button"
                   onClick={() => openLightbox(d, 0)}
-                  className="relative block aspect-square overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+                  className="relative block aspect-square overflow-hidden bg-ink-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:bg-ink-800"
                   aria-label={`View ${d.name} images`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={d.imageUrl}
                     alt={d.imageAlt || d.name}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.03]"
                     loading="lazy"
                   />
                   <span className="pointer-events-none absolute left-2 top-2 flex flex-wrap gap-1.5">
@@ -147,26 +147,26 @@ export function ShopGallery({ designs }: { designs: ShopDesignPublic[] }) {
                   )}
                 </button>
 
-                <div className="flex flex-1 flex-col p-4">
+                <div className="flex flex-1 flex-col p-5">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">{d.name}</h3>
                   </div>
                   {d.category && (
-                    <p className="mt-1 text-xs font-medium uppercase tracking-wide text-brand-600 dark:text-brand-300">
+                    <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-brand-600 dark:text-brand-300">
                       {d.category}
                     </p>
                   )}
                   {d.creator && (
-                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400">
                       by {d.creator}
                     </p>
                   )}
                   {d.description && (
-                    <p className="mt-2 line-clamp-3 text-sm text-zinc-500 dark:text-zinc-400">{d.description}</p>
+                    <p className="mt-2.5 line-clamp-3 text-sm text-zinc-500 dark:text-zinc-400">{d.description}</p>
                   )}
 
                   {hasGallery && (
-                    <div className="mt-3 flex gap-1.5 overflow-x-auto">
+                    <div className="mt-4 flex gap-1.5 overflow-x-auto">
                       {d.galleryUrls.slice(0, 5).map((g, i) => (
                         <button
                           key={g}

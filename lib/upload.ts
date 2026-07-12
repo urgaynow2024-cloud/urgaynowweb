@@ -11,7 +11,7 @@ const ALLOWED_TYPES = [
   "image/avif",
 ];
 
-const MAX_BYTES = 4 * 1024 * 1024; // 4MB
+const MAX_BYTES = 10 * 1024 * 1024; // 10MB
 
 export function isAllowedImageType(type: string): boolean {
   return ALLOWED_TYPES.includes(type);

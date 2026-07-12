@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { NAV_ITEMS, isNavGroup, isLinkActive, type NavLink } from "@/lib/nav-links";
 import { NavDropdown } from "@/components/NavDropdown";
 import { useTheme } from "@/components/ThemeProvider";
@@ -37,7 +37,7 @@ function NavLeafLink({ item, className = "" }: { item: NavLink; className?: stri
     <Link
       href={item.href}
       aria-current={active ? "page" : undefined}
-      className={`rounded-full px-3 py-2 text-sm font-medium transition-all duration-200 ${
+      className={`relative rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-200 ${
         active
           ? "bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-200"
           : "text-zinc-600 hover:bg-brand-50 hover:text-brand-700 dark:text-zinc-300 dark:hover:bg-brand-900/40 dark:hover:text-brand-200"
@@ -52,6 +52,27 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState<string | null>(null);
   const pathname = usePathname();
+  const mobileRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(e: MouseEvent) {
+      if (mobileRef.current && !mobileRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    function onTouchStart(e: TouchEvent) {
+      if (mobileRef.current && !mobileRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("touchstart", onTouchStart);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("touchstart", onTouchStart);
+    };
+  }, [open]);
 
   const activeClass =
     "bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-200";
@@ -72,7 +93,7 @@ export function Header() {
         </Link>
 
         {/* Desktop navigation */}
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
+        <nav className="hidden items-center gap-2 lg:flex" aria-label="Primary">
           {NAV_ITEMS.map((item) =>
             isNavGroup(item) ? (
               <NavDropdown key={item.label} label={item.label} items={item.children} />
@@ -121,15 +142,16 @@ export function Header() {
       {/* Mobile navigation */}
       {open && (
         <nav
-          className="border-t border-zinc-200/80 bg-white/95 px-4 py-4 backdrop-blur-md lg:hidden dark:border-zinc-800/80 dark:bg-zinc-950/95"
+          ref={mobileRef}
+          className="border-t border-zinc-200/80 bg-white/95 px-4 py-5 backdrop-blur-md lg:hidden dark:border-zinc-800/80 dark:bg-zinc-950/95"
           aria-label="Mobile"
         >
-          <ul className="space-y-1">
+          <ul className="space-y-2">
             {NAV_ITEMS.map((item) => {
               if (!isNavGroup(item)) {
                 return (
                   <li key={item.href}>
-                    <NavLeafLink item={item} className="block" />
+                    <NavLeafLink item={item} className="block rounded-xl px-3 py-3 text-base" />
                   </li>
                 );
               }
@@ -142,14 +164,14 @@ export function Header() {
                     aria-expanded={isOpen}
                     aria-controls={`mobile-${item.label}`}
                     onClick={() => setExpanded(isOpen ? null : item.label)}
-                    className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${
+                    className={`flex w-full items-center justify-between rounded-xl px-3.5 py-3 text-base font-semibold transition-colors ${
                       groupActive ? activeClass : idleClass
                     }`}
                   >
                     <span>{item.label}</span>
                     <svg
-                      width={16}
-                      height={16}
+                      width={18}
+                      height={18}
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -173,7 +195,7 @@ export function Header() {
                         <li key={child.href}>
                           <NavLeafLink
                             item={child}
-                            className="block border-l-2 border-zinc-200 py-2 pl-3 dark:border-zinc-800"
+                            className="block rounded-lg border-l-2 border-zinc-200 py-2.5 pl-4 text-base dark:border-zinc-800"
                           />
                         </li>
                       ))}

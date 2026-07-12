@@ -25,7 +25,7 @@ export default async function SupportPage() {
 
           <div className="mt-12 grid gap-6 sm:grid-cols-2">
             {email && (
-              <a href={`mailto:${email}`} className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700">
+              <a href={`mailto:${email}`} className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700 dark:focus-visible:ring-offset-ink-950">
                 <div className="flex items-center gap-4">
                   <span className="text-4xl" aria-hidden>✉️</span>
                   <span>
@@ -36,7 +36,7 @@ export default async function SupportPage() {
               </a>
             )}
             {discord && (
-              <a href={discord} target="_blank" rel="noopener noreferrer" className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700">
+              <a href={discord} target="_blank" rel="noopener noreferrer" className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700 dark:focus-visible:ring-offset-ink-950">
                 <div className="flex items-center gap-4">
                   <span className="text-4xl" aria-hidden>💬</span>
                   <span>
@@ -47,7 +47,7 @@ export default async function SupportPage() {
               </a>
             )}
             {vrchat && (
-              <a href={vrchat} target="_blank" rel="noopener noreferrer" className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700">
+              <a href={vrchat} target="_blank" rel="noopener noreferrer" className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700 dark:focus-visible:ring-offset-ink-950">
                 <div className="flex items-center gap-4">
                   <span className="text-4xl" aria-hidden>🌐</span>
                   <span>

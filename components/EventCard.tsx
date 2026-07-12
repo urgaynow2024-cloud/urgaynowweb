@@ -19,7 +19,7 @@ export function EventCard({ event }: { event: EventCardData }) {
   const day = start.getDate();
 
   return (
-    <article className="flex overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl hover:shadow-brand-500/10 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:shadow-brand-500/5">
+    <article className="flex overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:shadow-brand-500/5 dark:focus-visible:ring-offset-ink-950">
       <div className="flex w-20 flex-col items-center justify-center bg-gradient-to-br from-brand-600 to-brand-700 text-white shadow-inner">
         <span className="text-sm font-bold">{month}</span>
         <span className="text-3xl font-extrabold leading-none">{day}</span>
@@ -52,7 +52,7 @@ export function EventCard({ event }: { event: EventCardData }) {
         <div className="mt-auto flex flex-wrap gap-2 pt-3">
           <Link
             href={`/events#${event.id}`}
-            className="rounded-full bg-brand-600 px-3 py-1 text-xs font-semibold text-white hover:bg-brand-700"
+            className="btn-primary btn-sm"
           >
             Details
           </Link>
@@ -61,7 +61,7 @@ export function EventCard({ event }: { event: EventCardData }) {
               href={event.vrchatWorldUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-full border border-zinc-200 px-3 py-1 text-xs font-medium text-zinc-600 hover:border-brand-300 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-300"
+              className="btn-outline btn-sm"
             >
               VRChat World
             </a>

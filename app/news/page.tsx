@@ -54,10 +54,11 @@ export default async function NewsPage({
             <Pagination page={page} totalPages={totalPages} basePath="/news" />
           </>
         ) : (
-          <p className="rounded-xl border border-dashed border-zinc-300 p-8 text-center text-zinc-500 dark:border-zinc-700">
-            No announcements yet.{" "}
-            <Link href="/" className="text-brand-600 hover:underline">Back to home</Link>
-          </p>
+          <div className="rounded-2xl border-2 border-dashed border-zinc-300 p-12 text-center dark:border-zinc-700">
+            <p className="text-xl text-zinc-500 dark:text-zinc-400">No announcements yet.{" "}
+              <Link href="/" className="text-brand-600 hover:underline">Back to home</Link>
+            </p>
+          </div>
         )}
       </Container>
     </>

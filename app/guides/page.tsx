@@ -40,10 +40,10 @@ export default async function GuidesPage() {
                     .map((g) => (
                       <details
                         key={g.id}
-                        className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white transition-all duration-300 hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700"
+                        className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white transition-all duration-300 hover:border-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700 dark:focus-visible:ring-offset-ink-950"
                       >
-                        <summary className="cursor-pointer list-none px-6 py-5 text-xl font-semibold text-zinc-900 dark:text-white">
-                          <span className="mr-3 text-brand-500">+</span>
+                        <summary className="cursor-pointer list-none select-none px-6 py-5 text-xl font-semibold text-zinc-900 transition-colors hover:text-brand-700 dark:text-white dark:hover:text-brand-200">
+                          <span className="mr-3 text-brand-500 transition-transform duration-200 group-open:rotate-45" aria-hidden>+</span>
                           {g.question}
                         </summary>
                         <div className="px-6 pb-5 text-base text-zinc-600 dark:text-zinc-400">

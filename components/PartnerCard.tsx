@@ -15,7 +15,7 @@ export function PartnerCard({ partner }: { partner: PartnerCardData }) {
   const links = partner.links.filter((l) => l.url);
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:shadow-brand-500/5">
+    <article className="group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:shadow-brand-500/5 dark:focus-visible:ring-offset-ink-950">
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-start justify-between gap-3">
           {partner.logoUrl ? (

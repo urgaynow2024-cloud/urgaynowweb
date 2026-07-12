@@ -12,9 +12,9 @@ export type GalleryImageData = {
 export function GalleryGrid({ images }: { images: GalleryImageData[] }) {
   if (images.length === 0) {
     return (
-      <p className="rounded-xl border border-dashed border-zinc-300 p-12 text-center text-zinc-500 dark:border-zinc-700">
-        No photos yet — check back soon!
-      </p>
+      <div className="rounded-2xl border-2 border-dashed border-zinc-300 p-12 text-center dark:border-zinc-700">
+        <p className="text-xl text-zinc-500 dark:text-zinc-400">No photos yet — check back soon!</p>
+      </div>
     );
   }
 
@@ -33,12 +33,12 @@ export function GalleryGrid({ images }: { images: GalleryImageData[] }) {
               />
             </div>
             {(img.title || img.description) && (
-              <figcaption className="flex flex-1 flex-col p-3">
+              <div className="flex flex-1 flex-col p-4">
                 {img.title && (
                   <p className="text-sm font-semibold text-zinc-900 dark:text-white">{img.title}</p>
                 )}
                 {img.description && (
-                  <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                     {img.description}
                   </p>
                 )}
@@ -47,7 +47,7 @@ export function GalleryGrid({ images }: { images: GalleryImageData[] }) {
                     View group →
                   </p>
                 )}
-              </figcaption>
+              </div>
             )}
           </>
         );
@@ -57,7 +57,7 @@ export function GalleryGrid({ images }: { images: GalleryImageData[] }) {
             <Link
               key={img.id}
               href={`/groups/${img.groupId}`}
-              className="group flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:shadow-brand-500/5"
+              className="group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:shadow-brand-500/5 dark:focus-visible:ring-offset-ink-950"
             >
               {content}
             </Link>
@@ -67,7 +67,7 @@ export function GalleryGrid({ images }: { images: GalleryImageData[] }) {
         return (
           <figure
             key={img.id}
-            className="group flex flex-col overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:shadow-brand-500/5"
+            className="group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:shadow-brand-500/5 dark:focus-visible:ring-offset-ink-950"
           >
             {content}
           </figure>

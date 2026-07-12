@@ -19,13 +19,16 @@ export function ConfirmDeleteButton({
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleConfirm() {
     setLoading(true);
+    setError(null);
     try {
       await action(new FormData());
-    } catch {
       setOpen(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
       setLoading(false);
     }
@@ -33,12 +36,17 @@ export function ConfirmDeleteButton({
 
   return (
     <>
-      <button type="button" className={className} onClick={() => setOpen(true)}>
+      <button type="button" className={className} onClick={() => { setOpen(true); setError(null); }}>
         <span className="flex items-center gap-1.5">
           <IconTrash size={15} />
           {label}
         </span>
       </button>
+      {error && (
+        <p role="alert" className="field-error mt-2">
+          {error}
+        </p>
+      )}
       <ConfirmDialog
         open={open}
         onClose={() => setOpen(false)}

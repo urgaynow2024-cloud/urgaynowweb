@@ -38,8 +38,17 @@ export function NavDropdown({ label, items }: { label: string; items: NavLink[] 
         setOpen(false);
       }
     }
+    function onTouchStart(e: TouchEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
     document.addEventListener("mousedown", onPointerDown);
-    return () => document.removeEventListener("mousedown", onPointerDown);
+    document.addEventListener("touchstart", onTouchStart);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("touchstart", onTouchStart);
+    };
   }, []);
 
   // Move DOM focus to the active/first item when the menu opens via keyboard.
@@ -98,13 +107,14 @@ export function NavDropdown({ label, items }: { label: string; items: NavLink[] 
       <button
         ref={triggerRef}
         type="button"
-        className={`flex items-center gap-1 rounded-full px-3 py-2 text-sm font-medium transition-all duration-200 ${
+        className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium transition-all duration-200 ${
           groupActive
             ? "bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-200"
             : "text-zinc-600 hover:bg-brand-50 hover:text-brand-700 dark:text-zinc-300 dark:hover:bg-brand-900/40 dark:hover:text-brand-200"
         }`}
         aria-haspopup="true"
         aria-expanded={open}
+        aria-controls={open ? "nav-dropdown-menu" : undefined}
         onClick={() => (open ? closeMenu() : openMenu(true))}
         onKeyDown={onTriggerKeyDown}
       >
@@ -127,10 +137,11 @@ export function NavDropdown({ label, items }: { label: string; items: NavLink[] 
 
       <ul
         ref={menuRef}
+        id="nav-dropdown-menu"
         role="menu"
         aria-label={label}
         onKeyDown={onMenuKeyDown}
-        className={`absolute left-0 top-full z-50 mt-2 min-w-[13rem] origin-top rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-card-hover transition-all duration-200 dark:border-zinc-800 dark:bg-zinc-900 ${
+        className={`absolute left-0 top-full z-50 mt-2 min-w-[14rem] origin-top rounded-2xl border border-zinc-200 bg-white p-1.5 shadow-card-hover transition-all duration-200 ease-out dark:border-zinc-800 dark:bg-zinc-900 ${
           open ? "visible translate-y-0 opacity-100" : "invisible -translate-y-1 opacity-0 pointer-events-none"
         }`}
       >
@@ -143,7 +154,7 @@ export function NavDropdown({ label, items }: { label: string; items: NavLink[] 
                 href={item.href}
                 tabIndex={open ? 0 : -1}
                 onClick={() => setOpen(false)}
-                className={`block rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex items-center rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-150 ${
                   active
                     ? "bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-200"
                     : "text-zinc-700 hover:bg-brand-50 hover:text-brand-700 dark:text-zinc-200 dark:hover:bg-brand-900/40 dark:hover:text-brand-200"

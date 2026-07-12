@@ -38,7 +38,7 @@ export default async function RulesPage() {
                   {rules
                     .filter((r) => r.category === cat)
                     .map((r, i) => (
-                      <div key={r.id} className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700">
+                      <div key={r.id} className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700 dark:focus-visible:ring-offset-ink-950">
                         <h3 className={cn("text-xl font-semibold text-brand-700 dark:text-brand-200")}>
                           {i + 1}. {r.title}
                         </h3>

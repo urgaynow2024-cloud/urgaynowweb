@@ -28,8 +28,3 @@ if (!env.adminUser || !env.adminPass) {
     "[env] ADMIN_USERNAME / ADMIN_PASSWORD are not set — admin login will be unavailable.",
   );
 }
-if (!env.webhookSecret) {
-  console.warn(
-    "[env] DISCORD_WEBHOOK_SECRET is not set — the /api/discord/webhook auto-import endpoint is disabled.",
-  );
-}

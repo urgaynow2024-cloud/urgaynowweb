@@ -37,17 +37,17 @@ async function AboutContent() {
       </div>
 
       <div className="mx-auto mt-16 grid max-w-4xl gap-8 sm:grid-cols-3">
-        <div className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white p-8 text-center shadow-sm transition-all duration-300 hover:shadow-xl hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700">
+        <div className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white p-8 text-center shadow-sm transition-all duration-300 hover:shadow-xl hover:border-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700 dark:focus-visible:ring-offset-ink-950">
           <div className="text-5xl mb-4 transition-transform duration-300 group-hover:scale-110">🤝</div>
           <h3 className="mt-2 text-xl font-bold text-zinc-900 dark:text-white">Welcoming</h3>
           <p className="mt-3 text-base text-zinc-600 dark:text-zinc-400">Everyone is welcome, exactly as they are.</p>
         </div>
-        <div className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white p-8 text-center shadow-sm transition-all duration-300 hover:shadow-xl hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700">
+        <div className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white p-8 text-center shadow-sm transition-all duration-300 hover:shadow-xl hover:border-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700 dark:focus-visible:ring-offset-ink-950">
           <div className="text-5xl mb-4 transition-transform duration-300 group-hover:scale-110">🏳️‍🌈</div>
           <h3 className="mt-2 text-xl font-bold text-zinc-900 dark:text-white">Proud</h3>
           <p className="mt-3 text-base text-zinc-600 dark:text-zinc-400">Loud, proud, and LGBTQ+ friendly.</p>
         </div>
-        <div className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white p-8 text-center shadow-sm transition-all duration-300 hover:shadow-xl hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700">
+        <div className="group overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white p-8 text-center shadow-sm transition-all duration-300 hover:shadow-xl hover:border-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700 dark:focus-visible:ring-offset-ink-950">
           <div className="text-5xl mb-4 transition-transform duration-300 group-hover:scale-110">💜</div>
           <h3 className="mt-2 text-xl font-bold text-zinc-900 dark:text-white">Kind</h3>
           <p className="mt-3 text-base text-zinc-600 dark:text-zinc-400">A safe, supportive space to be yourself.</p>

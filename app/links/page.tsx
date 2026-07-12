@@ -33,7 +33,7 @@ export default async function LinksPage() {
                 href={f.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group w-full min-w-0 rounded-2xl border-2 border-zinc-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700"
+                className="group w-full min-w-0 rounded-2xl border-2 border-zinc-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700 dark:focus-visible:ring-offset-ink-950"
               >
                 <div className="flex items-center gap-4">
                   <span className="text-4xl" aria-hidden>{f.icon}</span>
@@ -53,7 +53,7 @@ export default async function LinksPage() {
                   href={l.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group block w-full min-w-0 rounded-2xl border-2 border-zinc-200 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700"
+                  className="group block w-full min-w-0 rounded-2xl border-2 border-zinc-200 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700 dark:focus-visible:ring-offset-ink-950"
                 >
                   <div className="flex items-center gap-3">
                     {l.icon && <span className="text-2xl" aria-hidden>{l.icon}</span>}

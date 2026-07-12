@@ -96,7 +96,14 @@ export async function updateShopDesignOrder(id: string, formData: FormData) {
 
 export async function deleteShopDesign(id: string) {
   await requireAdmin();
-  await prisma.shopDesign.delete({ where: { id } });
+  if (!id || typeof id !== "string" || !id.trim()) {
+    throw new Error("Invalid design ID.");
+  }
+  const trimmed = id.trim();
+  const result = await prisma.shopDesign.deleteMany({ where: { id: trimmed } });
+  if (result.count === 0) {
+    throw new Error("Design not found. It may have already been deleted.");
+  }
   revalidatePath("/", "layout");
   revalidatePath("/shop");
   revalidatePath("/about");

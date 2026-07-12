@@ -21,23 +21,23 @@ export async function Footer() {
         <div>
           <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">Explore</h3>
           <ul className="mt-4 space-y-3 text-base">
-            <li><Link className="text-zinc-600 transition hover:text-brand-600 dark:text-zinc-400" href="/about">About</Link></li>
-            <li><Link className="text-zinc-600 transition hover:text-brand-600 dark:text-zinc-400" href="/rules">Rules</Link></li>
-            <li><Link className="text-zinc-600 transition hover:text-brand-600 dark:text-zinc-400" href="/staff">Staff</Link></li>
-            <li><Link className="text-zinc-600 transition hover:text-brand-600 dark:text-zinc-400" href="/events">Events</Link></li>
-            <li><Link className="text-zinc-600 transition hover:text-brand-600 dark:text-zinc-400" href="/guides">Guides & FAQ</Link></li>
+            <li><Link className="text-zinc-600 transition hover:text-brand-600 hover:underline dark:text-zinc-400" href="/about">About</Link></li>
+            <li><Link className="text-zinc-600 transition hover:text-brand-600 hover:underline dark:text-zinc-400" href="/rules">Rules</Link></li>
+            <li><Link className="text-zinc-600 transition hover:text-brand-600 hover:underline dark:text-zinc-400" href="/staff">Staff</Link></li>
+            <li><Link className="text-zinc-600 transition hover:text-brand-600 hover:underline dark:text-zinc-400" href="/events">Events</Link></li>
+            <li><Link className="text-zinc-600 transition hover:text-brand-600 hover:underline dark:text-zinc-400" href="/guides">Guides & FAQ</Link></li>
           </ul>
         </div>
 
         <div>
           <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-500">Community</h3>
           <ul className="mt-4 space-y-3 text-base">
-            <li><Link className="text-zinc-600 transition hover:text-brand-600 dark:text-zinc-400" href="/news">News</Link></li>
-            <li><Link className="text-zinc-600 transition hover:text-brand-600 dark:text-zinc-400" href="/gallery">Gallery</Link></li>
-            <li><Link className="text-zinc-600 transition hover:text-brand-600 dark:text-zinc-400" href="/shop">Shop</Link></li>
-            <li><Link className="text-zinc-600 transition hover:text-brand-600 dark:text-zinc-400" href="/partners">Partners</Link></li>
-            <li><Link className="text-zinc-600 transition hover:text-brand-600 dark:text-zinc-400" href="/links">Links</Link></li>
-            <li><Link className="text-zinc-600 transition hover:text-brand-600 dark:text-zinc-400" href="/support">Support</Link></li>
+            <li><Link className="text-zinc-600 transition hover:text-brand-600 hover:underline dark:text-zinc-400" href="/news">News</Link></li>
+            <li><Link className="text-zinc-600 transition hover:text-brand-600 hover:underline dark:text-zinc-400" href="/gallery">Gallery</Link></li>
+            <li><Link className="text-zinc-600 transition hover:text-brand-600 hover:underline dark:text-zinc-400" href="/shop">Shop</Link></li>
+            <li><Link className="text-zinc-600 transition hover:text-brand-600 hover:underline dark:text-zinc-400" href="/partners">Partners</Link></li>
+            <li><Link className="text-zinc-600 transition hover:text-brand-600 hover:underline dark:text-zinc-400" href="/links">Links</Link></li>
+            <li><Link className="text-zinc-600 transition hover:text-brand-600 hover:underline dark:text-zinc-400" href="/support">Support</Link></li>
           </ul>
         </div>
 

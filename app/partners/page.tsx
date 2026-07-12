@@ -39,31 +39,8 @@ export default async function PartnersPage() {
             No partners yet — check back soon!
           </p>
         ) : (
-          <div className="space-y-12">
-            {tags.map((tag) => {
-              const group = partners.filter((p) => p.tag === tag);
-              if (group.length === 0) return null;
-              return (
-                <section key={tag}>
-                  <h2 className="mb-5 text-2xl font-bold text-zinc-900 dark:text-white">{tag}s</h2>
-                  <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {group.map((p) => (
-                      <PartnerCard
-                        key={p.id}
-                        partner={{
-                          id: p.id,
-                          name: p.name,
-                          logoUrl: p.logoUrl,
-                          description: p.description,
-                          links: parseSocials(p.links),
-                          tag: p.tag,
-                        }}
-                      />
-                    ))}
-                  </div>
-                </section>
-              );
-            })}
+          <div className="rounded-2xl border-2 border-dashed border-zinc-300 p-12 text-center dark:border-zinc-700">
+            <p className="text-xl text-zinc-500 dark:text-zinc-400">No partners yet — check back soon!</p>
           </div>
         )}
       </Container>

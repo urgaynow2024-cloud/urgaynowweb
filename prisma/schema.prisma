@@ -112,3 +112,18 @@ model Setting {
   value     String   @default("")
   updatedAt DateTime @updatedAt
 }
+
+model ShopDesign {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String?
+  imageUrl    String
+  imageAlt    String?
+  galleryUrls String[] @default([])
+  featured    Boolean  @default(false)
+  published   Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

@@ -103,12 +103,44 @@ CREATE TABLE "GroupPhoto" (
 );
 
 -- CreateTable
+CREATE TABLE "GroupPhoto" (
+    "id" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT NOT NULL DEFAULT '',
+    "imageUrl" TEXT NOT NULL,
+    "bannerUrl" TEXT NOT NULL DEFAULT '',
+    "rules" TEXT NOT NULL DEFAULT '',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "GroupPhoto_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Setting" (
     "key" TEXT NOT NULL,
     "value" TEXT NOT NULL DEFAULT '',
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Setting_pkey" PRIMARY KEY ("key")
+);
+
+-- CreateTable
+CREATE TABLE "ShopDesign" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "category" TEXT,
+    "imageUrl" TEXT NOT NULL,
+    "imageAlt" TEXT,
+    "galleryUrls" TEXT[] DEFAULT ARRAY[]::TEXT[],
+    "featured" BOOLEAN NOT NULL DEFAULT false,
+    "published" BOOLEAN NOT NULL DEFAULT true,
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "ShopDesign_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex

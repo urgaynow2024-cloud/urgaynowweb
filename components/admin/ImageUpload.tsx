@@ -47,11 +47,13 @@ export function ImageUpload({
 
       const done = await new Promise<{ ok: boolean; data: any }>((resolve) => {
         xhr.onload = () => {
+          let parsed: any;
           try {
-            resolve({ ok: xhr.status >= 200 && xhr.status < 300, data: JSON.parse(xhr.responseText) });
+            parsed = JSON.parse(xhr.responseText);
           } catch {
-            resolve({ ok: false, data: { error: "Unexpected response." } });
+            parsed = { error: "Unexpected response." };
           }
+          resolve({ ok: xhr.status >= 200 && xhr.status < 300, data: parsed });
         };
         xhr.onerror = () => resolve({ ok: false, data: { error: "Network error. Please try again." } });
         xhr.send(form);

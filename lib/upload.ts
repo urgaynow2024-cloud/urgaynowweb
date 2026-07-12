@@ -1,6 +1,5 @@
 import "server-only";
 import { put } from "@vercel/blob";
-import { getSession } from "@/lib/auth";
 
 const ALLOWED_TYPES = [
   "image/png",
@@ -18,8 +17,6 @@ export function isAllowedImageType(type: string): boolean {
 }
 
 export async function uploadFile(file: File, folder = "uploads"): Promise<string> {
-  await getSession();
-
   const storeId = process.env.BLOB_STORE_ID;
   const oidcToken = process.env.VERCEL_OIDC_TOKEN;
 

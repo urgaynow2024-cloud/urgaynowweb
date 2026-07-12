@@ -1,4 +1,5 @@
 import { Container, PageHeader } from "@/components/Container";
+import { prisma } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
 import { safeQuery } from "@/lib/safeQuery";
 import { Markdown } from "@/components/Markdown";
@@ -14,14 +15,19 @@ export const metadata = {
 };
 
 async function AboutContent() {
-  const [content, discord, vrchat] = await safeQuery(
+  const [content, discord, vrchat, shopDesigns] = await safeQuery(
     () =>
       Promise.all([
         getSetting("aboutContent"),
         getSetting("discordInvite"),
         getSetting("vrchatGroupUrl"),
+        prisma.shopDesign.findMany({
+          where: { published: true, featured: true },
+          orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+          take: 3,
+        }),
       ]),
-    ["", "", ""],
+    ["", "", "", [] as { id: string; name: string; imageUrl: string; imageAlt: string | null }[]],
   );
 
   return (
@@ -56,6 +62,47 @@ async function AboutContent() {
           <a href={vrchat} target="_blank" rel="noopener noreferrer" className="btn-secondary text-lg px-8 py-3">VRChat Group</a>
         )}
         <Link href="/rules" className="btn-secondary text-lg px-8 py-3">Read the rules</Link>
+      </div>
+
+      <div className="mx-auto mt-16 max-w-4xl">
+        <div className="overflow-hidden rounded-2xl border-2 border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+            <div>
+              <span className="inline-flex items-center gap-2 rounded-full bg-pride-gradient-soft px-3 py-1 text-xs font-semibold uppercase tracking-wide text-brand-700 dark:text-brand-200">
+                Shop Coming Soon
+              </span>
+              <h3 className="mt-3 text-2xl font-bold text-zinc-900 dark:text-white">Our merch is on the way</h3>
+              <p className="mt-2 max-w-xl text-base text-zinc-600 dark:text-zinc-400">
+                Ur Gay Now clothing, outfits, and community designs are being prepared. Here&apos;s a
+                sneak peek at what&apos;s coming — the full shop opens soon.
+              </p>
+            </div>
+            <Link href="/shop" className="btn-primary text-base px-6 py-3 shrink-0">View Our Shop</Link>
+          </div>
+
+          {shopDesigns.length > 0 && (
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              {shopDesigns.map((d) => (
+                <Link
+                  key={d.id}
+                  href="/shop"
+                  className="group overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 transition-all hover:-translate-y-1 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-800/40"
+                >
+                  <div className="aspect-square overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={d.imageUrl}
+                      alt={d.imageAlt || d.name}
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  </div>
+                  <p className="truncate p-3 text-sm font-semibold text-zinc-900 dark:text-white">{d.name}</p>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </>
   );

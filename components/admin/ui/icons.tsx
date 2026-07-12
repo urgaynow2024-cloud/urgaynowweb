@@ -133,6 +133,18 @@ export const IconMenu = (p: IconProps) => (
 export const IconChevronRight = (p: IconProps) => (
   <svg {...base(p)}><path d="m9 6 6 6-6 6" /></svg>
 );
+export const IconChevronLeft = (p: IconProps) => (
+  <svg {...base(p)}><path d="m15 6-6 6 6 6" /></svg>
+);
+export const IconStar = (p: IconProps) => (
+  <svg {...base(p)}><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 17.9 6.8 19.6l1-5.8-4.3-4.1 5.9-.9Z" /></svg>
+);
+export const IconEye = (p: IconProps) => (
+  <svg {...base(p)}><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="3" /></svg>
+);
+export const IconEyeOff = (p: IconProps) => (
+  <svg {...base(p)}><path d="M3 3l18 18" /><path d="M10.6 6.2A9.7 9.7 0 0 1 12 6.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-2.6 3.1M6.2 6.9A17 17 0 0 0 2.5 12S6 18.5 12 18.5c1.4 0 2.7-.3 3.9-.9" /><path d="M9.8 9.9A3 3 0 0 0 12 15a3 3 0 0 0 2.1-.9" /></svg>
+);
 export const IconActivity = (p: IconProps) => (
   <svg {...base(p)}><path d="M3 12h4l2.5 7 5-14L17 12h4" /></svg>
 );
@@ -144,4 +156,7 @@ export const IconInbox = (p: IconProps) => (
 );
 export const IconFilter = (p: IconProps) => (
   <svg {...base(p)}><path d="M4 6h16M7 12h10M10 18h4" /></svg>
+);
+export const IconTag = (p: IconProps) => (
+  <svg {...base(p)}><path d="M6 8h12l-1 11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2Z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></svg>
 );

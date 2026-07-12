@@ -12,6 +12,7 @@ single-admin dashboard for managing all content.
 - 📣 Announcements & 📅 Events with Markdown content and image uploads
 - 📖 Rules & Guides/FAQ (collapsible)
 - 🖼️ Group photos & gallery image management
+- 🛍️ Internal shop showcase — upcoming clothing, outfit & accessory designs (Opening Soon)
 - 🌗 Light / dark mode with no flash on load
 - 📱 Fully responsive & accessible (skip link, focus styles, semantic HTML)
 - 🔍 SEO-friendly metadata on every page
@@ -79,7 +80,8 @@ Visit:
 
 Log in at `/admin`. From there you can:
 - Add / edit / remove staff, announcements, events, rules, guides, links
-- Upload staff photos, group photos, and gallery images
+- Upload staff photos, group photos, gallery images, and shop design images
+- Manage shop designs: main + gallery images, categories, featured/published flags, display order
 - Update homepage copy, the About page, support info, and social links (Settings)
 
 The public cannot access `/admin` — routes are protected by `middleware.ts` and server-side
@@ -103,11 +105,13 @@ session checks.
         - **Do not** use the transaction-mode pooler (`:6543?pgbouncer=true`) for the build — it
           deadlocks `db push`. Either use the direct `:5432` connection, or switch the Supabase
           pooler to **Session** mode first.
-        - Bulletproof alternative: run the SQL in `schema.sql` (repo root) once in the Supabase
-          **SQL Editor**, then the build-time push is a harmless no-op.
-    - If a new model (e.g. `GroupPhoto`) was added after the first deploy, the production database
-      may be missing its table. The next deploy’s `prisma db push` creates it automatically — or run
-      `schema.sql` in the Supabase SQL Editor to add it immediately.
+         - Bulletproof alternative: run the SQL in `schema.sql` (repo root) once in the Supabase
+           **SQL Editor**, then the build-time push is a harmless no-op.
+     - If a new model (e.g. `GroupPhoto`, `ShopDesign`) was added after the first deploy, the
+       production database may be missing its table. The next deploy's `prisma db push` creates it
+       automatically — or run `schema.sql` (or the migration in
+       `prisma/migrations/<timestamp>_add_shop_designs/migration.sql`) in the Supabase SQL Editor to
+       add it immediately.
  5. (Required for uploads on Vercel) **Image uploads:** connect a Vercel Blob store to this
     project. The Vercel Blob integration automatically provides `BLOB_STORE_ID` to your
     deployments. You do **not** need a `BLOB_READ_WRITE_TOKEN` for the connected store.

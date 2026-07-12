@@ -34,6 +34,7 @@ export async function Footer() {
           <ul className="mt-4 space-y-3 text-base">
             <li><Link className="text-zinc-600 transition hover:text-brand-600 dark:text-zinc-400" href="/news">News</Link></li>
             <li><Link className="text-zinc-600 transition hover:text-brand-600 dark:text-zinc-400" href="/gallery">Gallery</Link></li>
+            <li><Link className="text-zinc-600 transition hover:text-brand-600 dark:text-zinc-400" href="/shop">Shop</Link></li>
             <li><Link className="text-zinc-600 transition hover:text-brand-600 dark:text-zinc-400" href="/partners">Partners</Link></li>
             <li><Link className="text-zinc-600 transition hover:text-brand-600 dark:text-zinc-400" href="/links">Links</Link></li>
             <li><Link className="text-zinc-600 transition hover:text-brand-600 dark:text-zinc-400" href="/support">Support</Link></li>

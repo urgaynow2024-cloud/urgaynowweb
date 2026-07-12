@@ -26,6 +26,7 @@ import {
   IconFlag,
   IconActivity,
   IconCheck,
+  IconTag,
 } from "./ui/icons";
 
 type NavItem = { label: string; href: string; icon: React.ReactNode };
@@ -41,6 +42,7 @@ const NAV: NavItem[] = [
   { label: "Partners", href: "/admin/partners", icon: <IconLink size={19} /> },
   { label: "Gallery", href: "/admin/gallery", icon: <IconImages size={19} /> },
   { label: "Group Photos", href: "/admin/group-photos", icon: <IconCamera size={19} /> },
+  { label: "Shop Designs", href: "/admin/shop", icon: <IconTag size={19} /> },
   { label: "Moderation", href: "/admin/moderation", icon: <IconShield size={19} /> },
   { label: "Reports", href: "/admin/reports", icon: <IconFlag size={19} /> },
   { label: "Settings", href: "/admin/settings", icon: <IconSettings size={19} /> },
@@ -53,6 +55,7 @@ const QUICK_CREATE: { label: string; href: string }[] = [
   { label: "New guide", href: "/admin/guides/new" },
   { label: "Upload gallery image", href: "/admin/gallery/new" },
   { label: "Upload group photo", href: "/admin/group-photos/new" },
+  { label: "New shop design", href: "/admin/shop/new" },
   { label: "New link", href: "/admin/links/new" },
   { label: "New partner", href: "/admin/partners/new" },
 ];
@@ -67,6 +70,7 @@ const SECTION_LABELS: Record<string, string> = {
   partners: "Partners",
   gallery: "Gallery",
   "group-photos": "Group Photos",
+  shop: "Shop Designs",
   moderation: "Moderation",
   reports: "Reports",
   settings: "Settings",

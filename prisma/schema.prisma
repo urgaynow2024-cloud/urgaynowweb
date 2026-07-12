@@ -117,6 +117,7 @@ model ShopDesign {
   id          String   @id @default(cuid())
   name        String
   description String?
+  creator     String?
   category    String?
   imageUrl    String
   imageAlt    String?

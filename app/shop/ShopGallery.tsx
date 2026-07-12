@@ -7,6 +7,7 @@ export type ShopDesignPublic = {
   id: string;
   name: string;
   description: string | null;
+  creator: string | null;
   category: string | null;
   imageUrl: string;
   imageAlt: string | null;
@@ -153,6 +154,11 @@ export function ShopGallery({ designs }: { designs: ShopDesignPublic[] }) {
                   {d.category && (
                     <p className="mt-1 text-xs font-medium uppercase tracking-wide text-brand-600 dark:text-brand-300">
                       {d.category}
+                    </p>
+                  )}
+                  {d.creator && (
+                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                      by {d.creator}
                     </p>
                   )}
                   {d.description && (

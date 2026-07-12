@@ -28,6 +28,7 @@ async function ShopContent() {
     id: d.id,
     name: d.name,
     description: d.description,
+    creator: d.creator,
     category: d.category,
     imageUrl: d.imageUrl,
     imageAlt: d.imageAlt,

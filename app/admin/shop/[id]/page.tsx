@@ -26,6 +26,7 @@ export default async function EditShopDesignPage({ params }: { params: { id: str
   const initial: ShopDesignFormValues = {
     name: d.name,
     description: d.description ?? "",
+    creator: d.creator ?? "",
     category: d.category ?? "",
     imageUrl: d.imageUrl,
     imageAlt: d.imageAlt ?? "",

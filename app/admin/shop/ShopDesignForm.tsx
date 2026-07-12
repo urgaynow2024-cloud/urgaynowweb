@@ -7,6 +7,7 @@ import { MultiImageUpload } from "@/components/admin/MultiImageUpload";
 export type ShopDesignFormValues = {
   name: string;
   description: string;
+  creator: string;
   category: string;
   imageUrl: string;
   imageAlt: string;
@@ -75,6 +76,18 @@ export function ShopDesignForm({
           defaultValue={initial?.description ?? ""}
           placeholder="Short description of the design."
         />
+      </div>
+
+      <div>
+        <label className="field-label" htmlFor="creator">Creator</label>
+        <input
+          id="creator"
+          name="creator"
+          className="input"
+          defaultValue={initial?.creator ?? ""}
+          placeholder="Name of the community member or designer"
+        />
+        <p className="field-help">Shown publicly on the design card as &quot;by [creator]&quot;.</p>
       </div>
 
       <ImageUpload

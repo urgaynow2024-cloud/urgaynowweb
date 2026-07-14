@@ -132,8 +132,8 @@ export function GallerySubmissionForm() {
       </div>
 
       <div>
-        <label className="field-label" htmlFor="title">Title <span className="text-red-500">*</span></label>
-        <input id="title" name="title" className="input" required maxLength={120} placeholder="e.g. Sunset meetup" />
+        <label className="field-label" htmlFor="title">Title <span className="text-ink-400">(optional)</span></label>
+        <input id="title" name="title" className="input" maxLength={120} placeholder="e.g. Sunset meetup" />
       </div>
 
       <div>

@@ -59,16 +59,16 @@ export async function POST(req: Request) {
   }
 
   const file = form.get("file");
-  const title = String(form.get("title") || "").trim();
+  const rawTitle = String(form.get("title") || "").trim();
   const description = String(form.get("description") || "").trim();
   const submitterName = String(form.get("submitterName") || "").trim();
 
-  if (!title) {
-    return NextResponse.json(
-      { success: false, error: "Please add a title for your photo." },
-      { status: 400 },
-    );
+  // Title is optional; fall back to the filename (without extension) or a default.
+  let title = rawTitle;
+  if (!title && file instanceof File) {
+    title = file.name.replace(/\.[^.]+$/, "") || "Untitled submission";
   }
+  if (!title) title = "Untitled submission";
 
   if (!(file instanceof File)) {
     return NextResponse.json(

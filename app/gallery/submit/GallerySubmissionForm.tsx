@@ -2,6 +2,7 @@
 
 import { useRef, useState, type DragEvent, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { upload } from "@vercel/blob/client";
 import { IconUpload, IconImage, IconX, IconCheck, IconSpinner } from "@/components/admin/ui/icons";
 
 const ACCEPT = "image/png,image/jpeg,image/jpg,image/gif,image/webp,image/avif";
@@ -48,43 +49,53 @@ export function GallerySubmissionForm() {
 
     const form = formRef.current;
     if (!form) return;
-    const data = new FormData(form);
     if (!file) {
       setError("Please choose an image to upload.");
       return;
     }
-    data.set("file", file);
+
+    const getValue = (name: string) =>
+      (form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement)?.value || "";
+
+    const title = getValue("title");
+    const description = getValue("description");
+    const submitterName = getValue("submitterName");
+    const website = getValue("website");
 
     setStatus("submitting");
     setProgress(0);
 
     try {
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", "/api/gallery/submit");
-
-      xhr.upload.onprogress = (ev) => {
-        if (ev.lengthComputable) setProgress(Math.round((ev.loaded / ev.total) * 100));
-      };
-
-      const done = await new Promise<{ ok: boolean; data: any }>((resolve) => {
-        xhr.onload = () => {
-          let parsed: any;
-          try {
-            parsed = JSON.parse(xhr.responseText);
-          } catch {
-            parsed = { error: "Unexpected response." };
-          }
-          resolve({ ok: xhr.status >= 200 && xhr.status < 300, data: parsed });
-        };
-        xhr.onerror = () => resolve({ ok: false, data: { error: "Network error. Please try again." } });
-        xhr.send(data);
+      // 1) Upload the image directly from the browser to Vercel Blob.
+      //    This avoids the serverless request-body size limit.
+      const pathname = `gallery-submissions/${Date.now()}-${file.name}`;
+      const blob = await upload(pathname, file, {
+        access: "public",
+        handleUploadUrl: "/api/blob",
+        contentType: file.type,
+        multipart: file.size > 5 * 1024 * 1024,
+        onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
       });
 
-      if (!done.ok) throw new Error(done.data?.error || "Submission failed. Please try again.");
+      // 2) Submit the resulting URL + metadata to create a pending record.
+      const res = await fetch("/api/gallery/submit", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ imageUrl: blob.url, title, description, submitterName, website }),
+      });
+      const data = await res.json().catch(() => ({ error: "Unexpected response." }));
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Submission failed. Please try again.");
+      }
+
       setStatus("success");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Submission failed. Please try again.");
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : "Submission failed. Please try again.";
+      setError(message);
       setStatus("error");
     }
   }

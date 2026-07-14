@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     const signed = await issueSignedToken({
       storeId: process.env.BLOB_STORE_ID,
       oidcToken: process.env.VERCEL_OIDC_TOKEN,
-      pathname: "gallery-submissions/*",
+      pathname,
       operations: ["put"],
       allowedContentTypes: ALLOWED,
       maximumSizeInBytes: MAX_BYTES,

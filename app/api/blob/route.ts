@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
+import { issueSignedToken, presignUrl } from "@vercel/blob";
 
 export const runtime = "nodejs";
 
@@ -10,33 +10,45 @@ const ALLOWED = [
   "image/webp",
   "image/avif",
 ];
+const MAX_BYTES = 25 * 1024 * 1024;
 
-// Issues short-lived client upload tokens for direct browser -> Blob uploads.
-// This bypasses the serverless function 4.5MB request body limit.
+// Creates a short-lived, scoped presigned PUT URL so the browser can upload
+// directly to Vercel Blob (OIDC connected store). This bypasses the serverless
+// function 4.5MB request body limit.
 export async function POST(request: Request) {
-  let body: HandleUploadBody;
+  let body: any;
   try {
-    body = (await request.json()) as HandleUploadBody;
+    body = await request.json();
   } catch {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
+  const pathname = String(body.pathname || "").trim();
+  if (!pathname.startsWith("gallery-submissions/") || pathname.includes("..")) {
+    return NextResponse.json({ error: "Invalid path." }, { status: 400 });
+  }
+
   try {
-    const result = await handleUpload({
-      body,
-      request,
-      onBeforeGenerateToken: async () => ({
-        allowedContentTypes: ALLOWED,
-        maximumSizeInBytes: 25 * 1024 * 1024,
-        addRandomSuffix: true,
-      }),
-      onUploadCompleted: async () => {
-        // Record creation is handled by /api/gallery/submit.
-      },
+    const signed = await issueSignedToken({
+      storeId: process.env.BLOB_STORE_ID,
+      oidcToken: process.env.VERCEL_OIDC_TOKEN,
+      pathname: "gallery-submissions/*",
+      operations: ["put"],
+      allowedContentTypes: ALLOWED,
+      maximumSizeInBytes: MAX_BYTES,
     });
-    return NextResponse.json(result);
+
+    const { presignedUrl } = await presignUrl(signed, {
+      operation: "put",
+      pathname,
+      access: "public",
+      allowedContentTypes: ALLOWED,
+      maximumSizeInBytes: MAX_BYTES,
+    });
+
+    return NextResponse.json({ url: presignedUrl });
   } catch (err) {
-    console.error("[blob] handleUpload failed", err);
+    console.error("[blob] presign failed", err);
     return NextResponse.json(
       { error: "Could not prepare the upload. Please try again." },
       { status: 500 },

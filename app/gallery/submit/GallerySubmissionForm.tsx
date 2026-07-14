@@ -2,7 +2,6 @@
 
 import { useRef, useState, type DragEvent, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { upload } from "@vercel/blob/client";
 import { IconUpload, IconImage, IconX, IconCheck, IconSpinner } from "@/components/admin/ui/icons";
 
 const ACCEPT = "image/png,image/jpeg,image/jpg,image/gif,image/webp,image/avif";
@@ -66,22 +65,51 @@ export function GallerySubmissionForm() {
     setProgress(0);
 
     try {
-      // 1) Upload the image directly from the browser to Vercel Blob.
+      // 1) Ask the server for a short-lived, scoped presigned PUT URL.
+      const pathname = `gallery-submissions/${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 8)}-${file.name}`;
+      const presignRes = await fetch("/api/blob", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ pathname, contentType: file.type }),
+      });
+      const presignData = await presignRes
+        .json()
+        .catch(() => ({ error: "Could not prepare the upload." }));
+      if (!presignRes.ok || !presignData.url) {
+        throw new Error(presignData.error || "Could not prepare the upload.");
+      }
+
+      // 2) Upload the image directly from the browser to Vercel Blob.
       //    This avoids the serverless request-body size limit.
-      const pathname = `gallery-submissions/${Date.now()}-${file.name}`;
-      const blob = await upload(pathname, file, {
-        access: "public",
-        handleUploadUrl: "/api/blob",
-        contentType: file.type,
-        multipart: file.size > 5 * 1024 * 1024,
-        onUploadProgress: ({ percentage }) => setProgress(Math.round(percentage)),
+      const blobUrl = await new Promise<string>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", presignData.url);
+        xhr.setRequestHeader("content-type", file.type);
+        xhr.upload.onprogress = (ev) => {
+          if (ev.lengthComputable) setProgress(Math.round((ev.loaded / ev.total) * 100));
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              resolve(JSON.parse(xhr.responseText).url);
+            } catch {
+              reject(new Error("Unexpected response from storage."));
+            }
+          } else {
+            reject(new Error("Upload failed. Please try again."));
+          }
+        };
+        xhr.onerror = () => reject(new Error("Network error during upload."));
+        xhr.send(file);
       });
 
-      // 2) Submit the resulting URL + metadata to create a pending record.
+      // 3) Submit the resulting URL + metadata to create a pending record.
       const res = await fetch("/api/gallery/submit", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ imageUrl: blob.url, title, description, submitterName, website }),
+        body: JSON.stringify({ imageUrl: blobUrl, title, description, submitterName, website }),
       });
       const data = await res.json().catch(() => ({ error: "Unexpected response." }));
       if (!res.ok || !data.success) {

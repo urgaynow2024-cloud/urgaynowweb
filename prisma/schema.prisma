@@ -89,11 +89,15 @@ model Link {
 }
 
 model GalleryImage {
-  id          String   @id @default(cuid())
-  title       String
-  description String   @default("")
-  imageUrl    String
-  createdAt   DateTime @default(now())
+  id              String    @id @default(cuid())
+  title           String
+  description     String    @default("")
+  imageUrl        String
+  status          String    @default("APPROVED") // PENDING | APPROVED | REJECTED
+  submitterName   String    @default("")
+  rejectionReason String    @default("")
+  reviewedAt      DateTime?
+  createdAt       DateTime  @default(now())
 }
 
 model GroupPhoto {

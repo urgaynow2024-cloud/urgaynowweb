@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "GalleryImage" ADD COLUMN "status" TEXT NOT NULL DEFAULT 'APPROVED',
+ADD COLUMN "submitterName" TEXT NOT NULL DEFAULT '',
+ADD COLUMN "rejectionReason" TEXT NOT NULL DEFAULT '',
+ADD COLUMN "reviewedAt" TIMESTAMP(3);

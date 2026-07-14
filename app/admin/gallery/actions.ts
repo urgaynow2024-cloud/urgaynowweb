@@ -36,3 +36,28 @@ export async function deleteGalleryImage(id: string) {
   revalidatePath("/gallery");
   redirect("/admin/gallery");
 }
+
+export async function approveGalleryImage(id: string) {
+  await requireAdmin();
+  await prisma.galleryImage.update({
+    where: { id },
+    data: { status: "APPROVED", rejectionReason: "", reviewedAt: new Date() },
+  });
+  revalidatePath("/", "layout");
+  revalidatePath("/gallery");
+  revalidatePath("/admin/gallery");
+  revalidatePath("/admin/moderation");
+}
+
+export async function rejectGalleryImage(id: string, formData: FormData) {
+  await requireAdmin();
+  const reason = String(formData.get("reason") || "").trim();
+  await prisma.galleryImage.update({
+    where: { id },
+    data: { status: "REJECTED", rejectionReason: reason, reviewedAt: new Date() },
+  });
+  revalidatePath("/", "layout");
+  revalidatePath("/gallery");
+  revalidatePath("/admin/gallery");
+  revalidatePath("/admin/moderation");
+}

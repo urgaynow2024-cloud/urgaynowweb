@@ -93,6 +93,10 @@ CREATE TABLE IF NOT EXISTS "GalleryImage" (
     "title" TEXT NOT NULL,
     "description" TEXT NOT NULL DEFAULT '',
     "imageUrl" TEXT NOT NULL,
+    "status" TEXT NOT NULL DEFAULT 'APPROVED',
+    "submitterName" TEXT NOT NULL DEFAULT '',
+    "rejectionReason" TEXT NOT NULL DEFAULT '',
+    "reviewedAt" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "GalleryImage_pkey" PRIMARY KEY ("id")

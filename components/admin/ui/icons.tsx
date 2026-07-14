@@ -148,6 +148,12 @@ export const IconEyeOff = (p: IconProps) => (
 export const IconActivity = (p: IconProps) => (
   <svg {...base(p)}><path d="M3 12h4l2.5 7 5-14L17 12h4" /></svg>
 );
+export const IconSpinner = (p: IconProps) => (
+  <svg {...base(p)} className={`animate-spin ${p.className ?? ""}`}>
+    <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="3" />
+    <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+  </svg>
+);
 export const IconAlert = (p: IconProps) => (
   <svg {...base(p)}><path d="M12 4 2.5 20h19Z" /><path d="M12 10v4M12 17.5v.01" /></svg>
 );

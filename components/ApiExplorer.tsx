@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { statusColor } from "@/lib/status/colors";
 
 const ENDPOINT = "/api/status/now";
 
@@ -11,14 +12,6 @@ type Snapshot = {
   text?: string;
   updatedAt?: string;
   degraded?: boolean;
-};
-
-const STATUS_TEXT: Record<string, string> = {
-  operational: "text-emerald-600 dark:text-emerald-400",
-  degraded_performance: "text-amber-600 dark:text-amber-400",
-  partial_outage: "text-amber-600 dark:text-amber-400",
-  major_outage: "text-red-600 dark:text-red-400",
-  maintenance: "text-sky-600 dark:text-sky-400",
 };
 
 export function ApiExplorer() {
@@ -53,10 +46,7 @@ export function ApiExplorer() {
     }
   }
 
-  const overall = data?.overall;
-  const statusClass = overall
-    ? STATUS_TEXT[overall] ?? "text-zinc-600 dark:text-zinc-300"
-    : "";
+  const c = statusColor(data?.overall ?? "unknown");
 
   return (
     <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
@@ -96,9 +86,11 @@ export function ApiExplorer() {
         {data && (
           <div>
             {data.label && (
-              <div className={`mb-3 flex items-center gap-2 text-lg font-semibold ${statusClass}`}>
-                <span aria-hidden>{data.emoji}</span>
-                <span>{data.label}</span>
+              <div className="mb-3">
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold ${c.soft} ${c.text}`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${c.dot}`} aria-hidden />
+                  {data.label}
+                </span>
               </div>
             )}
             <pre className="overflow-x-auto rounded-lg bg-zinc-950 p-4 text-xs leading-relaxed text-zinc-100">

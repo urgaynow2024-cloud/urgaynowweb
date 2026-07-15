@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { prisma } from "@/lib/db";
+import { safeQuery } from "@/lib/safeQuery";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminCard } from "@/components/admin/AdminCard";
 import { AdminStatCard } from "@/components/admin/AdminStatCard";
@@ -35,17 +36,29 @@ async function DashboardContent() {
     recentEvents,
     recentGroups,
   ] = await Promise.all([
-    prisma.staff.count(),
-    prisma.announcement.count(),
-    prisma.event.count(),
-    prisma.guide.count(),
-    prisma.link.count(),
-    prisma.galleryImage.count(),
-    prisma.groupPhoto.count(),
-    prisma.staff.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
-    prisma.announcement.findMany({ orderBy: { publishedAt: "desc" }, take: 5 }),
-    prisma.event.findMany({ orderBy: { startDateTime: "desc" }, take: 5 }),
-    prisma.groupPhoto.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
+    safeQuery(() => prisma.staff.count(), 0),
+    safeQuery(() => prisma.announcement.count(), 0),
+    safeQuery(() => prisma.event.count(), 0),
+    safeQuery(() => prisma.guide.count(), 0),
+    safeQuery(() => prisma.link.count(), 0),
+    safeQuery(() => prisma.galleryImage.count(), 0),
+    safeQuery(() => prisma.groupPhoto.count(), 0),
+    safeQuery(
+      () => prisma.staff.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
+      [] as Awaited<ReturnType<typeof prisma.staff.findMany>>,
+    ),
+    safeQuery(
+      () => prisma.announcement.findMany({ orderBy: { publishedAt: "desc" }, take: 5 }),
+      [] as Awaited<ReturnType<typeof prisma.announcement.findMany>>,
+    ),
+    safeQuery(
+      () => prisma.event.findMany({ orderBy: { startDateTime: "desc" }, take: 5 }),
+      [] as Awaited<ReturnType<typeof prisma.event.findMany>>,
+    ),
+    safeQuery(
+      () => prisma.groupPhoto.findMany({ orderBy: { createdAt: "desc" }, take: 5 }),
+      [] as Awaited<ReturnType<typeof prisma.groupPhoto.findMany>>,
+    ),
   ]);
 
   const totalContent = staffCount + announcementCount + eventCount + guideCount + linkCount + galleryCount + groupCount;

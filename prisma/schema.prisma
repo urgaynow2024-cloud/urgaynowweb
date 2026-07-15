@@ -132,3 +132,117 @@ model ShopDesign {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+// ---------------------------------------------------------------------------
+// System Status / Status page
+// ---------------------------------------------------------------------------
+
+model StatusService {
+  id             String   @id @default(cuid())
+  name           String
+  slug           String   @unique
+  description    String   @default("")
+  category       String   @default("Core") // Core | Payments | Platform
+  status         String   @default("operational")
+  autoManaged    Boolean  @default(true)
+  manualOverride Boolean  @default(false)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  healthChecks   HealthCheck[]
+  incidents      IncidentService[]
+  maintenances   MaintenanceService[]
+}
+
+model Incident {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("")
+  status      String   @default("investigating") // investigating | identified | monitoring | resolved
+  impact      String   @default("minor") // none | minor | major | critical
+  published   Boolean  @default(true)
+  resolvedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  updates     IncidentUpdate[]
+  services    IncidentService[]
+}
+
+model IncidentUpdate {
+  id         String   @id @default(cuid())
+  incidentId String
+  message    String
+  status     String   @default("investigating")
+  createdAt  DateTime @default(now())
+  incident   Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+
+  @@index([incidentId])
+}
+
+model IncidentService {
+  incidentId String
+  serviceId  String
+  incident   Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  service    StatusService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([incidentId, serviceId])
+}
+
+model Maintenance {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("")
+  status      String   @default("scheduled") // scheduled | in_progress | completed
+  startAt     DateTime
+  endAt       DateTime
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  updates     MaintenanceUpdate[]
+  services    MaintenanceService[]
+}
+
+model MaintenanceUpdate {
+  id           String     @id @default(cuid())
+  maintenanceId String
+  message      String
+  createdAt    DateTime   @default(now())
+  maintenance  Maintenance @relation(fields: [maintenanceId], references: [id], onDelete: Cascade)
+
+  @@index([maintenanceId])
+}
+
+model MaintenanceService {
+  maintenanceId String
+  serviceId     String
+  maintenance    Maintenance @relation(fields: [maintenanceId], references: [id], onDelete: Cascade)
+  service        StatusService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([maintenanceId, serviceId])
+}
+
+model HealthCheck {
+  id         String   @id @default(cuid())
+  serviceId  String
+  ok         Boolean
+  status     String   @default("operational")
+  latencyMs  Int?
+  detail      String   @default("")
+  checkedAt  DateTime @default(now())
+  service    StatusService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId, checkedAt])
+}
+
+model StatusSubscriber {
+  id              String   @id @default(cuid())
+  email           String?
+  discordWebhook  String?
+  pushEndpoint    String? // Web Push subscription endpoint (optional)
+  pushP256dh      String?
+  pushAuth        String?
+  verified        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  @@unique([email])
+}

@@ -45,6 +45,7 @@ const NAV: NavItem[] = [
   { label: "Shop Designs", href: "/admin/shop", icon: <IconTag size={19} /> },
   { label: "Moderation", href: "/admin/moderation", icon: <IconShield size={19} /> },
   { label: "Reports", href: "/admin/reports", icon: <IconFlag size={19} /> },
+  { label: "Status", href: "/admin/status", icon: <IconActivity size={19} /> },
   { label: "Settings", href: "/admin/settings", icon: <IconSettings size={19} /> },
 ];
 

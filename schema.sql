@@ -157,7 +157,7 @@ CREATE TABLE IF NOT EXISTS "ShopDesign" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "Announcement_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "ShopDesign_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex

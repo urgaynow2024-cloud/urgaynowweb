@@ -1,6 +1,7 @@
 import { Container, PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { StaffCard } from "@/components/StaffCard";
+import { getSetting } from "@/lib/settings";
 
 export const revalidate = 300;
 
@@ -10,9 +11,13 @@ export const metadata = {
 };
 
 export default async function StaffPage() {
-  const staff = await prisma.staff.findMany({
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-  });
+  const [staff, discord, vrchat] = await Promise.all([
+    prisma.staff.findMany({
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    }),
+    getSetting("discordInvite"),
+    getSetting("vrchatGroupUrl"),
+  ]);
 
   const ranks = Array.from(new Set(staff.map((s) => s.rank)));
 
@@ -52,6 +57,20 @@ export default async function StaffPage() {
                 </div>
               </section>
             ))}
+          </div>
+        )}
+        {(discord || vrchat) && (
+          <div className="mt-12 flex flex-wrap gap-3">
+            {discord && (
+              <a href={discord} target="_blank" rel="noopener noreferrer" className="btn-primary">
+                Join our Discord
+              </a>
+            )}
+            {vrchat && (
+              <a href={vrchat} target="_blank" rel="noopener noreferrer" className="btn-secondary">
+                VRChat Group
+              </a>
+            )}
           </div>
         )}
       </Container>

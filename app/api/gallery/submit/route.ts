@@ -1,6 +1,5 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { updateMetricBucket, getBucketStart } from "@/lib/status/instrumentation";
 
 export const runtime = "nodejs";
 
@@ -30,111 +29,74 @@ function isBlobUrl(url: string): boolean {
 }
 
 export async function POST(req: Request) {
-  const start = Date.now();
-  let status = 500;
-  let isSuccess = false;
-  let isFailure = true;
+  const ip =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("x-real-ip") ||
+    "unknown";
+
+  if (rateLimited(ip)) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Too many submissions. Please try again later.",
+      },
+      { status: 429 },
+    );
+  }
+
+  let payload: any;
+  try {
+    payload = await req.json();
+  } catch {
+    return NextResponse.json(
+      { success: false, error: "Invalid request." },
+      { status: 400 },
+    );
+  }
+
+  // Honeypot: bots that fill this hidden field get a fake success.
+  if (typeof payload.website === "string" && payload.website.trim()) {
+    return NextResponse.json({ success: true });
+  }
+
+  const imageUrl = String(payload.imageUrl || "").trim();
+  const rawTitle = String(payload.title || "").trim();
+  const description = String(payload.description || "").trim();
+  const submitterName = String(payload.submitterName || "").trim();
+
+  if (!isBlobUrl(imageUrl)) {
+    return NextResponse.json(
+      { success: false, error: "Please upload an image first." },
+      { status: 400 },
+    );
+  }
+
+  let title = rawTitle;
+  if (!title) {
+    const seg = imageUrl.split("/").pop() || "";
+    title = decodeURIComponent(seg).replace(/\.[^.]+$/, "") || "Untitled submission";
+  }
 
   try {
-    const ip =
-      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-      req.headers.get("x-real-ip") ||
-      "unknown";
-
-    if (rateLimited(ip)) {
-      status = 429;
-      return NextResponse.json(
-        { success: false, error: "Too many submissions. Please try again later." },
-        { status },
-      );
-    }
-
-    let payload: any;
-    try {
-      payload = await req.json();
-    } catch {
-      status = 400;
-      return NextResponse.json(
-        { success: false, error: "Invalid request." },
-        { status },
-      );
-    }
-
-    if (typeof payload.website === "string" && payload.website.trim()) {
-      status = 200;
-      isSuccess = true;
-      isFailure = false;
-      return NextResponse.json({ success: true });
-    }
-
-    const imageUrl = String(payload.imageUrl || "").trim();
-    const rawTitle = String(payload.title || "").trim();
-    const description = String(payload.description || "").trim();
-    const submitterName = String(payload.submitterName || "").trim();
-
-    if (!isBlobUrl(imageUrl)) {
-      status = 400;
-      return NextResponse.json(
-        { success: false, error: "Please upload an image first." },
-        { status },
-      );
-    }
-
-    let title = rawTitle;
-    if (!title) {
-      const seg = imageUrl.split("/").pop() || "";
-      title = decodeURIComponent(seg).replace(/\.[^.]+$/, "") || "Untitled submission";
-    }
-
-    try {
-      await prisma.galleryImage.create({
-        data: {
-          title,
-          description,
-          imageUrl,
-          submitterName,
-          status: "PENDING",
-        },
-      });
-      status = 200;
-      isSuccess = true;
-      isFailure = false;
-      return NextResponse.json({ success: true });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "unknown error";
-      console.error("[gallery/submit] failure", { ip, message });
-      status = 500;
-      return NextResponse.json(
-        { success: false, error: "Your photo could not be submitted. Please try again." },
-        { status },
-      );
-    }
-  } finally {
-    const durationMs = Date.now() - start;
-    const bucketStart = getBucketStart(1, new Date());
-    updateMetricBucket({
-      metricKey: "api_request_count:/api/gallery/submit",
-      bucketStart,
-      bucketSize: 1,
-      value: 1,
-      unit: "req",
-      source: "api-middleware",
-      environment: "production",
-      isSuccess,
-      isFailure,
-    }).catch(() => {});
-    if (isFailure) {
-      updateMetricBucket({
-        metricKey: "api_error_count:/api/gallery/submit",
-        bucketStart,
-        bucketSize: 1,
-        value: 1,
-        unit: "err",
-        source: "api-middleware",
-        environment: "production",
-        isSuccess: false,
-        isFailure: true,
-      }).catch(() => {});
-    }
+    await prisma.galleryImage.create({
+      data: {
+        title,
+        description,
+        imageUrl,
+        submitterName,
+        status: "PENDING",
+      },
+    });
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "unknown error";
+    console.error("[gallery/submit] failure", { ip, message });
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Your photo could not be submitted. Please try again.",
+      },
+      { status: 500 },
+    );
   }
 }

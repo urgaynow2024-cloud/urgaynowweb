@@ -1,12 +1,3 @@
 {
-  "crons": [
-    {
-      "path": "/api/status/now",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/status/cleanup",
-      "schedule": "0 1 * * *"
-    }
-  ]
+  "crons": []
 }

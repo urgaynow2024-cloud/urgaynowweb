@@ -26,6 +26,7 @@ export async function Footer() {
             <li><Link className="text-zinc-600 transition hover:text-brand-600 hover:underline dark:text-zinc-400" href="/staff">Staff</Link></li>
             <li><Link className="text-zinc-600 transition hover:text-brand-600 hover:underline dark:text-zinc-400" href="/events">Events</Link></li>
             <li><Link className="text-zinc-600 transition hover:text-brand-600 hover:underline dark:text-zinc-400" href="/guides">Guides & FAQ</Link></li>
+            <li><Link className="text-zinc-600 transition hover:text-brand-600 hover:underline dark:text-zinc-400" href="/api">API</Link></li>
           </ul>
         </div>
 

@@ -5,7 +5,7 @@ import { getSetting } from "@/lib/settings";
 import { Pagination } from "@/components/Pagination";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const PER_PAGE = 12;
 

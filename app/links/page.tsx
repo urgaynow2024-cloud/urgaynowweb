@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
 import { safeQuery } from "@/lib/safeQuery";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export const metadata = {
   title: "Links",

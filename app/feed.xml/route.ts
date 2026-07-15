@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { safeQuery } from "@/lib/safeQuery";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "https://urgaynow.com").replace(/\/$/, "");
 const SITE_NAME = process.env.NEXT_PUBLIC_SITE_NAME || "Ur Gay Now";

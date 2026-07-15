@@ -4,7 +4,7 @@ import { Markdown } from "@/components/Markdown";
 import { cn } from "@/lib/utils";
 import { safeQuery } from "@/lib/safeQuery";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export const metadata = {
   title: "Rules",

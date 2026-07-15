@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 import { Markdown } from "@/components/Markdown";
 import { formatDate } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const item = await prisma.announcement.findUnique({ where: { slug: params.slug } });

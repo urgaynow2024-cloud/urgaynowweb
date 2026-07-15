@@ -6,7 +6,7 @@ import { Pagination } from "@/components/Pagination";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/Skeleton";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata = {
   title: "Events",

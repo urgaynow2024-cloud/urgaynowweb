@@ -1,7 +1,7 @@
 import { Container, PageHeader } from "@/components/Container";
 import { getSetting } from "@/lib/settings";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export const metadata = {
   title: "Support & Contact",

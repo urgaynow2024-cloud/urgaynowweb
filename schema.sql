@@ -179,3 +179,13 @@ ALTER TABLE "Announcement" ADD COLUMN IF NOT EXISTS "discordMessageId" TEXT;
 
 -- CreateIndex
 CREATE UNIQUE INDEX IF NOT EXISTS "Announcement_discordMessageId_key" ON "Announcement"("discordMessageId");
+
+-- Performance indexes for common query patterns
+CREATE INDEX IF NOT EXISTS "Event_published_startDateTime_idx" ON "Event"("published", "startDateTime");
+CREATE INDEX IF NOT EXISTS "GalleryImage_status_createdAt_idx" ON "GalleryImage"("status", "createdAt");
+CREATE INDEX IF NOT EXISTS "Announcement_published_publishedAt_idx" ON "Announcement"("published", "publishedAt");
+CREATE INDEX IF NOT EXISTS "Rule_sortOrder_category_idx" ON "Rule"("sortOrder", "category");
+CREATE INDEX IF NOT EXISTS "Guide_sortOrder_category_idx" ON "Guide"("sortOrder", "category");
+CREATE INDEX IF NOT EXISTS "Partner_sortOrder_name_idx" ON "Partner"("sortOrder", "name");
+CREATE INDEX IF NOT EXISTS "GroupPhoto_createdAt_idx" ON "GroupPhoto"("createdAt");
+CREATE INDEX IF NOT EXISTS "HealthCheck_serviceId_checkedAt_idx" ON "HealthCheck"("serviceId", "checkedAt");

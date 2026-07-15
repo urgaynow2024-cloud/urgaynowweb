@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { IconStar, IconChevronLeft, IconChevronRight, IconX } from "@/components/admin/ui/icons";
 
 export type ShopDesignPublic = {
@@ -123,12 +124,12 @@ export function ShopGallery({ designs }: { designs: ShopDesignPublic[] }) {
                   className="relative block aspect-square overflow-hidden bg-ink-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 dark:bg-ink-800"
                   aria-label={`View ${d.name} images`}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src={d.imageUrl}
                     alt={d.imageAlt || d.name}
-                    className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.03]"
-                    loading="lazy"
+                    fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 25vw"
+                    className="object-contain transition-transform duration-300 group-hover:scale-[1.03]"
                   />
                   <span className="pointer-events-none absolute left-2 top-2 flex flex-wrap gap-1.5">
                     <span className="inline-flex items-center gap-1 rounded-full bg-ink-950/70 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-white">
@@ -175,8 +176,7 @@ export function ShopGallery({ designs }: { designs: ShopDesignPublic[] }) {
                           className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
                           aria-label={`View image ${i + 1} of ${d.name}`}
                         >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={g} alt="" className="h-full w-full object-cover" loading="lazy" />
+                          <Image src={g} alt="" width={48} height={48} className="h-full w-full object-cover" />
                         </button>
                       ))}
                     </div>
@@ -220,10 +220,11 @@ export function ShopGallery({ designs }: { designs: ShopDesignPublic[] }) {
           )}
 
           <figure className="max-h-[88vh] max-w-4xl" onClick={(e) => e.stopPropagation()}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={lightbox.images[lightbox.index]}
               alt={lightbox.alt || "Shop design image"}
+              width={1200}
+              height={800}
               className="max-h-[80vh] w-auto rounded-2xl object-contain shadow-2xl"
             />
             {lightbox.images.length > 1 && (

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { IconExternal } from "@/components/admin/ui/icons";
 
 export type PartnerCardData = {
@@ -19,12 +20,12 @@ export function PartnerCard({ partner }: { partner: PartnerCardData }) {
       <div className="flex flex-1 flex-col p-5">
         <div className="flex items-start justify-between gap-3">
           {partner.logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={partner.logoUrl}
               alt={`${partner.name} logo`}
+              width={64}
+              height={64}
               className="h-16 w-16 rounded-2xl object-cover shadow-sm"
-              loading="lazy"
             />
           ) : (
             <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-600 to-brand-700 text-2xl font-extrabold text-white shadow-sm">

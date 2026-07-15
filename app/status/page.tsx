@@ -14,7 +14,7 @@ import {
   deriveOverall,
 } from "@/lib/status/types";
 import { getMetricsForCharts } from "@/lib/status/metrics";
-import { dailyStatus, latestHealth, type DayStatus } from "@/lib/status/uptime";
+import { batchDailyStatus, batchLatestHealth, type DayStatus } from "@/lib/status/uptime";
 import { readSnapshotFromFile } from "@/lib/status/snapshot";
 import { STATUS_TIMEZONE, tzAbbrev } from "@/lib/status/format";
 import { StatusBanner } from "@/components/status/StatusBanner";
@@ -63,7 +63,6 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-export const dynamic = "force-dynamic";
 export const revalidate = 30;
 
 export const metadata: Metadata = {
@@ -171,24 +170,27 @@ export default async function StatusPage() {
   let serviceRows: ServiceRowData[] = [];
 
   if (dbAvailable && services) {
-    serviceRows = await Promise.all(
-      (services as any[]).map(async (s) => {
-        const [days, health] = await Promise.all([dailyStatus(s.id, 90), latestHealth(s.id)]);
-        return {
-          id: s.id,
-          name: s.name,
-          slug: s.slug,
-          category: s.category,
-          description: s.description ?? "",
-          status: s.status,
-          latencyMs: health?.latencyMs ?? null,
-          lastCheckedAt: health ? health.checkedAt.toISOString() : null,
-          detail: health?.detail ?? "",
-          days: (days as DayStatus[]) ?? [],
-          relatedIncident: incidentByService.get(s.id) ?? null,
-        } as ServiceRowData;
-      }),
-    );
+    const serviceIds = (services as any[]).map((s: any) => s.id);
+    const [daysMap, healthMap] = await Promise.all([
+      batchDailyStatus(serviceIds, 90),
+      batchLatestHealth(serviceIds),
+    ]);
+    serviceRows = (services as any[]).map((s: any) => {
+      const health = healthMap[s.id];
+      return {
+        id: s.id,
+        name: s.name,
+        slug: s.slug,
+        category: s.category,
+        description: s.description ?? "",
+        status: s.status,
+        latencyMs: health?.latencyMs ?? null,
+        lastCheckedAt: health ? health.checkedAt.toISOString() : null,
+        detail: health?.detail ?? "",
+        days: (daysMap[s.id] ?? []) as DayStatus[],
+        relatedIncident: incidentByService.get(s.id) ?? null,
+      } as ServiceRowData;
+    });
   } else if (snap && snap.services.length > 0) {
     const snapped = new Map(snap.services.map((sv) => [sv.slug, sv]));
     serviceRows = (snap.services as any[]).map((sv) => ({

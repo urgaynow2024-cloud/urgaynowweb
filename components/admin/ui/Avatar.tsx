@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 
 const sizeMap = {
   xs: "h-7 w-7 text-xs",
@@ -31,8 +32,7 @@ export function Avatar({
       className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand-100 font-semibold text-brand-700 ring-1 ring-black/5 dark:bg-brand-900/50 dark:text-brand-200 ${sizeMap[size]} ${className}`}
     >
       {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={src} alt={name ?? ""} className="h-full w-full object-cover" />
+        <Image src={src} alt={name ?? ""} width={40} height={40} className="h-full w-full object-cover" />
       ) : (
         initials
       )}

@@ -82,25 +82,26 @@ function daysAgo(n: number): Date {
  * there is no probe history yet (e.g. a freshly created service).
  */
 export async function computeUptime(serviceId: string): Promise<UptimeWindow[]> {
-  const windows: { key: UptimeWindow["key"]; label: string; days: number }[] = [
-    { key: "24h", label: "Last 24 Hours", days: 1 },
-    { key: "7d", label: "Last 7 Days", days: 7 },
-    { key: "30d", label: "Last 30 Days", days: 30 },
-    { key: "90d", label: "Last 90 Days", days: 90 },
+  const windows: { key: UptimeWindow["key"]; label: string; days: number; since: Date }[] = [
+    { key: "24h", label: "Last 24 Hours", days: 1, since: new Date(Date.now() - 24 * 3600 * 1000) },
+    { key: "7d", label: "Last 7 Days", days: 7, since: daysAgo(7) },
+    { key: "30d", label: "Last 30 Days", days: 30, since: daysAgo(30) },
+    { key: "90d", label: "Last 90 Days", days: 90, since: daysAgo(90) },
   ];
+
+  const since = windows[windows.length - 1].since;
+  const rows = await prisma.healthCheck
+    .findMany({
+      where: { serviceId, checkedAt: { gte: since } },
+      select: { ok: true, status: true, checkedAt: true },
+    })
+    .catch(() => []);
 
   const out: UptimeWindow[] = [];
   for (const w of windows) {
-    const since = w.days <= 1 ? new Date(Date.now() - 24 * 3600 * 1000) : daysAgo(w.days);
-    const rows = await prisma.healthCheck
-      .findMany({
-        where: { serviceId, checkedAt: { gte: since } },
-        select: { ok: true, status: true },
-      })
-      .catch(() => []);
-
-    const total = rows.length;
-    const up = rows.filter((r) => r.ok || r.status === "maintenance").length;
+    const relevant = rows.filter((r) => r.checkedAt >= w.since);
+    const total = relevant.length;
+    const up = relevant.filter((r) => r.ok || r.status === "maintenance").length;
     const uptimePct = total === 0 ? 100 : (up / total) * 100;
     out.push({ key: w.key, label: w.label, days: w.days, uptimePct, total, up });
   }
@@ -128,4 +129,73 @@ export async function uptimeSeries(serviceId: string, days = 90): Promise<{ date
   return Array.from(byDay.entries())
     .map(([date, v]) => ({ date, pct: v.total === 0 ? 100 : (v.up / v.total) * 100 }))
     .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+type DayServiceMap = Record<string, ServiceStatus>;
+
+/** Batch fetch daily status for multiple services in parallel. */
+export async function batchDailyStatus(serviceIds: string[], days = 90): Promise<Record<string, DayStatus[]>> {
+  const since = daysAgo(days);
+  const serviceIdSet = new Set(serviceIds);
+
+  const rows = await prisma.healthCheck
+    .findMany({
+      where: { serviceId: { in: serviceIds }, checkedAt: { gte: since } },
+      select: { serviceId: true, status: true, checkedAt: true },
+    })
+    .catch(() => []);
+
+  const worstByDay = new Map<string, DayServiceMap>();
+  for (const r of rows) {
+    if (!serviceIdSet.has(r.serviceId)) continue;
+    const day = r.checkedAt.toISOString().slice(0, 10);
+    const dayMap = worstByDay.get(day) || {};
+    const cur = dayMap[r.serviceId];
+    const statusRank = WORST_RANK[r.status as ServiceStatus];
+    if (!cur || statusRank > WORST_RANK[cur]) {
+      dayMap[r.serviceId] = r.status as ServiceStatus;
+    }
+    worstByDay.set(day, dayMap);
+  }
+
+  const now = new Date();
+  const allDays: string[] = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - i);
+    allDays.push(d.toISOString().slice(0, 10));
+  }
+
+  const result: Record<string, DayStatus[]> = {};
+  for (const sid of serviceIds) {
+    result[sid] = allDays.map((date) => ({
+      date,
+      status: worstByDay.get(date)?.[sid] ?? "unknown",
+    }));
+  }
+  return result;
+}
+
+/** Batch fetch latest health check for multiple services in parallel. */
+export async function batchLatestHealth(serviceIds: string[]): Promise<Record<string, Awaited<ReturnType<typeof latestHealth>>>> {
+  const rows = await prisma.healthCheck
+    .findMany({
+      where: { serviceId: { in: serviceIds } },
+      orderBy: { checkedAt: "desc" },
+      include: { service: true },
+    })
+    .catch(() => []);
+
+  const latestByService = new Map<string, (typeof rows)[number]>();
+  for (const r of rows) {
+    if (!latestByService.has(r.serviceId)) {
+      latestByService.set(r.serviceId, r);
+    }
+  }
+
+  const result: Record<string, Awaited<ReturnType<typeof latestHealth>>> = {};
+  for (const sid of serviceIds) {
+    result[sid] = latestByService.get(sid) ?? null;
+  }
+  return result;
 }

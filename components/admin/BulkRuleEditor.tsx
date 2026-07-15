@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Markdown } from "@/components/Markdown";
+import dynamic from "next/dynamic";
 import {
   IconPlus,
   IconTrash,
@@ -14,6 +14,8 @@ import {
   IconSparkles,
   IconLayers,
 } from "@/components/admin/ui/icons";
+
+const Markdown = dynamic(() => import("@/components/Markdown").then((m) => m.Markdown), { ssr: false });
 
 export type RuleEntry = {
   id: string;

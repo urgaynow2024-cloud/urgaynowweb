@@ -4,10 +4,11 @@ import { getSetting } from "@/lib/settings";
 import { safeQuery } from "@/lib/safeQuery";
 import { Markdown } from "@/components/Markdown";
 import Link from "next/link";
+import Image from "next/image";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/Skeleton";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata = {
   title: "About",
@@ -89,12 +90,12 @@ async function AboutContent() {
                   className="group overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 transition-all hover:-translate-y-1 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-800/40"
                 >
                   <div className="aspect-square overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={d.imageUrl}
                       alt={d.imageAlt || d.name}
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      loading="lazy"
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
                   <p className="truncate p-3 text-sm font-semibold text-zinc-900 dark:text-white">{d.name}</p>

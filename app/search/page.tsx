@@ -7,7 +7,7 @@ import { StaffCard } from "@/components/StaffCard";
 import { prisma } from "@/lib/db";
 import { safeQuery } from "@/lib/safeQuery";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata = {
   title: "Search",

@@ -159,11 +159,7 @@ export default async function AdminStatusPage() {
         <div className="border-b border-zinc-100 p-4 dark:border-zinc-800">
           <h2 className="font-semibold text-zinc-900 dark:text-white">Uptime (90 days)</h2>
         </div>
-        <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
-          {services.slice(0, 9).map((s: any) => (
-            <UptimeMini key={s.id} serviceId={s.id} name={s.name} />
-          ))}
-        </div>
+        <UptimeGrid services={services.slice(0, 9)} />
       </Card>
 
       {/* Health log */}
@@ -206,17 +202,29 @@ export default async function AdminStatusPage() {
   );
 }
 
-async function UptimeMini({ serviceId, name }: { serviceId: string; name: string }) {
-  const w = await safeQuery(
-    () => computeUptime(serviceId),
-    [{ key: "90d", label: "Last 90 Days", days: 90, uptimePct: 100, total: 0, up: 0 }] as any,
+async function UptimeGrid({ services }: { services: any[] }) {
+  const results = await Promise.all(
+    services.map((s: any) =>
+      safeQuery(
+        () => computeUptime(s.id),
+        [{ key: "90d", label: "Last 90 Days", days: 90, uptimePct: 100, total: 0, up: 0 }] as any,
+      ),
+    ),
   );
-  const pct = w.find((x: any) => x.key === "90d")?.uptimePct ?? 100;
-  const color = pct >= 99.9 ? "text-emerald-600 dark:text-emerald-400" : pct >= 98 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400";
+
   return (
-    <div className="rounded-xl border border-zinc-200 p-3 dark:border-zinc-800">
-      <p className="truncate text-sm text-zinc-700 dark:text-zinc-300">{name}</p>
-      <p className={`text-lg font-bold ${color}`}>{pct.toFixed(2)}%</p>
+    <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
+      {services.map((s: any, i: number) => {
+        const w = results[i];
+        const pct = w.find((x: any) => x.key === "90d")?.uptimePct ?? 100;
+        const color = pct >= 99.9 ? "text-emerald-600 dark:text-emerald-400" : pct >= 98 ? "text-amber-600 dark:text-amber-400" : "text-red-600 dark:text-red-400";
+        return (
+          <div key={s.id} className="rounded-xl border border-zinc-200 p-3 dark:border-zinc-800">
+            <p className="truncate text-sm text-zinc-700 dark:text-zinc-300">{s.name}</p>
+            <p className={`text-lg font-bold ${color}`}>{pct.toFixed(2)}%</p>
+          </div>
+        );
+      })}
     </div>
   );
 }

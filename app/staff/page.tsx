@@ -4,7 +4,7 @@ import { StaffCard } from "@/components/StaffCard";
 import { getSetting } from "@/lib/settings";
 import { safeQuery } from "@/lib/safeQuery";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata = {
   title: "Staff",

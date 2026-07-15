@@ -13,7 +13,7 @@ import { Skeleton, CardGridSkeleton } from "@/components/Skeleton";
 // Render fresh on every request so admin edits appear immediately. (Previously
 // `export const revalidate = 120` which let a static/edge cache serve stale HTML
 // after admin saves.)
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 async function HeroContent() {
   const [intro, tagline, discord, vrchat] = await safeQuery(

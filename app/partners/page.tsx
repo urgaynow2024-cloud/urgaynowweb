@@ -4,7 +4,7 @@ import { parseSocials } from "@/lib/utils";
 import { PartnerCard } from "@/components/PartnerCard";
 import { safeQuery } from "@/lib/safeQuery";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export const metadata = {
   title: "Partners & Affiliates",

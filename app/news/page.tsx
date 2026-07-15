@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { AnnouncementCard } from "@/components/AnnouncementCard";
 import { Pagination } from "@/components/Pagination";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const PAGE_SIZE = 9;
 

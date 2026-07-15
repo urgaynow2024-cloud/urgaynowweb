@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/db";
 import { deletePartner } from "./actions";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
@@ -98,8 +99,7 @@ export default async function AdminPartnersList({
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
                         {p.logoUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.logoUrl} alt={p.name} className="h-9 w-9 shrink-0 rounded-lg object-cover" />
+                          <Image src={p.logoUrl} alt={p.name} width={36} height={36} className="h-9 w-9 shrink-0 rounded-lg object-cover" />
                         ) : (
                           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-sm font-bold text-brand-600 dark:bg-brand-900/40 dark:text-brand-200">
                             {p.name.slice(0, 1).toUpperCase()}

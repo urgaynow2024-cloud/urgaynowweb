@@ -1,6 +1,6 @@
 import { buildStatusAtom } from "@/lib/status/rss";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 30;
 
 export async function GET() {
   const xml = await buildStatusAtom(process.env.NEXT_PUBLIC_SITE_URL || "https://urgaynow.com").catch(

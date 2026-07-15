@@ -201,13 +201,15 @@ export async function probeAll(): Promise<{ results: Record<string, ProbeResult>
  * list matches the requested services exactly.
  */
 export async function ensureDefaultServices(): Promise<void> {
-  for (const s of DEFAULT_SERVICES) {
-    await prisma.statusService.upsert({
-      where: { slug: s.slug },
-      create: { ...s, autoManaged: true },
-      update: { name: s.name, description: s.description, category: s.category },
-    });
-  }
+  await prisma.$transaction(
+    DEFAULT_SERVICES.map((s) =>
+      prisma.statusService.upsert({
+        where: { slug: s.slug },
+        create: { ...s, autoManaged: true },
+        update: { name: s.name, description: s.description, category: s.category },
+      }),
+    ),
+  );
   await prisma.statusService
     .deleteMany({ where: { slug: { in: ["ai", "cdn"] } } })
     .catch(() => {});
@@ -234,12 +236,10 @@ export async function runHealthChecks(): Promise<{
   const services = await prisma.statusService.findMany();
   const snapServices: SnapshotService[] = [];
 
-  for (const svc of services) {
+  const healthCreates = services.map((svc) => {
     const r = results[svc.slug];
-    if (!r) continue;
-    const status = mapStatus(r);
-
-    await prisma.healthCheck
+    if (!r) return Promise.resolve(undefined);
+    return prisma.healthCheck
       .create({
         data: {
           serviceId: svc.id,
@@ -249,14 +249,29 @@ export async function runHealthChecks(): Promise<{
           detail: r.detail ?? "",
         },
       })
-      .catch(() => {});
+      .catch(() => undefined);
+  });
 
+  const serviceUpdates = services.map((svc) => {
+    const r = results[svc.slug];
+    if (!r) return Promise.resolve();
+    const status = mapStatus(r);
     if (svc.autoManaged && !svc.manualOverride && svc.status !== status) {
-      await prisma.statusService
+      return prisma.statusService
         .update({ where: { id: svc.id }, data: { status } })
         .catch(() => {});
     }
+    return Promise.resolve();
+  });
 
+  await Promise.all(healthCreates);
+  await Promise.all(serviceUpdates);
+
+  for (let i = 0; i < services.length; i++) {
+    const svc = services[i];
+    const r = results[svc.slug];
+    if (!r) continue;
+    const status = mapStatus(r);
     snapServices.push({
       id: svc.id,
       name: svc.name,

@@ -1,8 +1,9 @@
 import { Container, PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export default async function GroupPhotoPage({ params }: { params: { id: string } }) {
   const group = await prisma.groupPhoto.findUnique({ where: { id: params.id } });
@@ -17,11 +18,12 @@ export default async function GroupPhotoPage({ params }: { params: { id: string 
       {/* Banner */}
       {bannerUrl && (
         <div className="relative h-48 sm:h-64 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={bannerUrl}
             alt={`${group.title} banner`}
-            className="h-full w-full object-cover"
+            fill
+            sizes="100vw"
+            className="object-cover"
           />
         </div>
       )}
@@ -30,11 +32,12 @@ export default async function GroupPhotoPage({ params }: { params: { id: string 
         <div className="lg:col-span-1">
           <div className="card">
             <div className="relative w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-zinc-800">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={group.imageUrl}
                 alt={group.title}
-                className="w-full object-contain"
+                fill
+                sizes="100vw"
+                className="object-contain"
               />
             </div>
             <div className="mt-4">

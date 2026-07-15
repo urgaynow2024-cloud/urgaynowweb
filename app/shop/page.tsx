@@ -6,7 +6,7 @@ import { ShopGallery, type ShopDesignPublic } from "./ShopGallery";
 import { Skeleton } from "@/components/Skeleton";
 import { IconTag, IconClock } from "@/components/admin/ui/icons";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export const metadata = {
   title: "Shop",

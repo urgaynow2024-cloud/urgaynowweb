@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/db";
 import { deleteGalleryImage, approveGalleryImage, rejectGalleryImage } from "./actions";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
@@ -142,8 +143,7 @@ export default async function AdminGalleryList({
               return (
                 <div key={g.id} className="card card-hover overflow-hidden">
                   <div className="group relative aspect-square">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={g.imageUrl} alt={g.title} className="h-full w-full object-cover" />
+                    <Image src={g.imageUrl} alt={g.title} fill className="h-full w-full object-cover" />
                     <div className="absolute inset-0 flex items-center justify-center gap-2 bg-ink-950/60 opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100">
                       <Link href={`/admin/gallery/${g.id}`} className="btn-secondary btn-sm">
                         <IconEdit size={14} /> Edit
@@ -204,12 +204,11 @@ export default async function AdminGalleryList({
           {groupPhotos.length === 0 ? (
             <p className="text-sm text-ink-500 dark:text-ink-400">No group photos yet.</p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {groupPhotos.map((g) => (
-                <div key={g.id} className="card overflow-hidden">
-                  <div className="relative aspect-[4/3] overflow-hidden bg-ink-100 dark:bg-ink-800">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={g.bannerUrl || g.imageUrl} alt={g.title} className="h-full w-full object-cover" />
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {groupPhotos.map((g) => (
+                  <div key={g.id} className="card overflow-hidden">
+                    <div className="relative aspect-[4/3] overflow-hidden bg-ink-100 dark:bg-ink-800">
+                      <Image src={g.bannerUrl || g.imageUrl} alt={g.title} fill className="h-full w-full object-cover" />
                     <div className="absolute left-2 top-2">
                       <Badge tone={g.bannerUrl ? "success" : "warning"}>
                         {g.bannerUrl ? "Ready" : "No banner"}

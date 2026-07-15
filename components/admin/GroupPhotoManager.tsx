@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState, type DragEvent } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { deleteGroupPhoto, createGroupPhotoQuick } from "@/app/admin/group-photos/actions";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { EmptyState } from "@/components/admin/ui/Avatar";
@@ -152,8 +153,7 @@ export function GroupPhotoManager({ items }: { items: GroupPhotoItem[] }) {
           {filtered.map((g) => (
             <div key={g.id} className="card group overflow-hidden card-hover">
               <div className="relative aspect-[4/3] overflow-hidden bg-ink-100 dark:bg-ink-800">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={g.bannerUrl || g.imageUrl} alt={g.title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <Image src={g.bannerUrl || g.imageUrl} alt={g.title} fill className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 <div className="absolute inset-0 flex items-center justify-center gap-2 bg-ink-950/55 opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100">
                   <Link href={`/admin/group-photos/${g.id}`} className="btn-secondary btn-sm"><IconEdit size={14} /> Edit</Link>
                   <ConfirmDeleteButton

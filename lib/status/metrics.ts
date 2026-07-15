@@ -150,19 +150,26 @@ export type MetricSeries = {
 
 /** Read the most recent `limit` samples for every registered metric. */
 export async function getMetricsForCharts(limit = 90): Promise<MetricSeries[]> {
-  const out: MetricSeries[] = [];
-  for (const def of METRIC_DEFS) {
-    const rows = await prisma.statusMetric
-      .findMany({
-        where: { key: def.key },
-        orderBy: { recordedAt: "asc" },
-        take: limit,
-        select: { value: true, recordedAt: true, status: true },
-      })
-      .catch(() => []);
-    out.push({ def, points: rows as MetricPoint[] });
+  const keys = METRIC_KEYS;
+  const rows = await prisma.statusMetric
+    .findMany({
+      where: { key: { in: keys } },
+      orderBy: { recordedAt: "asc" },
+      select: { key: true, value: true, recordedAt: true, status: true },
+    })
+    .catch(() => []);
+
+  const grouped = new Map<string, MetricPoint[]>();
+  for (const r of rows) {
+    const arr = grouped.get(r.key) || [];
+    arr.push(r as MetricPoint);
+    grouped.set(r.key, arr);
   }
-  return out;
+
+  return METRIC_DEFS.map((def) => ({
+    def,
+    points: (grouped.get(def.key) || []).slice(-limit),
+  }));
 }
 
 /** Latest single value per metric key (for sparkline numbers in the admin). */

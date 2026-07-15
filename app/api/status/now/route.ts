@@ -1,58 +1,114 @@
 ﻿import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { runHealthChecks, ensureDefaultServices } from "@/lib/status/health";
-import { deriveOverall } from "@/lib/status/types";
-import { OVERALL_STATUS_META, type OverallStatus } from "@/lib/status/types";
+import {
+  deriveOverall,
+  OVERALL_STATUS_META,
+  type OverallStatus,
+  type ServiceStatus,
+} from "@/lib/status/types";
+import {
+  readSnapshot,
+  readSnapshotFromFile,
+  writeSnapshot,
+  type StatusSnapshot,
+} from "@/lib/status/snapshot";
+import { formatDateTime } from "@/lib/status/format";
 
-// Public, unauthenticated live snapshot. Designed to stay useful even when the
-// database is unreachable: if we can't read persisted service rows, we fall back
-// to a fresh live probe so the status page still reflects reality during an outage.
+// Public, unauthenticated live snapshot. Resilient by design:
+//   1. If the database is reachable, derive the current status live (fresh).
+//   2. If the database is down, serve the last cached snapshot from local
+//      storage (written by the health-check job) so the page still works.
+//   3. If even that is unavailable, run a live probe (no DB).
+//   4. Only as a last resort report "Status Unavailable".
+// At no point do we fabricate an "operational" status while checks are failing.
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  // --- Path 1: live read from the database (authoritative when available) ---
   try {
     await ensureDefaultServices();
-
     const services = await prisma.statusService.findMany();
+    if (services.length > 0) {
+      const overall = deriveOverall(services.map((s) => ({ status: s.status as ServiceStatus }))) as OverallStatus;
+      const om = OVERALL_STATUS_META[overall as OverallStatus];
+      const [activeIncidents, activeMaintenance, subscriberCount] = await Promise.all([
+        prisma.incident.count({ where: { published: true, status: { not: "resolved" } } }).catch(() => 0),
+        prisma.maintenance.count({ where: { published: true, status: { in: ["scheduled", "in_progress"] } } }).catch(() => 0),
+        prisma.statusSubscriber.count().catch(() => 0),
+      ]);
 
-    if (services.length === 0) {
-      // No persisted state — probe live so the page still works.
-      const { overall, results } = await runHealthChecks();
-      return NextResponse.json(toSnapshot(overall, results), {
-        headers: { "Cache-Control": "no-store" },
-      });
-    }
-
-    const overall = deriveOverall(services.map((s) => ({ status: s.status as any }))) as OverallStatus;
-    const om = OVERALL_STATUS_META[overall as OverallStatus];
-    const anyDown = services.some((s) => s.status !== "operational" && s.status !== "maintenance");
-    return NextResponse.json(
-      {
+      const snapshot: StatusSnapshot = {
         overall,
         label: om.label,
         emoji: om.emoji,
         text: om.text,
-        updatedAt: new Date().toLocaleTimeString(),
-        degraded: anyDown,
-      },
-      { headers: { "Cache-Control": "no-store" } },
-    );
-  } catch {
-    // Last-resort fallback: live probe without DB.
-    try {
-      const { overall } = await runHealthChecks();
-      const om = OVERALL_STATUS_META[overall as OverallStatus];
-      return NextResponse.json(
-        { overall, label: om.label, emoji: om.emoji, text: om.text, updatedAt: new Date().toLocaleTimeString() },
-        { headers: { "Cache-Control": "no-store" } },
-      );
-    } catch {
-      return NextResponse.json(
-        { overall: "major_outage", label: "Status Unavailable", emoji: "⚠️", text: "text-red-600", updatedAt: new Date().toLocaleTimeString() },
-        { status: 200, headers: { "Cache-Control": "no-store" } },
-      );
+        generatedAt: new Date().toISOString(),
+        source: "db",
+        dbAvailable: true,
+        services: services.map((s) => ({
+          id: s.id,
+          name: s.name,
+          slug: s.slug,
+          category: s.category,
+          status: s.status,
+          latencyMs: null,
+          lastCheckedAt: null,
+          detail: "",
+        })),
+        activeIncidents,
+        activeMaintenance,
+        subscriberCount,
+      };
+      // Keep the resilient cache fresh for when the DB *does* go down later.
+      writeSnapshot(snapshot);
+      return json(snapshot);
     }
+  } catch {
+    /* database unreachable — continue to cached snapshot */
   }
+
+  // --- Path 2: serve the last cached snapshot (independent of the DB) ---
+  const cached = readSnapshot() ?? readSnapshotFromFile();
+  if (cached) {
+    return json({ ...cached, source: "snapshot" as const });
+  }
+
+  // --- Path 3: live probe without the database ---
+  try {
+    const { overall } = await runHealthChecks();
+    const om = OVERALL_STATUS_META[overall as OverallStatus];
+    return json({
+      overall,
+      label: om.label,
+      emoji: om.emoji,
+      text: om.text,
+      generatedAt: new Date().toISOString(),
+      source: "live" as const,
+      dbAvailable: false,
+      services: [],
+      activeIncidents: 0,
+      activeMaintenance: 0,
+      subscriberCount: 0,
+    });
+  } catch {
+    /* fall through */
+  }
+
+  // --- Path 4: total failure ---
+  return json({
+    overall: "major_outage",
+    label: "Status Unavailable",
+    emoji: "⚠️",
+    text: "text-red-600 dark:text-red-400",
+    generatedAt: new Date().toISOString(),
+    source: "fallback" as const,
+    dbAvailable: false,
+    services: [],
+    activeIncidents: 0,
+    activeMaintenance: 0,
+    subscriberCount: 0,
+  });
 }
 
 export async function POST() {
@@ -62,17 +118,12 @@ export async function POST() {
   return NextResponse.json({ overall, label: om.label });
 }
 
-function toSnapshot(overall: string, _results: Record<string, unknown>) {
-  const om = OVERALL_STATUS_META[overall as OverallStatus];
-  return {
-    overall,
-    label: om.label,
-    emoji: om.emoji,
-    text: om.text,
-    updatedAt: new Date().toLocaleTimeString(),
-    degraded: overall !== "operational" && overall !== "maintenance",
+function json(body: unknown) {
+  const withLabel = {
+    ...(body as Record<string, unknown>),
+    updatedLabel: formatDateTime((body as any).generatedAt ?? new Date().toISOString()),
   };
+  return NextResponse.json(withLabel, {
+    headers: { "Cache-Control": "no-store" },
+  });
 }
-
-
-

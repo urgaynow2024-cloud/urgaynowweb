@@ -2,6 +2,64 @@ import "server-only";
 import { prisma } from "@/lib/db";
 import type { ServiceStatus } from "@/lib/status/types";
 
+export type DayStatus = {
+  date: string; // YYYY-MM-DD
+  status: ServiceStatus | "unknown";
+};
+
+const WORST_RANK: Record<ServiceStatus | "unknown", number> = {
+  unknown: 0,
+  operational: 1,
+  maintenance: 2,
+  degraded: 3,
+  partial_outage: 4,
+  major_outage: 5,
+};
+
+/** Most recent HealthCheck for a service (or null). */
+export async function latestHealth(serviceId: string) {
+  return prisma.healthCheck
+    .findFirst({
+      where: { serviceId },
+      orderBy: { checkedAt: "desc" },
+    })
+    .catch(() => null);
+}
+
+/**
+ * Per-day status for the last `days` days. Each day is coloured by the WORST
+ * status observed in that day's checks; days with no checks are "unknown"
+ * (rendered as a neutral square, never as operational).
+ */
+export async function dailyStatus(serviceId: string, days = 90): Promise<DayStatus[]> {
+  const since = daysAgo(days);
+  const rows = await prisma.healthCheck
+    .findMany({
+      where: { serviceId, checkedAt: { gte: since } },
+      select: { status: true, checkedAt: true },
+    })
+    .catch(() => []);
+
+  const worstByDay = new Map<string, ServiceStatus>();
+  for (const r of rows) {
+    const day = r.checkedAt.toISOString().slice(0, 10);
+    const cur = worstByDay.get(day);
+    if (!cur || WORST_RANK[r.status as ServiceStatus] > WORST_RANK[cur]) {
+      worstByDay.set(day, r.status as ServiceStatus);
+    }
+  }
+
+  const out: DayStatus[] = [];
+  const now = new Date();
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(now.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    out.push({ date: key, status: worstByDay.get(key) ?? "unknown" });
+  }
+  return out;
+}
+
 export type UptimeWindow = {
   key: "24h" | "7d" | "30d" | "90d";
   label: string;

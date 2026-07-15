@@ -66,3 +66,51 @@ function escapeXml(s: string): string {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&apos;");
 }
+
+function toIso(d: Date | string): string {
+  return new Date(d).toISOString();
+}
+
+/** Build an Atom 1.0 feed of incidents + maintenance for public subscribers. */
+export async function buildStatusAtom(siteUrl = "https://urgaynow.com"): Promise<string> {
+  const base = siteUrl.replace(/\/$/, "");
+  const incidents = await prisma.incident
+    .findMany({ where: { published: true }, orderBy: { createdAt: "desc" }, take: 50 })
+    .catch(() => []);
+  const maintenances = await prisma.maintenance
+    .findMany({ where: { published: true }, orderBy: { startAt: "desc" }, take: 50 })
+    .catch(() => []);
+
+  const entries: { title: string; content: string; link: string; updated: string }[] = [
+    ...incidents.map((i) => ({
+      title: `[Incident: ${INCIDENT_STATUS_META[i.status as IncidentStatus].label}] ${i.title}`,
+      content: i.description || i.title,
+      link: `${base}/status#incident-${i.id}`,
+      updated: toIso(i.updatedAt),
+    })),
+    ...maintenances.map((m) => ({
+      title: `[Maintenance: ${MAINTENANCE_STATUS_META[m.status as MaintenanceStatus].label}] ${m.title}`,
+      content: m.description || m.title,
+      link: `${base}/status#maintenance-${m.id}`,
+      updated: toIso(m.updatedAt),
+    })),
+  ].sort((a, b) => Date.parse(b.updated) - Date.parse(a.updated));
+
+  const itemsXml = entries
+    .map(
+      (e) =>
+        `    <entry>\n      <title>${escapeXml(e.title)}</title>\n      <link href="${escapeXml(e.link)}" />\n      <id>${escapeXml(e.link)}</id>\n      <updated>${e.updated}</updated>\n      <content type="text">${escapeXml(e.content)}</content>\n    </entry>`,
+    )
+    .join("\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Ur Gay Now — System Status</title>
+  <id>${base}/status</id>
+  <link rel="self" href="${base}/status/atom.xml" />
+  <link rel="alternate" href="${base}/status" />
+  <subtitle>Incidents and maintenance for the Ur Gay Now platform.</subtitle>
+  <updated>${new Date().toISOString()}</updated>
+${itemsXml}
+</feed>`;
+}

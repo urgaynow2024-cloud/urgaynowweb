@@ -63,6 +63,7 @@ export async function createIncident(formData: FormData) {
   const status = str(formData.get("status")) || "investigating";
   const impact = str(formData.get("impact")) || "minor";
   const serviceIds = arr(formData.get("serviceIds"));
+  const published = formData.get("published") !== "off";
   if (!title) redirect("/admin/status/incidents/new?error=1");
   if (!VALID_INCIDENT.has(status as any)) redirect("/admin/status/incidents/new?error=1");
 
@@ -72,10 +73,23 @@ export async function createIncident(formData: FormData) {
       description,
       status,
       impact,
+      published,
       services: { create: serviceIds.map((sid) => ({ serviceId: sid })) },
       updates: { create: { message: description || title, status } },
     },
   });
+
+  if (published) {
+    await notifySubscribers({
+      title: `📢 Incident: ${title}`,
+      body: `Status: ${status}. ${description}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL || "https://urgaynow.com"}/status`,
+    }).catch(() => {});
+    await announceToStatusWebhook({
+      title: `Incident: ${title}`,
+      body: `${status} — ${description}`,
+    }).catch(() => {});
+  }
 
   await notifySubscribers({
     title: `📢 Incident: ${title}`,
@@ -124,6 +138,7 @@ export async function createMaintenance(formData: FormData) {
   const startAt = str(formData.get("startAt"));
   const endAt = str(formData.get("endAt"));
   const serviceIds = arr(formData.get("serviceIds"));
+  const published = formData.get("published") !== "off";
   if (!title || !startAt || !endAt) redirect("/admin/status/maintenance/new?error=1");
   if (!VALID_MAINT.has(status as any)) redirect("/admin/status/maintenance/new?error=1");
 
@@ -132,6 +147,7 @@ export async function createMaintenance(formData: FormData) {
       title,
       description,
       status,
+      published,
       startAt: new Date(startAt),
       endAt: new Date(endAt),
       services: { create: serviceIds.map((sid) => ({ serviceId: sid })) },

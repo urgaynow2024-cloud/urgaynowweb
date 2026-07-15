@@ -52,5 +52,6 @@ export const NAV_ITEMS: NavItem[] = [
   },
   { label: "Shop", href: "/shop" },
   { label: "Support", href: "/support" },
+  { label: "Status", href: "/status" },
   { label: "API", href: "/api" },
 ];

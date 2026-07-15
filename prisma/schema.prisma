@@ -246,3 +246,31 @@ model StatusSubscriber {
 
   @@unique([email])
 }
+
+// Real, stored monitoring data for the live metrics charts. Each row is one
+// measured sample (latency, success rate, request volume, etc.) captured by a
+// health-check pass. Charts read straight from this table; if a metric has no
+// rows yet we show a "No monitoring data available" state rather than faking it.
+model StatusMetric {
+  id          String   @id @default(cuid())
+  // Stable metric key, e.g. "website_response_time", "api_latency",
+  // "db_response_time", "api_error_rate", "checkout_success_rate".
+  key         String
+  // Human label shown on the chart, e.g. "Website response time".
+  label       String
+  // Unit for display, e.g. "ms", "req/s", "%".
+  unit        String   @default("")
+  // "gauge" for point-in-time values (latency), "rate" for 0-100 percentages.
+  kind        String   @default("gauge")
+  // The measured value.
+  value       Float
+  // Derived health for the sample (operational | degraded | partial_outage | major_outage).
+  status      String   @default("operational")
+  detail      String   @default("")
+  // Optional owning service (for per-service metric breakdowns).
+  serviceId   String?
+  recordedAt  DateTime @default(now())
+
+  @@index([key, recordedAt])
+  @@index([recordedAt])
+}

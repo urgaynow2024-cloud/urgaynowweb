@@ -18,6 +18,7 @@ const tables = [
   "incident",
   "maintenance",
   "statusSubscriber",
+  "statusMetric",
 ];
 
 async function main() {

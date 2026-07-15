@@ -14,9 +14,12 @@ import {
   OVERALL_STATUS_META,
   deriveOverall,
   isActiveIncident,
+  isActiveMaintenance,
 } from "@/lib/status/types";
 import { updateServiceStatus, ensureServices } from "./actions";
 import { computeUptime } from "@/lib/status/uptime";
+import { getLatestMetrics, METRIC_DEFS } from "@/lib/status/metrics";
+import { statusColor } from "@/lib/status/colors";
 
 export const metadata = { title: "Status", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -41,6 +44,11 @@ export default async function AdminStatusPage() {
   const overall = deriveOverall(services.map((s: any) => ({ status: s.status as ServiceStatus }))) as OverallStatus;
   const om = OVERALL_STATUS_META[overall as OverallStatus];
   const activeCount = incidents.filter((i: any) => isActiveIncident(i.status as IncidentStatus)).length;
+
+  const [subscriberCount, latestMetrics] = await Promise.all([
+    safeQuery(() => prisma.statusSubscriber.count(), 0),
+    getLatestMetrics().catch(() => ({} as Record<string, any>)),
+  ]);
 
   return (
     <div>
@@ -70,6 +78,43 @@ export default async function AdminStatusPage() {
           <Link href="/admin/status/maintenance" className="btn-secondary btn-sm">
             <IconCalendar size={16} /> Maintenance
           </Link>
+        </div>
+      </Card>
+
+      {/* Stats strip */}
+      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <Stat label="Services" value={String(services.length)} />
+        <Stat label="Active incidents" value={String(activeCount)} />
+        <Stat label="Subscribers" value={String(subscriberCount)} />
+        <Stat label="Maintenance" value={String(maintenances.filter((m: any) => isActiveMaintenance(m.status as MaintenanceStatus)).length)} />
+      </div>
+
+      {/* Latest metrics */}
+      <Card className="mb-6">
+        <div className="border-b border-zinc-100 p-4 dark:border-zinc-800">
+          <h2 className="font-semibold text-zinc-900 dark:text-white">Latest measured metrics</h2>
+        </div>
+        <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Object.entries(latestMetrics as Record<string, any>).length === 0 && (
+            <p className="col-span-full text-sm text-zinc-500">No metrics recorded yet. Run a health check to capture samples.</p>
+          )}
+          {Object.entries(latestMetrics as Record<string, { value: number; recordedAt: string; status: string }>).map(([key, m]) => {
+            const def = METRIC_DEFS.find((d) => d.key === key);
+            if (!def || !m) return null;
+            const c = statusColor(m.status);
+            return (
+              <div key={key} className="rounded-xl border border-zinc-200 p-3 dark:border-zinc-800">
+                <div className="flex items-center justify-between">
+                  <p className="truncate text-sm text-zinc-700 dark:text-zinc-300">{def.label}</p>
+                  <span className={`h-2 w-2 rounded-full ${c.dot}`} aria-hidden />
+                </div>
+                <p className="mt-1 text-lg font-bold text-zinc-900 dark:text-white">
+                  {m.value.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+                  <span className="ml-1 text-xs font-medium text-zinc-400">{def.unit}</span>
+                </p>
+              </div>
+            );
+          })}
         </div>
       </Card>
 
@@ -172,6 +217,15 @@ async function UptimeMini({ serviceId, name }: { serviceId: string; name: string
     <div className="rounded-xl border border-zinc-200 p-3 dark:border-zinc-800">
       <p className="truncate text-sm text-zinc-700 dark:text-zinc-300">{name}</p>
       <p className={`text-lg font-bold ${color}`}>{pct.toFixed(2)}%</p>
+    </div>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-ink-900">
+      <p className="text-xs font-medium uppercase tracking-wider text-zinc-400">{label}</p>
+      <p className="mt-1 text-2xl font-bold text-zinc-900 dark:text-white">{value}</p>
     </div>
   );
 }

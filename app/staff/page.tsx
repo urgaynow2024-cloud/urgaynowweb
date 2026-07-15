@@ -2,6 +2,7 @@ import { Container, PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { StaffCard } from "@/components/StaffCard";
 import { getSetting } from "@/lib/settings";
+import { safeQuery } from "@/lib/safeQuery";
 
 export const dynamic = "force-dynamic";
 
@@ -11,10 +12,16 @@ export const metadata = {
 };
 
 export default async function StaffPage() {
-  const [staff, discord, vrchat] = await Promise.all([
-    prisma.staff.findMany({
-      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-    }),
+  // Wrapped in safeQuery: if the database is unreachable, the page renders the
+  // empty-state instead of throwing a server-side exception (the /staff crash).
+  const staff = await safeQuery(
+    () =>
+      prisma.staff.findMany({
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      }),
+    [] as Awaited<ReturnType<typeof prisma.staff.findMany>>,
+  );
+  const [discord, vrchat] = await Promise.all([
     getSetting("discordInvite"),
     getSetting("vrchatGroupUrl"),
   ]);

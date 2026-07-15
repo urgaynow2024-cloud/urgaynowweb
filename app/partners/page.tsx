@@ -2,6 +2,7 @@ import { Container, PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { parseSocials } from "@/lib/utils";
 import { PartnerCard } from "@/components/PartnerCard";
+import { safeQuery } from "@/lib/safeQuery";
 
 export const dynamic = "force-dynamic";
 
@@ -13,9 +14,13 @@ export const metadata = {
 const TAG_ORDER = ["Partner", "Affiliate", "Friend Community"];
 
 export default async function PartnersPage() {
-  const partners = await prisma.partner.findMany({
-    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-  });
+  const partners = await safeQuery(
+    () =>
+      prisma.partner.findMany({
+        orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      }),
+    [] as Awaited<ReturnType<typeof prisma.partner.findMany>>,
+  );
 
   const tags = Array.from(new Set(partners.map((p) => p.tag).filter(Boolean)));
   tags.sort((a, b) => {

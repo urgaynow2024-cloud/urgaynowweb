@@ -2,6 +2,7 @@ import { Container, PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { Markdown } from "@/components/Markdown";
 import { cn } from "@/lib/utils";
+import { safeQuery } from "@/lib/safeQuery";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,10 @@ export const metadata = {
 };
 
 export default async function RulesPage() {
-  const rules = await prisma.rule.findMany({ orderBy: [{ sortOrder: "asc" }, { title: "asc" }] });
+  const rules = await safeQuery(
+    () => prisma.rule.findMany({ orderBy: [{ sortOrder: "asc" }, { title: "asc" }] }),
+    [] as Awaited<ReturnType<typeof prisma.rule.findMany>>,
+  );
 
   const categories = Array.from(new Set(rules.map((r) => r.category)));
 

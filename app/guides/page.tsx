@@ -1,6 +1,7 @@
 import { Container, PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { Markdown } from "@/components/Markdown";
+import { safeQuery } from "@/lib/safeQuery";
 
 export const dynamic = "force-dynamic";
 
@@ -10,9 +11,13 @@ export const metadata = {
 };
 
 export default async function GuidesPage() {
-  const guides = await prisma.guide.findMany({
-    orderBy: [{ sortOrder: "asc" }, { question: "asc" }],
-  });
+  const guides = await safeQuery(
+    () =>
+      prisma.guide.findMany({
+        orderBy: [{ sortOrder: "asc" }, { question: "asc" }],
+      }),
+    [] as Awaited<ReturnType<typeof prisma.guide.findMany>>,
+  );
   const categories = Array.from(new Set(guides.map((g) => g.category)));
 
   return (

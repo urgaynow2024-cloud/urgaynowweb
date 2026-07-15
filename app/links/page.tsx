@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
+import { safeQuery } from "@/lib/safeQuery";
 
 export const dynamic = "force-dynamic";
 
@@ -10,8 +11,11 @@ export const metadata = {
 };
 
 export default async function LinksPage() {
-  const [links, discord, vrchat] = await Promise.all([
-    prisma.link.findMany({ orderBy: { sortOrder: "asc" } }),
+  const links = await safeQuery(
+    () => prisma.link.findMany({ orderBy: { sortOrder: "asc" } }),
+    [] as Awaited<ReturnType<typeof prisma.link.findMany>>,
+  );
+  const [discord, vrchat] = await Promise.all([
     getSetting("discordInvite"),
     getSetting("vrchatGroupUrl"),
   ]);

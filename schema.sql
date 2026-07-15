@@ -38,6 +38,21 @@ CREATE TABLE IF NOT EXISTS "Announcement" (
 );
 
 -- CreateTable
+CREATE TABLE IF NOT EXISTS "Partner" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "logoUrl" TEXT NOT NULL DEFAULT '',
+    "description" TEXT NOT NULL DEFAULT '',
+    "links" TEXT NOT NULL DEFAULT '[]',
+    "tag" TEXT NOT NULL DEFAULT 'Partner',
+    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Partner_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE IF NOT EXISTS "Event" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
@@ -137,11 +152,12 @@ CREATE TABLE IF NOT EXISTS "ShopDesign" (
     "galleryUrls" TEXT[] DEFAULT ARRAY[]::TEXT[],
     "featured" BOOLEAN NOT NULL DEFAULT false,
     "published" BOOLEAN NOT NULL DEFAULT true,
-    "sortOrder" INTEGER NOT NULL DEFAULT 0,
+    "publishedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "discordMessageId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
-    CONSTRAINT "ShopDesign_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Announcement_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -155,3 +171,12 @@ CREATE INDEX IF NOT EXISTS "ShopDesign_published_idx" ON "ShopDesign"("published
 
 -- CreateIndex
 CREATE INDEX IF NOT EXISTS "ShopDesign_featured_idx" ON "ShopDesign"("featured");
+
+-- Incremental fixes for existing databases (safe/idempotent) -----------------
+
+-- Announcement.discordMessageId was added after the baseline. Add it if missing
+-- so Prisma queries selecting this column don't fail with "column does not exist".
+ALTER TABLE "Announcement" ADD COLUMN IF NOT EXISTS "discordMessageId" TEXT;
+
+-- CreateIndex
+CREATE UNIQUE INDEX IF NOT EXISTS "Announcement_discordMessageId_key" ON "Announcement"("discordMessageId");

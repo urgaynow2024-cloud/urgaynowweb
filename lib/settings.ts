@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/db";
+import { safeQuery } from "@/lib/safeQuery";
 
 const DEFAULT_SETTINGS: Record<string, string> = {
   siteTagline: "",
@@ -20,13 +21,18 @@ const DEFAULT_SETTINGS: Record<string, string> = {
 };
 
 export async function getSetting(key: string): Promise<string> {
-  const row = await prisma.setting.findUnique({ where: { key } });
+  // Reads are wrapped in safeQuery so a database outage degrades gracefully to
+  // the default value instead of throwing and crashing the whole page/route.
+  const row = await safeQuery(
+    () => prisma.setting.findUnique({ where: { key } }),
+    null,
+  );
   if (row) return row.value;
   return DEFAULT_SETTINGS[key] ?? "";
 }
 
 export async function getAllSettings(): Promise<Record<string, string>> {
-  const rows = await prisma.setting.findMany();
+  const rows = await safeQuery(() => prisma.setting.findMany(), []);
   const map: Record<string, string> = { ...DEFAULT_SETTINGS };
   for (const row of rows) map[row.key] = row.value;
   return map;

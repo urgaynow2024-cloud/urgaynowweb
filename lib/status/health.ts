@@ -193,15 +193,24 @@ export async function probeAll(): Promise<{ results: Record<string, ProbeResult>
   return { results, dbUp };
 }
 
-/** Ensure all default services exist in the DB (idempotent upsert). */
+/**
+ * Ensure all default services exist in the DB (idempotent upsert). Updates
+ * name/description/category on every run so renamed/branded services stay
+ * in sync with the canonical DEFAULT_SERVICES list. Also prunes the
+ * two stale leftovers from the old default set (ai, cdn) so the live
+ * list matches the requested services exactly.
+ */
 export async function ensureDefaultServices(): Promise<void> {
   for (const s of DEFAULT_SERVICES) {
     await prisma.statusService.upsert({
       where: { slug: s.slug },
       create: { ...s, autoManaged: true },
-      update: {},
+      update: { name: s.name, description: s.description, category: s.category },
     });
   }
+  await prisma.statusService
+    .deleteMany({ where: { slug: { in: ["ai", "cdn"] } } })
+    .catch(() => {});
 }
 
 function mapStatus(r: ProbeResult): ServiceStatus {

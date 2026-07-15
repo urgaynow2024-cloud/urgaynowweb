@@ -45,21 +45,40 @@ export function ImageUpload({
         if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));
       };
 
-      const done = await new Promise<{ ok: boolean; data: any }>((resolve) => {
-        xhr.onload = () => {
-          let parsed: any;
-          try {
-            parsed = JSON.parse(xhr.responseText);
-          } catch {
-            parsed = { error: "Unexpected response." };
-          }
-          resolve({ ok: xhr.status >= 200 && xhr.status < 300, data: parsed });
-        };
-        xhr.onerror = () => resolve({ ok: false, data: { error: "Network error. Please try again." } });
-        xhr.send(form);
-      });
+      const done = await new Promise<{ ok: boolean; status: number; data: any; raw: string }>(
+        (resolve) => {
+          xhr.onload = () => {
+            let parsed: any;
+            try {
+              parsed = JSON.parse(xhr.responseText);
+            } catch {
+              parsed = { error: `Unexpected response (HTTP ${xhr.status}).` };
+            }
+            resolve({
+              ok: xhr.status >= 200 && xhr.status < 300,
+              status: xhr.status,
+              data: parsed,
+              raw: xhr.responseText,
+            });
+          };
+          xhr.onerror = () =>
+            resolve({
+              ok: false,
+              status: 0,
+              data: { error: "Network error. Please try again." },
+              raw: "",
+            });
+          xhr.send(form);
+        },
+      );
 
-      if (!done.ok) throw new Error(done.data?.error || "Upload failed. Please try again.");
+      if (!done.ok) {
+        const msg =
+          done.data?.error ||
+          (done.status ? `Upload failed (HTTP ${done.status}).` : "Upload failed. Please try again.");
+        console.error("[ImageUpload] upload failed", { status: done.status, response: done.raw });
+        throw new Error(msg);
+      }
       onChange(done.data.url as string);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Upload failed. Please try again.");

@@ -7,6 +7,16 @@ import { IconUpload, IconImage, IconX, IconCheck, IconSpinner } from "@/componen
 const ACCEPT = "image/png,image/jpeg,image/jpg,image/gif,image/webp,image/avif";
 const MAX_BYTES = 10 * 1024 * 1024;
 
+/** Parse JSON, falling back to a default so a non-JSON (HTML) error body never
+ *  crashes the UI — the caller logs the raw text for diagnosis. */
+function safeJson(text: string, fallback: any): any {
+  try {
+    return JSON.parse(text);
+  } catch {
+    return fallback;
+  }
+}
+
 type Status = "idle" | "uploading" | "submitting" | "success" | "error";
 
 export function GallerySubmissionForm() {
@@ -74,11 +84,14 @@ export function GallerySubmissionForm() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ pathname, contentType: file.type }),
       });
-      const presignData = await presignRes
-        .json()
-        .catch(() => ({ error: "Could not prepare the upload." }));
+      const presignRaw = await presignRes.text();
+      const presignData = safeJson(presignRaw, { error: "Could not prepare the upload." });
       if (!presignRes.ok || !presignData.url) {
-        throw new Error(presignData.error || "Could not prepare the upload.");
+        console.error("[GallerySubmit] presign failed", {
+          status: presignRes.status,
+          response: presignRaw,
+        });
+        throw new Error(presignData.error || `Could not prepare the upload (HTTP ${presignRes.status}).`);
       }
 
       // 2) Upload the image directly from the browser to Vercel Blob.
@@ -95,10 +108,10 @@ export function GallerySubmissionForm() {
             try {
               resolve(JSON.parse(xhr.responseText).url);
             } catch {
-              reject(new Error("Unexpected response from storage."));
+              reject(new Error(`Unexpected response from storage (HTTP ${xhr.status}).`));
             }
           } else {
-            reject(new Error("Upload failed. Please try again."));
+            reject(new Error(`Upload failed (HTTP ${xhr.status}). Please try again.`));
           }
         };
         xhr.onerror = () => reject(new Error("Network error during upload."));
@@ -111,9 +124,11 @@ export function GallerySubmissionForm() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ imageUrl: blobUrl, title, description, submitterName, website }),
       });
-      const data = await res.json().catch(() => ({ error: "Unexpected response." }));
+      const submitRaw = await res.text();
+      const data = safeJson(submitRaw, { error: "Unexpected response." });
       if (!res.ok || !data.success) {
-        throw new Error(data.error || "Submission failed. Please try again.");
+        console.error("[GallerySubmit] submit failed", { status: res.status, response: submitRaw });
+        throw new Error(data.error || `Submission failed (HTTP ${res.status}).`);
       }
 
       setStatus("success");

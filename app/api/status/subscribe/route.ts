@@ -1,14 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { updateMetricBucket, getBucketStart } from "@/lib/status/instrumentation";
 
 export const dynamic = "force-dynamic";
 
-// --- In-memory rate limiter (token bucket per IP) -------------------------
-// Cheap, dependency-free protection against subscribe-form abuse. State lives
-// per server instance; for multi-instance production this is a starting point
-// and can later be backed by Upstash/KV. Never blocks legitimate one-off subs.
-const LIMIT = 5; // requests
-const WINDOW_MS = 10 * 60 * 1000; // per 10 minutes
+const LIMIT = 5;
+const WINDOW_MS = 10 * 60 * 1000;
 const hits = new Map<string, { count: number; resetAt: number }>();
 
 function clientKey(req: Request): string {
@@ -32,57 +29,97 @@ const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const DISCORD_RE = /^https:\/\/discord\.com\/api\/webhooks\//;
 
 export async function POST(req: Request) {
-  const key = clientKey(req);
-  if (rateLimited(key)) {
-    return NextResponse.json(
-      { error: "Too many requests. Please try again in a few minutes." },
-      { status: 429 },
-    );
-  }
+  const start = Date.now();
+  let status = 500;
+  let isSuccess = false;
+  let isFailure = true;
 
-  let body: { email?: string; discordWebhook?: string; company?: string } = {};
   try {
-    body = await req.json();
-  } catch {
-    /* invalid JSON — validated below */
-  }
+    const key = clientKey(req);
+    if (rateLimited(key)) {
+      status = 429;
+      return NextResponse.json(
+        { error: "Too many requests. Please try again in a few minutes." },
+        { status },
+      );
+    }
 
-  // Honeypot: real users never fill this hidden field; bots do.
-  if (typeof body.company === "string" && body.company.length > 0) {
-    return NextResponse.json({ ok: true }); // silently accept to mislead bots
-  }
+    let body: { email?: string; discordWebhook?: string; company?: string } = {};
+    try {
+      body = await req.json();
+    } catch {
+      /* invalid JSON — validated below */
+    }
 
-  const email = (body.email ?? "").trim();
-  const discordWebhook = (body.discordWebhook ?? "").trim();
+    if (typeof body.company === "string" && body.company.length > 0) {
+      status = 200;
+      isSuccess = true;
+      isFailure = false;
+      return NextResponse.json({ ok: true });
+    }
 
-  if (!email && !discordWebhook) {
-    return NextResponse.json({ error: "Provide an email or Discord webhook." }, { status: 400 });
-  }
-  if (email && !EMAIL_RE.test(email)) {
-    return NextResponse.json({ error: "Invalid email address." }, { status: 400 });
-  }
-  if (discordWebhook && !DISCORD_RE.test(discordWebhook)) {
-    return NextResponse.json(
-      { error: "Discord webhook must start with https://discord.com/api/webhooks/." },
-      { status: 400 },
-    );
-  }
+    const email = (body.email ?? "").trim();
+    const discordWebhook = (body.discordWebhook ?? "").trim();
 
-  // Never store more than necessary; webhooks stay server-side only and are
-  // never returned by any public endpoint.
-  try {
-    await prisma.statusSubscriber.upsert({
-      where: email ? { email } : { email: `__discord__${discordWebhook}` },
-      create: {
-        email: email || null,
-        discordWebhook: email ? null : discordWebhook, // only store one channel per row
-        verified: false,
-      },
-      update: email ? {} : { discordWebhook },
-    });
-  } catch {
-    return NextResponse.json({ error: "Could not save subscription." }, { status: 500 });
-  }
+    if (!email && !discordWebhook) {
+      status = 400;
+      return NextResponse.json({ error: "Provide an email or Discord webhook." }, { status });
+    }
+    if (email && !EMAIL_RE.test(email)) {
+      status = 400;
+      return NextResponse.json({ error: "Invalid email address." }, { status });
+    }
+    if (discordWebhook && !DISCORD_RE.test(discordWebhook)) {
+      status = 400;
+      return NextResponse.json(
+        { error: "Discord webhook must start with https://discord.com/api/webhooks/." },
+        { status },
+      );
+    }
 
-  return NextResponse.json({ ok: true });
+    try {
+      await prisma.statusSubscriber.upsert({
+        where: email ? { email } : { email: `__discord__${discordWebhook}` },
+        create: {
+          email: email || null,
+          discordWebhook: email ? null : discordWebhook,
+          verified: false,
+        },
+        update: email ? {} : { discordWebhook },
+      });
+      status = 200;
+      isSuccess = true;
+      isFailure = false;
+      return NextResponse.json({ ok: true });
+    } catch {
+      status = 500;
+      return NextResponse.json({ error: "Could not save subscription." }, { status });
+    }
+  } finally {
+    const bucketStart = getBucketStart(1, new Date());
+    updateMetricBucket({
+      metricKey: "api_request_count:/api/status/subscribe",
+      bucketStart,
+      bucketSize: 1,
+      value: 1,
+      unit: "req",
+      source: "api-middleware",
+      environment: "production",
+      isSuccess,
+      isFailure,
+    }).catch(() => {});
+    if (isFailure) {
+      updateMetricBucket({
+        metricKey: "api_error_count:/api/status/subscribe",
+        bucketStart,
+        bucketSize: 1,
+        value: 1,
+        unit: "err",
+        source: "api-middleware",
+        environment: "production",
+        isSuccess: false,
+        isFailure: true,
+      }).catch(() => {});
+    }
+  }
 }

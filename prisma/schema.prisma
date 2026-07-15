@@ -254,7 +254,8 @@ model StatusSubscriber {
 model StatusMetric {
   id          String   @id @default(cuid())
   // Stable metric key, e.g. "website_response_time", "api_latency",
-  // "db_response_time", "api_error_rate", "checkout_success_rate".
+  // "db_response_time", "api_request_count", "api_error_count",
+  // "auth.success_count", "auth.failure_count".
   key         String
   // Human label shown on the chart, e.g. "Website response time".
   label       String
@@ -269,8 +270,48 @@ model StatusMetric {
   detail      String   @default("")
   // Optional owning service (for per-service metric breakdowns).
   serviceId   String?
+  // Extra metadata as JSON (non-sensitive only).
+  metadata    String?  @default("")
+  // Source/probe name, e.g. "homepage-probe", "api-middleware", "auth-login".
+  source      String   @default("")
+  // Deployment region when available.
+  region      String?
+  // Environment label, e.g. "production".
+  environment String   @default("production")
   recordedAt  DateTime @default(now())
 
   @@index([key, recordedAt])
   @@index([recordedAt])
+  @@index([environment, recordedAt])
+}
+
+// Aggregated time-bucketed metrics for high-volume series. Used primarily for
+// API request counts, error counts, and latency percentiles. Raw samples are
+// still stored in StatusMetric for low-volume probes.
+model StatusMetricBucket {
+  id           String   @id @default(cuid())
+  metricKey    String
+  bucketStart  DateTime
+  bucketSize   Int      // minutes: 1, 5, or 60
+  count        Int      @default(0)
+  sum          Float    @default(0)
+  min          Float?
+  max          Float?
+  successCount Int      @default(0)
+  failureCount Int      @default(0)
+  p50          Float?
+  p75          Float?
+  p95          Float?
+  p99          Float?
+  unit         String   @default("")
+  source       String
+  region       String?
+  environment  String   @default("production")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([metricKey, bucketStart, bucketSize, environment, source, region], map: "uq_metric_bucket")
+  @@index([metricKey, bucketStart])
+  @@index([environment, bucketStart])
+  @@index([source, bucketStart])
 }

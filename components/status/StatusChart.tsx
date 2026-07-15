@@ -2,25 +2,32 @@
 
 import { useId } from "react";
 
-type Point = { value: number; recordedAt: string };
+type Point = { value: number; timestamp: string; sampleCount?: number; p95?: number | null };
 
-/**
- * Lightweight SVG area+line chart. Built from real stored metric samples only —
- * callers must not pass synthetic data. Renders nothing meaningful if fewer than
- * two points exist (the parent shows an empty state instead).
- */
+const RANGES = [
+  { label: "1h", value: "1h" },
+  { label: "6h", value: "6h" },
+  { label: "24h", value: "24h" },
+  { label: "7d", value: "7d" },
+];
+
 export function StatusChart({
   points,
   accent,
   unit,
   height = 140,
+  stale,
+  lastUpdatedAt,
 }: {
   points: Point[];
   accent: string;
   unit: string;
   height?: number;
+  stale?: boolean;
+  lastUpdatedAt?: string | null;
 }) {
   const gradId = useId();
+
   if (points.length < 2) {
     return (
       <div
@@ -63,6 +70,11 @@ export function StatusChart({
           {points.length} samples
         </span>
       </div>
+      {stale && lastUpdatedAt && (
+        <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+          Last measurement {formatAge(new Date(lastUpdatedAt))} ago
+        </p>
+      )}
       <svg
         viewBox={`0 0 ${w} ${h}`}
         className="mt-2 w-full"
@@ -81,4 +93,13 @@ export function StatusChart({
       </svg>
     </div>
   );
+}
+
+function formatAge(date: Date): string {
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h`;
 }

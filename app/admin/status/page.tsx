@@ -18,7 +18,8 @@ import {
 } from "@/lib/status/types";
 import { updateServiceStatus, ensureServices } from "./actions";
 import { computeUptime } from "@/lib/status/uptime";
-import { getLatestMetrics, METRIC_DEFS } from "@/lib/status/metrics";
+import { getLatestMetrics } from "@/lib/status/metrics";
+import { METRIC_DEFS } from "@/lib/status/metric-defs";
 import { statusColor } from "@/lib/status/colors";
 
 export const metadata = { title: "Status", robots: { index: false, follow: false } };

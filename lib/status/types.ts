@@ -47,7 +47,7 @@ export const MAINTENANCE_STATUSES: MaintenanceStatus[] = [
   "completed",
 ];
 
-export const SERVICE_CATEGORIES = ["Core", "Payments", "Platform"] as const;
+export const SERVICE_CATEGORIES = ["Core", "Platform"] as const;
 export type ServiceCategory = (typeof SERVICE_CATEGORIES)[number];
 
 type Meta = { label: string; emoji: string; tone: string; text: string };

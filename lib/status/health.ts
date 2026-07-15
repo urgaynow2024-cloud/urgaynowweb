@@ -5,7 +5,7 @@ import {
   type OverallStatus,
   deriveOverall,
 } from "@/lib/status/types";
-import { recordMetrics } from "@/lib/status/metrics";
+import { recordMetric } from "@/lib/status/instrumentation";
 import { writeSnapshot, type SnapshotService, type StatusSnapshot } from "@/lib/status/snapshot";
 import { OVERALL_STATUS_META } from "@/lib/status/types";
 
@@ -31,11 +31,6 @@ export const DEFAULT_SERVICES: {
   { slug: "staff-portal", name: "Staff Portal", description: "Internal staff tools", category: "Core" },
   { slug: "admin", name: "Admin Dashboard", description: "Content management console", category: "Core" },
   { slug: "database", name: "Database", description: "Primary data store", category: "Core" },
-  { slug: "checkout", name: "Checkout", description: "Store checkout flow", category: "Payments" },
-  { slug: "payments", name: "Payment Processing", description: "Payment provider processing", category: "Payments" },
-  { slug: "billing", name: "Subscription Billing", description: "Recurring subscriptions", category: "Payments" },
-  { slug: "webhooks", name: "Payment Webhooks", description: "Payment provider webhooks", category: "Payments" },
-  { slug: "refunds", name: "Refund Processing", description: "Refund handling", category: "Payments" },
   { slug: "email", name: "Email Delivery", description: "Transactional email", category: "Platform" },
   { slug: "notifications", name: "Notifications", description: "User notifications", category: "Platform" },
   { slug: "storage", name: "File and Image Storage", description: "Image and asset storage", category: "Platform" },
@@ -129,7 +124,6 @@ async function checkWebsite(base: string, dbUp: boolean): Promise<ProbeResult> {
 /** Probe all default services. Returns a result per slug (no DB writes). */
 export async function probeAll(): Promise<{ results: Record<string, ProbeResult>; dbUp: boolean }> {
   const base = process.env.NEXT_PUBLIC_SITE_URL || "https://urgaynow.com";
-  const stripeKey = process.env.STRIPE_SECRET_KEY?.trim();
 
   // Determine database health up front so DB-dependent routes can be rated honestly.
   const dbResult = await probe("database", checkDatabase);
@@ -150,28 +144,6 @@ export async function probeAll(): Promise<{ results: Record<string, ProbeResult>
       if (r && r.ok && !dbUp) return { ok: false, status: "degraded" as ServiceStatus, detail: "Database unavailable" };
       return r ?? { ok: true, status: "operational", detail: "Assumes provider health" };
     }),
-    payments: stripeKey
-      ? probe("payments", async () => {
-          const start = Date.now();
-          const res = await fetch("https://api.stripe.com/v1/charges?limit=1", {
-            headers: { Authorization: `Bearer ${stripeKey}` },
-            cache: "no-store",
-          });
-          return { ok: true, status: "operational", latencyMs: Date.now() - start, detail: `Stripe ${res.status}` };
-        })
-      : Promise.resolve({ ok: true, status: "operational", detail: "No payment provider configured" }),
-    billing: stripeKey
-      ? probe("billing", async () => {
-          const res = await fetch("https://api.stripe.com/v1/subscriptions?limit=1", {
-            headers: { Authorization: `Bearer ${stripeKey}` },
-            cache: "no-store",
-          });
-          return { ok: true, status: "operational", detail: `Stripe ${res.status}` };
-        })
-      : Promise.resolve({ ok: true, status: "operational", detail: "No payment provider configured" }),
-    checkout: Promise.resolve({ ok: true, status: "operational", detail: "Assumes provider health" }),
-    refunds: Promise.resolve({ ok: true, status: "operational", detail: "Assumes provider health" }),
-    webhooks: Promise.resolve({ ok: true, status: "operational", detail: "Assumes provider health" }),
     email: Promise.resolve({ ok: true, status: "operational", detail: "No email provider configured" }),
     notifications: Promise.resolve({ ok: true, status: "operational", detail: "Assumes provider health" }),
     accounts: Promise.resolve({ ok: true, status: "operational", detail: "Assumes provider health" }),
@@ -284,8 +256,6 @@ export async function runHealthChecks(): Promise<{
     });
   }
 
-  await recordMetrics(results).catch(() => {});
-
   // Build overall from the statuses we just determined (respecting overrides).
   const statuses = snapServices.map((s) => ({ status: s.status as ServiceStatus }));
   const overall = deriveOverall(statuses.length ? statuses : services.map((s) => ({ status: s.status as ServiceStatus })));
@@ -312,5 +282,80 @@ export async function runHealthChecks(): Promise<{
   };
   writeSnapshot(snapshot);
 
+  const website = results.website;
+  const api = results.api;
+  const database = results.database;
+
+  if (website && typeof website.latencyMs === "number") {
+    await recordMetric({
+      key: "website_response_time",
+      label: "Website response time",
+      value: website.latencyMs,
+      unit: "ms",
+      kind: "gauge",
+      status: website.status,
+      detail: website.detail ?? "",
+      source: "homepage-probe",
+      environment: "production",
+    }).catch(() => {});
+  }
+
+  if (api && typeof api.latencyMs === "number") {
+    await recordMetric({
+      key: "api_latency",
+      label: "API latency",
+      value: api.latencyMs,
+      unit: "ms",
+      kind: "gauge",
+      status: api.status,
+      detail: api.detail ?? "",
+      source: "status-probe",
+      environment: "production",
+    }).catch(() => {});
+  }
+
+  if (database && typeof database.latencyMs === "number") {
+    await recordMetric({
+      key: "database_response_time",
+      label: "Database response time",
+      value: database.latencyMs,
+      unit: "ms",
+      kind: "gauge",
+      status: database.status,
+      detail: database.detail ?? "",
+      source: "db-probe",
+      environment: "production",
+    }).catch(() => {});
+  }
+
+  await cleanupOldMetrics().catch(() => {});
+
   return { overall, results, dbAvailable: dbUp };
+}
+
+const RETENTION_RAW_DAYS = 7;
+const RETENTION_BUCKET_DAYS = 30;
+
+export async function cleanupOldMetrics(): Promise<void> {
+  const rawCutoff = new Date();
+  rawCutoff.setDate(rawCutoff.getDate() - RETENTION_RAW_DAYS);
+
+  const bucketCutoff = new Date();
+  bucketCutoff.setDate(bucketCutoff.getDate() - RETENTION_BUCKET_DAYS);
+
+  await Promise.all([
+    prisma.statusMetric
+      .deleteMany({
+        where: {
+          recordedAt: { lt: rawCutoff },
+          source: { not: "homepage-probe" },
+        },
+      })
+      .catch(() => {}),
+    prisma.statusMetricBucket
+      .deleteMany({
+        where: { bucketStart: { lt: bucketCutoff } },
+      })
+      .catch(() => {}),
+  ]);
 }

@@ -13,15 +13,14 @@ import {
   isActiveMaintenance,
   deriveOverall,
 } from "@/lib/status/types";
-import { getMetricsForCharts } from "@/lib/status/metrics";
-import { batchDailyStatus, batchLatestHealth, type DayStatus } from "@/lib/status/uptime";
+import { MetricsGrid } from "@/components/status/MetricsGrid";
 import { readSnapshotFromFile } from "@/lib/status/snapshot";
 import { STATUS_TIMEZONE, tzAbbrev } from "@/lib/status/format";
+import { batchDailyStatus, batchLatestHealth, type DayStatus } from "@/lib/status/uptime";
 import { StatusBanner } from "@/components/status/StatusBanner";
 import { IncidentCard, type IncidentCardData } from "@/components/status/IncidentCard";
 import { MaintenanceCard, type MaintenanceCardData } from "@/components/status/MaintenanceCard";
 import { ServiceAccordion, type ServiceRowData } from "@/components/status/ServiceAccordion";
-import { MetricsGrid } from "@/components/status/MetricsGrid";
 import { PastIncidents } from "@/components/status/PastIncidents";
 import { UptimeBars } from "@/components/status/UptimeBars";
 import { StatusSubscribeForm } from "@/components/status/StatusSubscribeForm";
@@ -120,7 +119,7 @@ export default async function StatusPage() {
   // still reflects reality (and never falsely claims "All Systems Operational").
   const snap = dbAvailable ? null : readSnapshotFromFile();
 
-  const [incidentRows, maintenanceRows, metrics] = await Promise.all([
+  const [incidentRows, maintenanceRows] = await Promise.all([
     safeQuery(
       () =>
         prisma.incident.findMany({
@@ -139,7 +138,6 @@ export default async function StatusPage() {
         }),
       [] as any[],
     ),
-    getMetricsForCharts(),
   ]);
 
   const incidents = (incidentRows as any[]) ?? [];
@@ -341,9 +339,9 @@ export default async function StatusPage() {
           Live Metrics
         </h2>
         <p className="mb-4 text-xs text-zinc-400">
-          Charts use real stored monitoring data. Metrics we don’t yet measure show an empty state rather than fake values.
+          Charts use real stored monitoring data. Metrics we don&apos;t yet measure show an empty state rather than fake values.
         </p>
-        <MetricsGrid series={metrics} />
+        <MetricsGrid />
       </section>
 
       {/* 7. Uptime history (90-day bars per service) */}

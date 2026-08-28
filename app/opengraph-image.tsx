@@ -11,12 +11,19 @@ export const contentType = "image/png";
 const PRIDE_BAR =
   "linear-gradient(90deg, #e40303 0%, #ff8c00 16.66%, #ffed00 33.33%, #008026 50%, #004dff 66.66%, #750787 100%)";
 const BG =
-  "linear-gradient(135deg, #0c0d12 0%, #1b1020 55%, #221231 100%)";
+  "radial-gradient(ellipse at 20% 80%, rgba(181,0,160,0.15) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(168,89,248,0.10) 0%, transparent 50%), linear-gradient(135deg, #0c0d12 0%, #1b1020 55%, #221231 100%)";
 
 export default async function Image() {
   const fontData = await readFile(
     join(process.cwd(), "node_modules/next/dist/compiled/@vercel/og/noto-sans-v27-latin-regular.ttf")
   );
+  const fontBold = await readFile(
+    join(process.cwd(), "node_modules/next/dist/compiled/@vercel/og/noto-sans-v27-latin-700.ttf")
+  );
+  const mascotData = await readFile(
+    join(process.cwd(), "public/brand/CutieLookingBack.png")
+  );
+  const mascotBase64 = mascotData.toString("base64");
 
   return new ImageResponse(
     (
@@ -30,10 +37,51 @@ export default async function Image() {
           backgroundImage: BG,
           color: "#ffffff",
           fontFamily: "Noto Sans",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
-        <div style={{ height: "16px", width: "100%", backgroundImage: PRIDE_BAR }} />
+        {/* Top pride bar */}
+        <div style={{ height: "8px", width: "100%", backgroundImage: PRIDE_BAR }} />
 
+        {/* Grid pattern overlay */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage:
+              "linear-gradient(rgba(189,127,206,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(189,127,206,0.04) 1px, transparent 1px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
+
+        {/* Glow orbs */}
+        <div
+          style={{
+            position: "absolute",
+            width: "400px",
+            height: "400px",
+            borderRadius: "50%",
+            filter: "blur(80px)",
+            background: "rgba(189,127,206,0.12)",
+            top: "-100px",
+            left: "-100px",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            width: "350px",
+            height: "350px",
+            borderRadius: "50%",
+            filter: "blur(80px)",
+            background: "rgba(168,89,248,0.08)",
+            bottom: "-80px",
+            right: "-80px",
+          }}
+        />
+
+        {/* Main content */}
         <div
           style={{
             flex: 1,
@@ -41,50 +89,76 @@ export default async function Image() {
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
-            padding: "0 84px",
-            gap: "64px",
+            padding: "0 80px",
+            gap: "60px",
+            position: "relative",
           }}
         >
+          {/* Mascot with glow */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              width: "320px",
-              height: "320px",
-              borderRadius: "52px",
-              backgroundImage: PRIDE_BAR,
-              boxShadow: "0 24px 70px -24px rgba(117,7,135,0.65)",
+              width: "280px",
+              height: "280px",
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, rgba(189,127,206,0.2) 0%, rgba(117,7,135,0.1) 100%)",
+              boxShadow: "0 0 60px -10px rgba(117,7,135,0.5), 0 0 120px -20px rgba(189,127,206,0.3)",
+              border: "3px solid rgba(189,127,206,0.3)",
+              overflow: "hidden",
             }}
           >
-            <div style={{ display: "flex", color: "#ffffff", fontSize: "140px" }}>UGN</div>
+            <img
+              src={`data:image/png;base64,${mascotBase64}`}
+              alt="UGN mascot"
+              width="250"
+              height="250"
+              style={{ borderRadius: "50%", objectFit: "cover" }}
+            />
           </div>
 
+          {/* Text content */}
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               alignItems: "flex-start",
-              maxWidth: "660px",
+              maxWidth: "680px",
             }}
           >
             <div
               style={{
                 display: "flex",
-                color: "#d6abe0",
-                fontSize: "28px",
-                letterSpacing: "5px",
+                alignItems: "center",
+                gap: "12px",
+                padding: "8px 16px",
+                borderRadius: "999px",
+                background: "rgba(117,7,135,0.15)",
+                border: "1px solid rgba(189,127,206,0.2)",
               }}
             >
-              VRCHAT · LGBTQ+ COMMUNITY
+              <div
+                style={{
+                  width: "8px",
+                  height: "8px",
+                  borderRadius: "50%",
+                  background: "#10b981",
+                }}
+              />
+              <div style={{ display: "flex", color: "#d6abe0", fontSize: "18px", letterSpacing: "3px" }}>
+                VRCHAT · LGBTQ+ COMMUNITY
+              </div>
             </div>
             <div
               style={{
                 display: "flex",
                 color: "#ffffff",
-                fontSize: "104px",
-                marginTop: "16px",
+                fontSize: "96px",
+                marginTop: "20px",
                 lineHeight: 1.02,
+                fontWeight: 700,
+                letterSpacing: "-2px",
               }}
             >
               Ur Gay Now
@@ -93,25 +167,42 @@ export default async function Image() {
               style={{
                 display: "flex",
                 color: "#cdd2dd",
-                fontSize: "34px",
-                marginTop: "18px",
+                fontSize: "32px",
+                marginTop: "16px",
+                lineHeight: 1.4,
               }}
             >
-              Events · Staff · Guides · News · Gallery
+              Events · Daily Games · Community · Friends
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "14px", marginTop: "30px" }}>
-              <div style={{ width: "14px", height: "14px", borderRadius: "999px", backgroundColor: "#750787" }} />
-              <div style={{ display: "flex", color: "#9aa2b4", fontSize: "28px" }}>urgaynow.com</div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "12px",
+                marginTop: "28px",
+                padding: "10px 20px",
+                borderRadius: "12px",
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.1)",
+              }}
+            >
+              <div style={{ display: "flex", color: "#a256bb", fontSize: "28px", fontWeight: 700 }}>
+                urgaynow.com
+              </div>
             </div>
           </div>
         </div>
 
-        <div style={{ height: "16px", width: "100%", backgroundImage: PRIDE_BAR }} />
+        {/* Bottom pride bar */}
+        <div style={{ height: "8px", width: "100%", backgroundImage: PRIDE_BAR }} />
       </div>
     ),
     {
       ...size,
-      fonts: [{ name: "Noto Sans", data: fontData, weight: 400, style: "normal" }],
+      fonts: [
+        { name: "Noto Sans", data: fontData, weight: 400, style: "normal" },
+        { name: "Noto Sans", data: fontBold, weight: 700, style: "normal" },
+      ],
     }
   );
 }

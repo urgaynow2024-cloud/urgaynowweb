@@ -17,12 +17,12 @@ export const metadata: Metadata = {
     template: `%s · ${siteName}`,
   },
   description:
-    "Join the official Ur Gay Now community for events, staff, guides, news, galleries, and more. A welcoming place to connect, socialize, and celebrate together.",
-  keywords: ["Ur Gay Now", "LGBTQ+", "VRChat", "community", "events", "announcements"],
+    "A vibrant VRChat LGBTQ+ community — daily games, events, friends, and good vibes. Come hang out with us!",
+  keywords: ["Ur Gay Now", "LGBTQ+", "VRChat", "community", "events", "gaming", "discord"],
   openGraph: {
     title: `${siteName} — VRChat LGBTQ+ Community`,
     description:
-      "Join the official Ur Gay Now community for events, staff, guides, news, galleries, and more. A welcoming place to connect, socialize, and celebrate together.",
+      "A vibrant VRChat LGBTQ+ community — daily games, events, friends, and good vibes. Come hang out with us!",
     url: siteUrl,
     siteName,
     type: "website",
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: `${siteName} — VRChat LGBTQ+ Community`,
     description:
-      "Join the official Ur Gay Now community for events, staff, guides, news, galleries, and more. A welcoming place to connect, socialize, and celebrate together.",
+      "A vibrant VRChat LGBTQ+ community — daily games, events, friends, and good vibes. Come hang out with us!",
   },
   robots: { index: true, follow: true },
   alternates: {

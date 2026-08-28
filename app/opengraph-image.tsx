@@ -11,7 +11,12 @@ const PRIDE_BAR =
 const BG =
   "radial-gradient(ellipse at 20% 80%, rgba(181,0,160,0.15) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(168,89,248,0.10) 0%, transparent 50%), linear-gradient(135deg, #0c0d12 0%, #1b1020 55%, #221231 100%)";
 
-export default function Image() {
+export default async function Image() {
+  const fontUrl = "https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hiA.woff2";
+
+  const fontRes = await fetch(fontUrl);
+  const fontData = await fontRes.arrayBuffer();
+
   return new ImageResponse(
     (
       <div
@@ -23,6 +28,7 @@ export default function Image() {
           backgroundColor: "#0c0d12",
           backgroundImage: BG,
           color: "#ffffff",
+          fontFamily: "Inter",
           position: "relative",
           overflow: "hidden",
         }}
@@ -138,6 +144,7 @@ export default function Image() {
                 fontSize: "96px",
                 marginTop: "20px",
                 lineHeight: 1.02,
+                fontWeight: 700,
               }}
             >
               Ur Gay Now
@@ -178,6 +185,7 @@ export default function Image() {
     ),
     {
       ...size,
+      fonts: [{ name: "Inter", data: new Uint8Array(fontData), weight: 700, style: "normal" }],
     }
   );
 }

@@ -1,8 +1,6 @@
 import { ImageResponse } from "next/og";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 export const dynamic = "force-dynamic";
 export const alt = "Ur Gay Now — VRChat LGBTQ+ Community";
 export const size = { width: 1200, height: 630 };
@@ -13,11 +11,7 @@ const PRIDE_BAR =
 const BG =
   "radial-gradient(ellipse at 20% 80%, rgba(181,0,160,0.15) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(168,89,248,0.10) 0%, transparent 50%), linear-gradient(135deg, #0c0d12 0%, #1b1020 55%, #221231 100%)";
 
-export default async function Image() {
-  const fontData = await readFile(
-    join(process.cwd(), "node_modules/next/dist/compiled/@vercel/og/noto-sans-v27-latin-regular.ttf")
-  );
-
+export default function Image() {
   return new ImageResponse(
     (
       <div
@@ -29,7 +23,6 @@ export default async function Image() {
           backgroundColor: "#0c0d12",
           backgroundImage: BG,
           color: "#ffffff",
-          fontFamily: "Noto Sans",
           position: "relative",
           overflow: "hidden",
         }}
@@ -185,7 +178,6 @@ export default async function Image() {
     ),
     {
       ...size,
-      fonts: [{ name: "Noto Sans", data: fontData, weight: 400, style: "normal" }],
     }
   );
 }

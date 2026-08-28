@@ -17,13 +17,6 @@ export default async function Image() {
   const fontData = await readFile(
     join(process.cwd(), "node_modules/next/dist/compiled/@vercel/og/noto-sans-v27-latin-regular.ttf")
   );
-  const fontBold = await readFile(
-    join(process.cwd(), "node_modules/next/dist/compiled/@vercel/og/noto-sans-v27-latin-700.ttf")
-  );
-  const mascotData = await readFile(
-    join(process.cwd(), "public/brand/CutieLookingBack.png")
-  );
-  const mascotBase64 = mascotData.toString("base64");
 
   return new ImageResponse(
     (
@@ -94,7 +87,7 @@ export default async function Image() {
             position: "relative",
           }}
         >
-          {/* Mascot with glow */}
+          {/* Logo circle with glow */}
           <div
             style={{
               display: "flex",
@@ -106,16 +99,11 @@ export default async function Image() {
               background: "linear-gradient(135deg, rgba(189,127,206,0.2) 0%, rgba(117,7,135,0.1) 100%)",
               boxShadow: "0 0 60px -10px rgba(117,7,135,0.5), 0 0 120px -20px rgba(189,127,206,0.3)",
               border: "3px solid rgba(189,127,206,0.3)",
-              overflow: "hidden",
             }}
           >
-            <img
-              src={`data:image/png;base64,${mascotBase64}`}
-              alt="UGN mascot"
-              width="250"
-              height="250"
-              style={{ borderRadius: "50%", objectFit: "cover" }}
-            />
+            <div style={{ display: "flex", color: "#ffffff", fontSize: "80px", fontWeight: 700 }}>
+              UGN
+            </div>
           </div>
 
           {/* Text content */}
@@ -157,8 +145,6 @@ export default async function Image() {
                 fontSize: "96px",
                 marginTop: "20px",
                 lineHeight: 1.02,
-                fontWeight: 700,
-                letterSpacing: "-2px",
               }}
             >
               Ur Gay Now
@@ -186,7 +172,7 @@ export default async function Image() {
                 border: "1px solid rgba(255,255,255,0.1)",
               }}
             >
-              <div style={{ display: "flex", color: "#a256bb", fontSize: "28px", fontWeight: 700 }}>
+              <div style={{ display: "flex", color: "#a256bb", fontSize: "28px" }}>
                 urgaynow.com
               </div>
             </div>
@@ -199,10 +185,7 @@ export default async function Image() {
     ),
     {
       ...size,
-      fonts: [
-        { name: "Noto Sans", data: fontData, weight: 400, style: "normal" },
-        { name: "Noto Sans", data: fontBold, weight: 700, style: "normal" },
-      ],
+      fonts: [{ name: "Noto Sans", data: fontData, weight: 400, style: "normal" }],
     }
   );
 }

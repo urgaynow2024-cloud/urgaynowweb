@@ -6,6 +6,8 @@ import { EventCard } from "@/components/EventCard";
 import { StaffCard } from "@/components/StaffCard";
 import { prisma } from "@/lib/db";
 import { safeQuery } from "@/lib/safeQuery";
+import { ScrollFadeIn } from "@/components/ScrollAnimation";
+import { EmptyState } from "@/components/EmptyState";
 
 export const revalidate = 60;
 
@@ -156,40 +158,44 @@ export default async function SearchPage({
         title="Search"
         description="Find announcements, guides, staff, events and more across the community."
       />
-      <Container className="py-12">
+      <Container className="py-16">
         <div className="mx-auto max-w-2xl">
           <SearchBox initial={q} autoFocus={!q} />
         </div>
 
         {!q ? (
-          <p className="mx-auto mt-10 max-w-2xl text-center text-zinc-500 dark:text-zinc-400">
-            Type something above to search the site.
-          </p>
+          <EmptyState
+            icon="🔍"
+            title="What can we help you find?"
+            description='Type something above to search the site — announcements, guides, staff, events, partners, and more.'
+            className="mt-10"
+          />
         ) : total === 0 ? (
-          <p className="mx-auto mt-10 max-w-2xl text-center text-zinc-500 dark:text-zinc-400">
-            No results for <span className="font-semibold text-zinc-700 dark:text-zinc-200">“{q}”</span>.
-            Try a different keyword.
-          </p>
+          <EmptyState
+            icon="😔"
+            title={`No results for “${q}”`}
+            description="Try a different keyword or check the spelling."
+            className="mt-10"
+          />
         ) : (
           <div className="mt-10 space-y-12">
             {announcements.length > 0 && (
               <section>
-                <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Announcements
-                </h2>
+                <h2 className="eyebrow mb-4">Announcements</h2>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {announcements.map((a) => (
-                    <AnnouncementCard
-                      key={a.id}
-                      item={{
-                        id: a.id,
-                        title: a.title,
-                        slug: a.slug,
-                        excerpt: a.excerpt,
-                        coverImage: a.coverImage,
-                        publishedAt: a.publishedAt,
-                      }}
-                    />
+                    <ScrollFadeIn key={a.id}>
+                      <AnnouncementCard
+                        item={{
+                          id: a.id,
+                          title: a.title,
+                          slug: a.slug,
+                          excerpt: a.excerpt,
+                          coverImage: a.coverImage,
+                          publishedAt: a.publishedAt,
+                        }}
+                      />
+                    </ScrollFadeIn>
                   ))}
                 </div>
               </section>
@@ -197,24 +203,23 @@ export default async function SearchPage({
 
             {events.length > 0 && (
               <section>
-                <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Events
-                </h2>
+                <h2 className="eyebrow mb-4">Events</h2>
                 <div className="grid gap-4">
                   {events.map((e) => (
-                    <EventCard
-                      key={e.id}
-                      event={{
-                        id: e.id,
-                        title: e.title,
-                        description: e.description,
-                        location: e.location,
-                        vrchatWorldUrl: e.vrchatWorldUrl,
-                        coverImage: e.coverImage,
-                        startDateTime: e.startDateTime,
-                        endDateTime: e.endDateTime,
-                      }}
-                    />
+                    <ScrollFadeIn key={e.id}>
+                      <EventCard
+                        event={{
+                          id: e.id,
+                          title: e.title,
+                          description: e.description,
+                          location: e.location,
+                          vrchatWorldUrl: e.vrchatWorldUrl,
+                          coverImage: e.coverImage,
+                          startDateTime: e.startDateTime,
+                          endDateTime: e.endDateTime,
+                        }}
+                      />
+                    </ScrollFadeIn>
                   ))}
                 </div>
               </section>
@@ -222,23 +227,22 @@ export default async function SearchPage({
 
             {staff.length > 0 && (
               <section>
-                <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Staff
-                </h2>
+                <h2 className="eyebrow mb-4">Staff</h2>
                 <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {staff.map((s) => (
-                    <StaffCard
-                      key={s.id}
-                      staff={{
-                        id: s.id,
-                        name: s.name,
-                        vrchatUsername: s.vrchatUsername,
-                        rank: s.rank,
-                        bio: s.bio,
-                        photoUrl: s.photoUrl,
-                        socials: s.socials,
-                      }}
-                    />
+                    <ScrollFadeIn key={s.id}>
+                      <StaffCard
+                        staff={{
+                          id: s.id,
+                          name: s.name,
+                          vrchatUsername: s.vrchatUsername,
+                          rank: s.rank,
+                          bio: s.bio,
+                          photoUrl: s.photoUrl,
+                          socials: s.socials,
+                        }}
+                      />
+                    </ScrollFadeIn>
                   ))}
                 </div>
               </section>
@@ -266,23 +270,19 @@ function SimpleResults({
   if (results.length === 0) return null;
   return (
     <section>
-      <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-        {title}
-      </h2>
-      <ul className="divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-900">
+      <h2 className="eyebrow mb-4">{title}</h2>
+      <ul className="card divide-y divide-ink-200 overflow-hidden dark:divide-ink-800">
         {results.map((r, i) => {
           const inner = (
             <>
               <div className="flex items-center justify-between gap-3">
-                <p className="font-semibold text-zinc-900 dark:text-white">{r.title}</p>
+                <p className="font-semibold text-ink-900 dark:text-white">{r.title}</p>
                 {r.kind && (
-                  <span className="shrink-0 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
-                    {r.kind}
-                  </span>
+                  <span className="badge-neutral shrink-0">{r.kind}</span>
                 )}
               </div>
               {r.snippet && (
-                <p className="mt-1 line-clamp-2 text-sm text-zinc-600 dark:text-zinc-400">{r.snippet}</p>
+                <p className="mt-1 line-clamp-2 text-sm text-ink-500 dark:text-ink-400">{r.snippet}</p>
               )}
             </>
           );
@@ -293,14 +293,14 @@ function SimpleResults({
                   href={r.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block px-4 py-3 transition hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                  className="block px-4 py-3 transition hover:bg-surface-100 dark:hover:bg-ink-800/60"
                 >
                   {inner}
                 </a>
               ) : (
                 <Link
                   href={r.href}
-                  className="block px-4 py-3 transition hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+                  className="block px-4 py-3 transition hover:bg-surface-100 dark:hover:bg-ink-800/60"
                 >
                   {inner}
                 </Link>

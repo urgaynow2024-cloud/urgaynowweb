@@ -69,7 +69,7 @@ function detectPlatform(s: Social): Platform {
     key: "link",
     label: s.label || "Link",
     icon: (
-      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
         <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1" strokeLinecap="round" strokeLinejoin="round" />
         <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
@@ -81,28 +81,34 @@ export function StaffCard({ staff }: { staff: StaffCardData }) {
   const socials = parseSocials(staff.socials);
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-brand-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:shadow-brand-500/5 dark:focus-visible:ring-offset-ink-950">
-      <div className="relative aspect-[4/3] bg-gradient-to-br from-brand-50 to-brand-100 dark:from-brand-900/30 dark:to-brand-800/30">
-        {staff.photoUrl && (
+    <article className="group relative flex flex-col overflow-hidden rounded-2xl border border-ink-200/60 bg-white shadow-card-premium transition-all duration-500 hover:-translate-y-1 hover:shadow-card-premium-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-brand-800/30 dark:bg-ink-900/80 dark:hover:border-brand-700/50 dark:focus-visible:ring-offset-surface-950">
+      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-900/40 dark:to-brand-800/30">
+        {staff.photoUrl ? (
           <Image
             src={staff.photoUrl}
             alt={`${staff.name} avatar`}
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover transition-transform duration-500 ease-spring-bounce group-hover:scale-105"
           />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-6xl font-bold text-brand-400 dark:text-brand-700">
+            {staff.name?.[0] ?? "?"}
+          </div>
         )}
-        <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-brand-700 shadow-sm backdrop-blur-sm dark:bg-zinc-900/90 dark:text-brand-200">
+        <div className="absolute inset-0 bg-gradient-to-t from-ink-950/30 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+        <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-brand-700 shadow-sm backdrop-blur-sm dark:bg-ink-900/90 dark:text-brand-200">
           {staff.rank}
         </span>
       </div>
+
       <div className="flex flex-1 flex-col p-5">
-        <h3 className="text-lg font-bold text-zinc-900 dark:text-white">{staff.name}</h3>
+        <h3 className="text-lg font-bold text-ink-900 dark:text-white">{staff.name}</h3>
         <p className="text-sm font-medium text-brand-600 dark:text-brand-300">
           @{staff.vrchatUsername}
         </p>
         {staff.bio && (
-          <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+          <p className="mt-3 text-sm text-ink-500 dark:text-ink-400 line-clamp-3">
             {staff.bio}
           </p>
         )}
@@ -117,7 +123,7 @@ export function StaffCard({ staff }: { staff: StaffCardData }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   title={platform.label}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700 transition hover:border-brand-300 hover:bg-brand-100 dark:border-brand-800/60 dark:bg-brand-900/40 dark:text-brand-200 dark:hover:border-brand-600"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-brand-200/60 bg-brand-50/80 px-3 py-1 text-xs font-medium text-brand-700 transition-all duration-300 hover:border-brand-300 hover:bg-brand-100 hover:shadow-sm dark:border-brand-800/50 dark:bg-brand-900/40 dark:text-brand-200 dark:hover:border-brand-600 dark:hover:bg-brand-900/60"
                 >
                   {platform.icon}
                   {platform.label}

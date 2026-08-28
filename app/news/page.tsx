@@ -3,6 +3,9 @@ import { Container, PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { AnnouncementCard } from "@/components/AnnouncementCard";
 import { Pagination } from "@/components/Pagination";
+import { SectionHeading } from "@/components/SectionHeading";
+import { ScrollFadeIn, StaggeredList } from "@/components/ScrollAnimation";
+import { EmptyState } from "@/components/EmptyState";
 
 export const revalidate = 60;
 
@@ -29,35 +32,64 @@ export default async function NewsPage({
     prisma.announcement.count({ where: { published: true } }),
   ]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const featured = items[0];
+  const rest = items.slice(1);
 
   return (
     <>
       <PageHeader title="News & Announcements" description="The latest updates from the community." />
-      <Container className="py-12">
-        {items.length > 0 ? (
-          <>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {items.map((a) => (
-                <AnnouncementCard
-                  key={a.id}
-                  item={{
-                    id: a.id,
-                    title: a.title,
-                    slug: a.slug,
-                    excerpt: a.excerpt,
-                    coverImage: a.coverImage,
-                    publishedAt: a.publishedAt,
-                  }}
-                />
-              ))}
-            </div>
-            <Pagination page={page} totalPages={totalPages} basePath="/news" />
-          </>
+      <Container className="py-16">
+        {items.length === 0 ? (
+          <EmptyState
+            icon="📭"
+            title="No announcements yet"
+            description="Check back soon for community news and updates!"
+          />
         ) : (
-          <div className="rounded-2xl border-2 border-dashed border-zinc-300 p-12 text-center dark:border-zinc-700">
-            <p className="text-xl text-zinc-500 dark:text-zinc-400">No announcements yet.{" "}
-              <Link href="/" className="text-brand-600 hover:underline">Back to home</Link>
-            </p>
+          <div className="space-y-16">
+            {/* Featured article */}
+            {featured && (
+              <section>
+                <ScrollFadeIn>
+                  <AnnouncementCard
+                    item={{
+                      id: featured.id,
+                      title: featured.title,
+                      slug: featured.slug,
+                      excerpt: featured.excerpt,
+                      coverImage: featured.coverImage,
+                      publishedAt: featured.publishedAt,
+                    }}
+                    featured
+                  />
+                </ScrollFadeIn>
+              </section>
+            )}
+
+            {rest.length > 0 && (
+              <section>
+                <StaggeredList className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {rest.map((a, i) => (
+                    <ScrollFadeIn key={a.id} delay={i * 80}>
+                      <AnnouncementCard
+                        item={{
+                          id: a.id,
+                          title: a.title,
+                          slug: a.slug,
+                          excerpt: a.excerpt,
+                          coverImage: a.coverImage,
+                          publishedAt: a.publishedAt,
+                        }}
+                      />
+                    </ScrollFadeIn>
+                  ))}
+                </StaggeredList>
+              </section>
+            )}
+
+            <div className="mt-12">
+              <Pagination page={page} totalPages={totalPages} basePath="/news" />
+            </div>
           </div>
         )}
       </Container>

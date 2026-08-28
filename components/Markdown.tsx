@@ -4,26 +4,26 @@ import type { Components } from "react-markdown";
 
 const components: Components = {
   h1: ({ children }) => (
-    <h1 className="mt-8 mb-4 text-3xl font-extrabold tracking-tight text-brand-800 dark:text-brand-200">
+    <h1 className="mt-8 mb-4 text-3xl font-extrabold tracking-tight text-ink-900 dark:text-white">
       {children}
     </h1>
   ),
   h2: ({ children }) => (
-    <h2 className="mt-8 mb-3 text-2xl font-bold tracking-tight text-brand-800 dark:text-brand-200">
+    <h2 className="mt-8 mb-3 text-2xl font-bold tracking-tight text-ink-900 dark:text-white">
       {children}
     </h2>
   ),
   h3: ({ children }) => (
-    <h3 className="mt-6 mb-2 text-xl font-semibold text-brand-700 dark:text-brand-200">
+    <h3 className="mt-6 mb-2 text-xl font-semibold text-ink-800 dark:text-ink-100">
       {children}
     </h3>
   ),
-  p: ({ children }) => <p className="my-4 leading-relaxed text-zinc-700 dark:text-zinc-300">{children}</p>,
+  p: ({ children }) => <p className="my-4 leading-relaxed text-ink-700 dark:text-ink-200">{children}</p>,
   ul: ({ children }) => (
-    <ul className="my-4 list-disc space-y-2 pl-6 text-zinc-700 dark:text-zinc-300">{children}</ul>
+    <ul className="my-4 list-disc space-y-2 pl-6 text-ink-700 dark:text-ink-200">{children}</ul>
   ),
   ol: ({ children }) => (
-    <ol className="my-4 list-decimal space-y-2 pl-6 text-zinc-700 dark:text-zinc-300">{children}</ol>
+    <ol className="my-4 list-decimal space-y-2 pl-6 text-ink-700 dark:text-ink-200">{children}</ol>
   ),
   li: ({ children }) => <li className="leading-relaxed">{children}</li>,
   a: ({ href, children }) => (
@@ -42,15 +42,15 @@ const components: Components = {
     </blockquote>
   ),
   code: ({ children }) => (
-    <code className="rounded bg-zinc-100 px-1.5 py-0.5 text-sm text-pink-700 dark:bg-zinc-800 dark:text-pink-300">
+    <code className="rounded bg-ink-100 px-1.5 py-0.5 text-sm text-pink-700 dark:bg-ink-800 dark:text-pink-300">
       {children}
     </code>
   ),
   pre: ({ children }) => (
-    <pre className="my-4 overflow-x-auto rounded-lg bg-zinc-900 p-4 text-sm text-zinc-100">{children}</pre>
+    <pre className="my-4 overflow-x-auto rounded-lg bg-ink-900 p-4 text-sm text-ink-100">{children}</pre>
   ),
-  hr: () => <hr className="my-8 border-zinc-200 dark:border-zinc-700" />,
-  strong: ({ children }) => <strong className="font-semibold text-zinc-900 dark:text-white">{children}</strong>,
+  hr: () => <hr className="my-8 border-ink-200 dark:border-ink-700" />,
+  strong: ({ children }) => <strong className="font-semibold text-ink-900 dark:text-white">{children}</strong>,
 };
 
 export function Markdown({ content }: { content: string }) {

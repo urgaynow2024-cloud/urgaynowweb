@@ -46,7 +46,6 @@ export function useTheme(): ThemeContextValue {
   return ctx;
 }
 
-/** Inline script injected before paint to avoid a flash of the wrong theme. */
 export const themeInitScript = `
 (function(){
   try {

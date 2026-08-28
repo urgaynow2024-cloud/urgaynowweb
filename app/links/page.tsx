@@ -2,6 +2,9 @@ import { PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { getSetting } from "@/lib/settings";
 import { safeQuery } from "@/lib/safeQuery";
+import { SectionHeading } from "@/components/SectionHeading";
+import { ScrollFadeIn, StaggeredList } from "@/components/ScrollAnimation";
+import { EmptyState } from "@/components/EmptyState";
 
 export const revalidate = 3600;
 
@@ -30,48 +33,69 @@ export default async function LinksPage() {
       <PageHeader title="Links" description="Everything in one place — find us across the web." />
       <div className="mx-auto w-full max-w-6xl px-6 py-16">
         {featured.length > 0 && (
-          <div className="mb-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
-            {featured.map((f) => (
-              <a
-                key={f.url}
-                href={f.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group w-full min-w-0 rounded-2xl border-2 border-zinc-200 bg-white p-6 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700 dark:focus-visible:ring-offset-ink-950"
-              >
-                <div className="flex items-center gap-4">
-                  <span className="text-4xl" aria-hidden>{f.icon}</span>
-                  <span className="text-xl font-semibold text-zinc-900 dark:text-white">{f.label}</span>
-                  <span className="ml-auto text-2xl text-brand-600 transition-transform group-hover:translate-x-1 dark:text-brand-300">↗</span>
-                </div>
-              </a>
-            ))}
-          </div>
+          <section>
+            <SectionHeading>Featured</SectionHeading>
+            <StaggeredList className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+              {featured.map((f, i) => (
+                <ScrollFadeIn key={f.url} delay={i * 80}>
+                  <a
+                    href={f.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="card card-hover group flex w-full min-w-0 items-center gap-4 p-6"
+                  >
+                    <span className="text-4xl" aria-hidden>
+                      {f.icon}
+                    </span>
+                    <span className="text-xl font-semibold text-ink-900 dark:text-white">
+                      {f.label}
+                    </span>
+                    <span className="ml-auto text-2xl text-brand-600 transition-transform group-hover:translate-x-1 dark:text-brand-300">
+                      ↗
+                    </span>
+                  </a>
+                </ScrollFadeIn>
+              ))}
+            </StaggeredList>
+          </section>
         )}
 
         {links.length > 0 ? (
-          <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {links.map((l) => (
-              <li key={l.id} className="w-full min-w-0">
-                <a
-                  href={l.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group block w-full min-w-0 rounded-2xl border-2 border-zinc-200 bg-white p-5 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-brand-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-brand-700 dark:focus-visible:ring-offset-ink-950"
-                >
-                  <div className="flex items-center gap-3">
-                    {l.icon && <span className="text-2xl" aria-hidden>{l.icon}</span>}
-                    <span className="text-lg font-medium text-zinc-900 dark:text-white">{l.label}</span>
-                    <span className="ml-auto text-xl text-brand-600 transition-transform group-hover:translate-x-1 dark:text-brand-300">↗</span>
-                  </div>
-                </a>
-              </li>
-            ))}
-          </ul>
+          <section className={featured.length > 0 ? "mt-12" : ""}>
+            <SectionHeading>All links</SectionHeading>
+            <StaggeredList className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {links.map((l, i) => (
+                <ScrollFadeIn key={l.id} delay={i * 60}>
+                  <li className="w-full min-w-0 list-none">
+                    <a
+                      href={l.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="card card-hover group flex w-full min-w-0 items-center gap-3 p-5"
+                    >
+                      {l.icon && (
+                        <span className="text-2xl" aria-hidden>
+                          {l.icon}
+                        </span>
+                      )}
+                      <span className="text-lg font-medium text-ink-900 dark:text-white">
+                        {l.label}
+                      </span>
+                      <span className="ml-auto text-xl text-brand-600 transition-transform group-hover:translate-x-1 dark:text-brand-300">
+                        ↗
+                      </span>
+                    </a>
+                  </li>
+                </ScrollFadeIn>
+              ))}
+            </StaggeredList>
+          </section>
         ) : (
-          <div className="rounded-2xl border-2 border-dashed border-zinc-300 p-12 text-center dark:border-zinc-700">
-            <p className="text-xl text-zinc-500 dark:text-zinc-400">No links have been added.</p>
-          </div>
+          <EmptyState
+            icon="🔗"
+            title="No links have been added"
+            description="Links will appear here once they're set up by staff."
+          />
         )}
       </div>
     </>

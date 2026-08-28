@@ -4,7 +4,6 @@ export function Skeleton({ className }: { className?: string }) {
   return <div className={cn("skeleton", className)} aria-hidden />;
 }
 
-/** A grid of card-shaped skeletons (used while content streams in). */
 export function CardGridSkeleton({
   count = 3,
   className = "grid gap-6 sm:grid-cols-2 lg:grid-cols-3",
@@ -15,7 +14,7 @@ export function CardGridSkeleton({
   return (
     <div className={className} aria-hidden>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+        <div key={i} className="overflow-hidden rounded-2xl border border-ink-200 bg-white dark:border-ink-800 dark:bg-ink-900">
           <Skeleton className="h-40 w-full rounded-none" />
           <div className="space-y-3 p-5">
             <Skeleton className="h-4 w-2/3" />
@@ -49,7 +48,7 @@ export function StatGridSkeleton({ count = 4 }: { count?: number }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-hidden>
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+        <div key={i} className="rounded-2xl border border-ink-200 bg-white p-5 dark:border-ink-800 dark:bg-ink-900">
           <Skeleton className="h-4 w-1/2" />
           <Skeleton className="mt-3 h-8 w-2/3" />
         </div>

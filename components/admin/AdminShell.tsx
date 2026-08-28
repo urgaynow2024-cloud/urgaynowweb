@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import Image from "next/image";
 import { Avatar } from "./ui/Avatar";
 import { Dropdown } from "./ui/Dropdown";
 import {
@@ -77,7 +78,7 @@ const SECTION_LABELS: Record<string, string> = {
 };
 
 function useBreadcrumbs(pathname: string) {
-  const parts = pathname.split("/").filter(Boolean); // ["admin", "staff", "new"]
+  const parts = pathname.split("/").filter(Boolean);
   if (parts.length <= 1) return [{ label: "Dashboard", href: "/admin" }];
   const crumbs: { label: string; href?: string }[] = [{ label: "Dashboard", href: "/admin" }];
   const section = parts[1];
@@ -162,8 +163,14 @@ export function AdminShell({
   const SidebarContent = (
     <div className="flex h-full flex-col">
       <div className={`flex h-16 items-center gap-2.5 border-b border-white/10 px-5 ${collapsed ? "justify-center px-0" : ""}`}>
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-pride-gradient text-lg shadow-glow">
-          🏳️‍🌈
+        <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl">
+          <Image
+            src="/brand/CutieLookingBack.png"
+            alt="UGN mascot"
+            fill
+            className="object-cover"
+            priority
+          />
         </span>
         {!collapsed && (
           <div className="leading-tight">
@@ -223,7 +230,7 @@ export function AdminShell({
           type="button"
           onClick={toggleCollapse}
           aria-label="Toggle sidebar"
-          className="absolute -right-3 top-20 hidden h-6 w-6 items-center justify-center rounded-full border border-white/15 bg-ink-800 text-white shadow-md transition hover:bg-ink-700 lg:flex"
+          className="absolute -right-3 top-20 hidden h-6 w-6 items-center justify-center rounded-full border border-white/20 bg-surface-800 text-white shadow-md transition hover:bg-surface-700 lg:flex active:scale-95"
         >
           <IconChevronRight size={14} className={`transition-transform duration-300 ${collapsed ? "" : "rotate-180"}`} />
         </button>
@@ -240,7 +247,7 @@ export function AdminShell({
 
       <div className={`flex min-w-0 flex-1 flex-col transition-[margin] duration-300 ${collapsed ? "lg:ml-[76px]" : "lg:ml-64"}`}>
         {/* Top bar */}
-        <header className="glass sticky top-0 z-30 flex h-16 items-center gap-3 border-b px-4 sm:px-6">
+        <header className="glass sticky top-0 z-30 flex h-16 items-center gap-3 border-b px-4 shadow-sm sm:px-6">
           <button type="button" onClick={() => setMobileOpen(true)} className="btn-icon lg:hidden" aria-label="Open menu">
             <IconMenu size={20} />
           </button>
@@ -275,14 +282,14 @@ export function AdminShell({
                 }}
                 onFocus={() => setSearchOpen(true)}
                 placeholder="Search…"
-                className="w-44 rounded-xl border border-ink-200 bg-white py-2 pl-9 pr-12 text-sm text-ink-800 placeholder:text-ink-400 transition-all focus:w-64 focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-500/15 dark:border-ink-700 dark:bg-ink-900 dark:text-white"
+                className="input w-44 focus:w-64 pl-9 pr-10"
               />
               <kbd className="pointer-events-none absolute right-2.5 top-1/2 hidden -translate-y-1/2 rounded border border-ink-200 bg-ink-50 px-1.5 py-0.5 text-[10px] font-medium text-ink-400 dark:border-ink-700 dark:bg-ink-800 lg:block">
                 ⌘K
               </kbd>
             </div>
             {searchOpen && searchResults.length > 0 && (
-              <div className="absolute right-0 z-50 mt-2 w-64 animate-scale-in overflow-hidden rounded-xl border border-ink-200 bg-white p-1.5 shadow-card-hover dark:border-ink-700 dark:bg-ink-900">
+              <div className="absolute right-0 z-50 mt-2 w-64 animate-scale-in overflow-hidden rounded-2xl border border-ink-200 bg-white p-1.5 shadow-card-hover dark:border-ink-700 dark:bg-ink-900">
                 {searchResults.map((r) => (
                   <button
                     key={r.href}
@@ -331,7 +338,7 @@ export function AdminShell({
               <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-pride-gradient ring-2 ring-white dark:ring-ink-900" />
             </button>
             {notifOpen && (
-              <div className="absolute right-0 z-50 mt-2 w-80 animate-scale-in overflow-hidden rounded-xl border border-ink-200 bg-white shadow-card-hover dark:border-ink-700 dark:bg-ink-900">
+              <div className="absolute right-0 z-50 mt-2 w-80 animate-scale-in overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-card-hover dark:border-ink-700 dark:bg-ink-900">
                 <div className="flex items-center justify-between border-b border-ink-100 px-4 py-3 dark:border-ink-800">
                   <p className="text-sm font-semibold text-ink-900 dark:text-white">Notifications</p>
                   <span className="badge badge-brand">{notifications.length} new</span>

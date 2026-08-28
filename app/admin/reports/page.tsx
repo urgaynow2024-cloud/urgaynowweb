@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
+import { safeQuery } from "@/lib/safeQuery";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
 import { StatCard } from "@/components/admin/ui/StatCard";
@@ -50,15 +51,15 @@ export default async function ReportsPage() {
     recentAnnouncements,
     upcomingEvents,
   ] = await Promise.all([
-    prisma.staff.count(),
-    prisma.announcement.count(),
-    prisma.event.count(),
-    prisma.guide.count(),
-    prisma.link.count(),
-    prisma.galleryImage.count(),
-    prisma.groupPhoto.count(),
-    prisma.announcement.findMany({ orderBy: { publishedAt: "desc" }, take: 5 }),
-    prisma.event.findMany({ orderBy: { startDateTime: "asc" }, take: 5 }),
+    safeQuery(() => prisma.staff.count(), 0),
+    safeQuery(() => prisma.announcement.count(), 0),
+    safeQuery(() => prisma.event.count(), 0),
+    safeQuery(() => prisma.guide.count(), 0),
+    safeQuery(() => prisma.link.count(), 0),
+    safeQuery(() => prisma.galleryImage.count(), 0),
+    safeQuery(() => prisma.groupPhoto.count(), 0),
+    safeQuery(() => prisma.announcement.findMany({ orderBy: { publishedAt: "desc" }, take: 5 }), []),
+    safeQuery(() => prisma.event.findMany({ orderBy: { startDateTime: "asc" }, take: 5 }), []),
   ]);
 
   const stats = [

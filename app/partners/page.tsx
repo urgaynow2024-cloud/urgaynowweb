@@ -3,6 +3,9 @@ import { prisma } from "@/lib/db";
 import { parseSocials } from "@/lib/utils";
 import { PartnerCard } from "@/components/PartnerCard";
 import { safeQuery } from "@/lib/safeQuery";
+import { SectionHeading } from "@/components/SectionHeading";
+import { ScrollFadeIn, StaggeredList } from "@/components/ScrollAnimation";
+import { EmptyState } from "@/components/EmptyState";
 
 export const revalidate = 3600;
 
@@ -38,14 +41,38 @@ export default async function PartnersPage() {
         title="Partners & Affiliates"
         description="The communities, groups, and creators we're proud to be connected with."
       />
-      <Container className="py-12">
+      <Container className="py-16">
         {partners.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-zinc-300 p-12 text-center text-zinc-500 dark:border-zinc-700">
-            No partners yet — check back soon!
-          </p>
+          <EmptyState
+            icon="🤝"
+            title="No partners yet"
+            description="Check back soon for our growing list of community friends!"
+          />
         ) : (
-          <div className="rounded-2xl border-2 border-dashed border-zinc-300 p-12 text-center dark:border-zinc-700">
-            <p className="text-xl text-zinc-500 dark:text-zinc-400">No partners yet — check back soon!</p>
+          <div className="space-y-16">
+            {tags.map((tag) => (
+              <section key={tag}>
+                <SectionHeading>{tag}</SectionHeading>
+                <StaggeredList className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {partners
+                    .filter((p) => p.tag === tag)
+                    .map((p, i) => (
+                      <ScrollFadeIn key={p.id} delay={i * 60}>
+                        <PartnerCard
+                          partner={{
+                            id: p.id,
+                            name: p.name,
+                            logoUrl: p.logoUrl ?? "",
+                            description: p.description ?? "",
+                            links: parseSocials(p.links),
+                            tag: p.tag ?? "",
+                          }}
+                        />
+                      </ScrollFadeIn>
+                    ))}
+                </StaggeredList>
+              </section>
+            ))}
           </div>
         )}
       </Container>

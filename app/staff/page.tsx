@@ -3,6 +3,9 @@ import { prisma } from "@/lib/db";
 import { StaffCard } from "@/components/StaffCard";
 import { getSetting } from "@/lib/settings";
 import { safeQuery } from "@/lib/safeQuery";
+import { SectionHeading } from "@/components/SectionHeading";
+import { ScrollFadeIn, StaggeredList } from "@/components/ScrollAnimation";
+import { EmptyState } from "@/components/EmptyState";
 
 export const revalidate = 300;
 
@@ -12,8 +15,6 @@ export const metadata = {
 };
 
 export default async function StaffPage() {
-  // Wrapped in safeQuery: if the database is unreachable, the page renders the
-  // empty-state instead of throwing a server-side exception (the /staff crash).
   const staff = await safeQuery(
     () =>
       prisma.staff.findMany({
@@ -36,32 +37,35 @@ export default async function StaffPage() {
       />
       <Container className="py-16">
         {staff.length === 0 ? (
-          <div className="rounded-2xl border-2 border-dashed border-zinc-300 p-12 text-center dark:border-zinc-700">
-            <p className="text-xl text-zinc-500 dark:text-zinc-400">Our team directory is being set up. Check back soon!</p>
-          </div>
+          <EmptyState
+            icon="👥"
+            title="Team directory coming soon"
+            description="Our staff profiles are being set up. Check back soon to meet the team!"
+          />
         ) : (
           <div className="space-y-16">
             {ranks.map((rank) => (
               <section key={rank}>
-                <h2 className="mb-6 text-3xl font-bold text-zinc-900 dark:text-white">{rank}</h2>
-                <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                <SectionHeading>{rank}</SectionHeading>
+                <StaggeredList className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {staff
                     .filter((s) => s.rank === rank)
-                    .map((s) => (
-                      <StaffCard
-                        key={s.id}
-                        staff={{
-                          id: s.id,
-                          name: s.name,
-                          vrchatUsername: s.vrchatUsername,
-                          rank: s.rank,
-                          bio: s.bio,
-                          photoUrl: s.photoUrl,
-                          socials: s.socials,
-                        }}
-                      />
+                    .map((s, i) => (
+                      <ScrollFadeIn key={s.id} delay={i * 60}>
+                        <StaffCard
+                          staff={{
+                            id: s.id,
+                            name: s.name,
+                            vrchatUsername: s.vrchatUsername,
+                            rank: s.rank,
+                            bio: s.bio,
+                            photoUrl: s.photoUrl,
+                            socials: s.socials,
+                          }}
+                        />
+                      </ScrollFadeIn>
                     ))}
-                </div>
+                </StaggeredList>
               </section>
             ))}
           </div>
@@ -69,12 +73,24 @@ export default async function StaffPage() {
         {(discord || vrchat) && (
           <div className="mt-16 flex flex-wrap justify-center gap-4">
             {discord && (
-              <a href={discord} target="_blank" rel="noopener noreferrer" className="btn-primary text-lg px-8 py-3">
-                Join our Discord
+              <a
+                href={discord}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-cta"
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  Join our Discord
+                </span>
               </a>
             )}
             {vrchat && (
-              <a href={vrchat} target="_blank" rel="noopener noreferrer" className="btn-secondary text-lg px-8 py-3">
+              <a
+                href={vrchat}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-secondary btn-lg"
+              >
                 VRChat Group
               </a>
             )}

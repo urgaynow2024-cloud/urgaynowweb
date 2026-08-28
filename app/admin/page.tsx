@@ -93,12 +93,12 @@ async function DashboardContent() {
                 <Link
                   key={i}
                   href={item.href}
-                  className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50 p-3 transition-colors hover:border-brand-300 hover:bg-brand-50 dark:border-zinc-800 dark:bg-zinc-800/50 dark:hover:border-brand-700 dark:hover:bg-brand-900/30"
+                  className="flex items-center gap-3 rounded-xl border border-ink-200 bg-ink-50 p-3 transition-all duration-200 hover:border-brand-300 hover:bg-brand-50 dark:border-ink-800 dark:bg-ink-800/50 dark:hover:border-brand-700 dark:hover:bg-brand-900/30"
                 >
                   <span className="text-xl">{item.icon}</span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-zinc-900 dark:text-white">{item.title}</p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">{item.type} · {relativeTime(item.at)}</p>
+                    <p className="truncate text-sm font-medium text-ink-900 dark:text-white">{item.title}</p>
+                    <p className="text-xs text-ink-500 dark:text-ink-400">{item.type} · {relativeTime(item.at)}</p>
                   </div>
                 </Link>
               ))}
@@ -109,23 +109,23 @@ async function DashboardContent() {
         <AdminCard title="Content Overview" description="Total items across all categories">
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800/50">
-                <p className="text-2xl font-bold text-zinc-900 dark:text-white">{totalContent}</p>
-                <p className="text-sm text-zinc-600 dark:text-zinc-400">Total Content</p>
+              <div className="rounded-xl bg-ink-50 p-4 dark:bg-ink-800/50">
+                <p className="text-2xl font-bold text-ink-900 dark:text-white">{totalContent}</p>
+                <p className="text-sm text-ink-600 dark:text-ink-400">Total Content</p>
               </div>
-              <div className="rounded-lg bg-brand-50 p-4 dark:bg-brand-900/30">
+              <div className="rounded-xl bg-brand-50 p-4 dark:bg-brand-900/30">
                 <p className="text-2xl font-bold text-brand-700 dark:text-brand-300">{galleryCount}</p>
                 <p className="text-sm text-brand-600 dark:text-brand-400">Gallery Images</p>
               </div>
             </div>
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-zinc-600 dark:text-zinc-400">Guides</span>
-                <span className="font-medium text-zinc-900 dark:text-white">{guideCount}</span>
+                <span className="text-ink-600 dark:text-ink-400">Guides</span>
+                <span className="font-medium text-ink-900 dark:text-white">{guideCount}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-zinc-600 dark:text-zinc-400">Links</span>
-                <span className="font-medium text-zinc-900 dark:text-white">{linkCount}</span>
+                <span className="text-ink-600 dark:text-ink-400">Links</span>
+                <span className="font-medium text-ink-900 dark:text-white">{linkCount}</span>
               </div>
             </div>
           </div>
@@ -152,8 +152,8 @@ export default function AdminDashboard() {
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">Dashboard</h1>
-            <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+            <h1 className="text-3xl font-bold text-ink-900 dark:text-white">Dashboard</h1>
+            <p className="mt-1 text-ink-500 dark:text-ink-400">
               Overview of your community and content
             </p>
           </div>

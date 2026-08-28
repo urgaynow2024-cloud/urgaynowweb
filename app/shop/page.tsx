@@ -5,6 +5,8 @@ import { Suspense } from "react";
 import { ShopGallery, type ShopDesignPublic } from "./ShopGallery";
 import { Skeleton } from "@/components/Skeleton";
 import { IconTag, IconClock } from "@/components/admin/ui/icons";
+import { ScrollFadeIn } from "@/components/ScrollAnimation";
+import { EmptyState } from "@/components/EmptyState";
 
 export const revalidate = 300;
 
@@ -38,9 +40,9 @@ async function ShopContent() {
 
   return (
     <>
-      <div className="mb-10 rounded-2xl border border-brand-200 bg-brand-50 px-6 py-5 dark:border-brand-900 dark:bg-brand-900/30">
+      <div className="card overflow-hidden border-brand-200 bg-brand-50 p-6 dark:border-brand-800 dark:bg-brand-900/30">
         <div className="flex items-start gap-3">
-          <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-pride-gradient text-white">
+          <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-pride-gradient text-white shadow-glow">
             <IconClock size={20} />
           </span>
           <div>
@@ -54,18 +56,20 @@ async function ShopContent() {
       </div>
 
       {mapped.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-zinc-300 p-16 text-center dark:border-zinc-700">
-          <span className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-50 text-brand-500 dark:bg-brand-900/40 dark:text-brand-300">
-            <IconTag size={28} />
-          </span>
-          <h2 className="text-xl font-semibold text-zinc-900 dark:text-white">No designs published yet</h2>
-          <p className="mx-auto mt-2 max-w-md text-zinc-500 dark:text-zinc-400">
-            We&apos;re still putting the showcase together. New clothing, outfits, and accessories
-            will appear here as soon as they&apos;re ready.
-          </p>
-        </div>
+        <EmptyState
+          icon={
+            <IconTag size={32} />
+          }
+          title="No designs published yet"
+          description="We're still putting the showcase together. New clothing, outfits, and accessories will appear here as soon as they're ready."
+          className="mt-10"
+        />
       ) : (
-        <ShopGallery designs={mapped} />
+        <div className="mt-10">
+          <ScrollFadeIn>
+            <ShopGallery designs={mapped} />
+          </ScrollFadeIn>
+        </div>
       )}
     </>
   );
@@ -73,11 +77,11 @@ async function ShopContent() {
 
 function ShopSkeleton() {
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4" aria-hidden>
+    <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4" aria-hidden>
       {Array.from({ length: 8 }).map((_, i) => (
         <div
           key={i}
-          className="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
+          className="overflow-hidden rounded-2xl border border-ink-200 bg-white dark:border-ink-800 dark:bg-ink-900"
         >
           <Skeleton className="h-44 w-full rounded-none" />
           <div className="space-y-3 p-4">
@@ -97,7 +101,7 @@ export default function ShopPage() {
         title="Our Shop"
         description="A first look at upcoming Ur Gay Now clothing, outfits, and community designs."
       />
-      <Container className="py-12">
+      <Container className="py-16">
         <Suspense fallback={<ShopSkeleton />}>
           <ShopContent />
         </Suspense>

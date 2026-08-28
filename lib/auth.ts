@@ -44,8 +44,12 @@ export async function verifySession(
 }
 
 export async function getSession(): Promise<SessionPayload | null> {
-  const token = cookies().get(SESSION_COOKIE)?.value;
-  return verifySession(token);
+  try {
+    const token = cookies().get(SESSION_COOKIE)?.value;
+    return await verifySession(token);
+  } catch {
+    return null;
+  }
 }
 
 /** For use in server components / layouts. Redirects to login when not authed. */

@@ -4,7 +4,12 @@ import { getSession } from "@/lib/auth";
 import { AdminShell } from "@/components/admin/AdminShell";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const session = await getSession();
+  let session;
+  try {
+    session = await getSession();
+  } catch {
+    session = null;
+  }
 
   // Login page (no session) renders without the admin shell.
   if (!session) {

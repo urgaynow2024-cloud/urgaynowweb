@@ -4,6 +4,7 @@ import { GalleryGrid } from "@/components/GalleryGrid";
 import { getSetting } from "@/lib/settings";
 import { Pagination } from "@/components/Pagination";
 import Link from "next/link";
+import { ScrollFadeIn, StaggeredList } from "@/components/ScrollAnimation";
 
 export const revalidate = 60;
 
@@ -58,18 +59,23 @@ export default async function GalleryPage({
         <div className="mb-8 space-y-4">
           <Link
             href="/gallery/submit"
-            className="flex items-center justify-between gap-4 rounded-2xl border-2 border-brand-200 bg-brand-50 px-6 py-4 text-base text-brand-800 transition-colors hover:border-brand-300 hover:bg-brand-100 dark:border-brand-900 dark:bg-brand-900/30 dark:text-brand-100 dark:hover:border-brand-700"
+            className="card card-hover group flex items-center justify-between gap-4 border-brand-200 bg-brand-50 p-6 transition-colors hover:border-brand-300 dark:border-brand-800 dark:bg-brand-900/30 dark:text-brand-100 dark:hover:border-brand-700"
           >
             <span>
-              <span className="font-semibold">Share your photo</span> — submit it to the
+              <span className="font-semibold text-brand-800 dark:text-brand-100">Share your photo</span> — submit it to the
               gallery and our team will review it.
             </span>
             <span className="btn-primary btn-sm shrink-0">Submit a photo</span>
           </Link>
           {discord && (
-            <div className="rounded-2xl border border-ink-200 bg-white px-6 py-4 text-base text-ink-700 dark:border-ink-800 dark:bg-ink-900 dark:text-ink-200">
+            <div className="card border-ink-200 bg-white p-6 text-base text-ink-700 dark:border-ink-800 dark:bg-ink-900 dark:text-ink-200">
               Chat with the community in our{" "}
-              <a href={discord} target="_blank" rel="noopener noreferrer" className="font-semibold underline">
+              <a
+                href={discord}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-brand-600 underline dark:text-brand-300"
+              >
                 Discord
               </a>
               !
@@ -81,8 +87,14 @@ export default async function GalleryPage({
             {pendingCount} photo{pendingCount === 1 ? "" : "s"} awaiting moderator review.
           </p>
         )}
-        <GalleryGrid images={paged} />
-        <Pagination page={page} totalPages={totalPages} basePath="/gallery" />
+
+        <ScrollFadeIn>
+          <GalleryGrid images={paged} />
+        </ScrollFadeIn>
+
+        <div className="mt-12">
+          <Pagination page={page} totalPages={totalPages} basePath="/gallery" />
+        </div>
       </Container>
     </>
   );

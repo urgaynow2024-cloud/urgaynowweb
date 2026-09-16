@@ -13,6 +13,8 @@ import { HeroBackground, ParticlesBackground } from "@/components/HeroBackground
 import { ScrollFadeIn, StaggeredList } from "@/components/ScrollAnimation";
 import { IconVrchat, IconDiscord, IconCalendar, IconImages, IconUsers, IconSparkles, IconArrowRight } from "@/components/admin/ui/icons";
 import { EmptyState } from "@/components/EmptyState";
+import { getEventState, toEventCard } from "@/lib/event-utils";
+import type { Poll, PollOption } from "@prisma/client";
 
 export const revalidate = 60;
 
@@ -82,16 +84,16 @@ async function HomeAnnouncements() {
   const announcements = await safeQuery(
     () =>
       prisma.announcement.findMany({
-        where: { published: true },
+        where: { state: "PUBLISHED" },
         orderBy: { publishedAt: "desc" },
         take: 3,
       }),
     [],
   );
 
-  return announcements.length > 0 ? (
+  return announcements.filter(a => a.publishedAt).length > 0 ? (
     <StaggeredList className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {announcements.map((a) => (
+      {announcements.filter(a => a.publishedAt).map((a) => (
         <ScrollFadeIn key={a.id} delay={0}>
           <AnnouncementCard
             item={{
@@ -100,7 +102,7 @@ async function HomeAnnouncements() {
               slug: a.slug,
               excerpt: a.excerpt,
               coverImage: a.coverImage,
-              publishedAt: a.publishedAt,
+              publishedAt: a.publishedAt!,
             }}
           />
         </ScrollFadeIn>
@@ -120,38 +122,67 @@ async function HomeEvents() {
   const events = await safeQuery(
     () =>
       prisma.event.findMany({
-        where: { published: true, startDateTime: { gte: now } },
+        where: { published: true },
         orderBy: { startDateTime: "asc" },
-        take: 3,
       }),
     [],
   );
+  const live = events.filter((event) => getEventState(event, now) === "LIVE");
+  const upcoming = events.filter((event) => getEventState(event, now) === "UPCOMING");
 
-  return events.length > 0 ? (
-    <StaggeredList className="grid gap-4">
-      {events.map((e, i) => (
-        <ScrollFadeIn key={e.id} delay={i * 80}>
-          <EventCard
-            event={{
-              id: e.id,
-              title: e.title,
-              description: e.description,
-              location: e.location,
-              vrchatWorldUrl: e.vrchatWorldUrl,
-              coverImage: e.coverImage,
-              startDateTime: e.startDateTime,
-              endDateTime: e.endDateTime,
-            }}
-          />
-        </ScrollFadeIn>
-      ))}
-    </StaggeredList>
-  ) : (
-    <EmptyState
-      icon="📅"
-      title="Nothing on the horizon"
-      description="No upcoming events scheduled right now. Follow us on socials for announcements!"
-    />
+  if (live.length === 0 && upcoming.length === 0) {
+    return (
+      <EmptyState
+        icon="📅"
+        title="Nothing on the horizon"
+        description="No upcoming events scheduled right now. Follow us on socials for announcements!"
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-10">
+      {live.length > 0 && (
+        <section className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-brand-500/10 via-transparent to-brand-700/10 dark:from-brand-500/5 dark:via-transparent dark:to-brand-700/5" />
+          <div className="relative flex items-center gap-3 mb-6 p-4 rounded-2xl bg-gradient-to-r from-brand-500/10 to-brand-700/10 border border-brand-200/50 dark:border-brand-800/50">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-500 opacity-75" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-brand-500" />
+              </span>
+              <span className="text-lg font-extrabold text-brand-700 dark:text-brand-300 uppercase tracking-wider">Live Now</span>
+            </div>
+            <span className="ml-2 text-sm text-brand-600 dark:text-brand-400">
+              {live.length === 1 ? "1 event happening" : `${live.length} events happening`}
+            </span>
+          </div>
+          <StaggeredList className="grid gap-4">
+            {live.map((e, i) => (
+              <ScrollFadeIn key={e.id} delay={i * 80}>
+                <EventCard
+                  event={toEventCard(e)}
+                />
+              </ScrollFadeIn>
+            ))}
+          </StaggeredList>
+        </section>
+      )}
+      {upcoming.length > 0 && (
+        <section>
+          <h2 className="mb-4 text-2xl font-extrabold text-ink-900 dark:text-white">Upcoming</h2>
+          <StaggeredList className="grid gap-4">
+            {upcoming.map((e, i) => (
+              <ScrollFadeIn key={e.id} delay={i * 80}>
+                <EventCard
+                  event={toEventCard(e)}
+                />
+              </ScrollFadeIn>
+            ))}
+          </StaggeredList>
+        </section>
+      )}
+    </div>
   );
 }
 
@@ -237,6 +268,128 @@ async function HomeGallery() {
               <IconArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </div>
+        </Section>
+      </Container>
+    </div>
+  );
+}
+
+async function HomePolls() {
+  type HomePoll = Poll & { options: PollOption[] };
+  const polls = await safeQuery(
+    () =>
+      prisma.poll.findMany({
+        where: { published: true, closed: false },
+        orderBy: { createdAt: "desc" },
+        take: 3,
+        include: { options: { orderBy: { sortOrder: "asc" } } },
+      }) as Promise<HomePoll[]>,
+    [] as HomePoll[],
+  );
+
+  if (polls.length === 0) return null;
+
+  return (
+    <div className="relative overflow-hidden border-t border-ink-200/80 bg-surface-50 dark:border-ink-800/80 dark:bg-surface-950">
+      <div className="absolute inset-0 bg-grid opacity-20 dark:opacity-10" />
+      <Container className="relative py-16 sm:py-20">
+        <Section title="Active polls" subtitle="Have your say — voting is open.">
+          <div className="grid gap-6 lg:grid-cols-3">
+            {polls.map((poll, i) => (
+              <ScrollFadeIn key={poll.id} delay={i * 80}>
+                <div className="card-premium flex flex-col p-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white">
+                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M4 6h16M4 12h16M4 18h10" /></svg>
+                    </span>
+                    <span className="badge badge-brand rounded-full px-2.5 py-1 text-xs font-semibold">
+                      {poll.type === "SINGLE" ? "Single choice" : "Multiple choice"}
+                    </span>
+                  </div>
+                  <h3 className="text-lg font-bold text-ink-900 dark:text-white line-clamp-2">
+                    {poll.title}
+                  </h3>
+                  {poll.description && (
+                    <p className="mt-2 text-sm text-ink-500 dark:text-ink-400 line-clamp-2">
+                      {poll.description}
+                    </p>
+                  )}
+                  <div className="mt-4 space-y-2">
+                    {poll.options.slice(0, 3).map((option) => (
+                      <div key={option.id} className="flex items-center gap-2 text-sm">
+                        <span className="h-2 w-2 rounded-full bg-brand-500" />
+                        <span className="text-ink-700 dark:text-ink-200">{option.label}</span>
+                      </div>
+                    ))}
+                    {poll.options.length > 3 && (
+                      <p className="text-xs text-ink-400">+{poll.options.length - 3} more</p>
+                    )}
+                  </div>
+                  <div className="mt-auto pt-5">
+                    <Link
+                      href="/polls"
+                      className="btn-primary btn-sm inline-flex items-center gap-1"
+                    >
+                      Vote
+                      <span>→</span>
+                    </Link>
+                  </div>
+                </div>
+              </ScrollFadeIn>
+            ))}
+          </div>
+          <div className="mt-8">
+            <Link
+              href="/polls"
+              className="group inline-flex items-center gap-2 font-semibold text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-300 dark:hover:text-brand-200"
+            >
+              View all polls
+              <IconArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+          </div>
+        </Section>
+      </Container>
+    </div>
+  );
+}
+
+async function CommunityHighlights() {
+  const [staffCount, eventCount, galleryCount] = await safeQuery(
+    () =>
+      Promise.all([
+        prisma.staff.count(),
+        prisma.event.count({ where: { published: true } }),
+        prisma.galleryImage.count({ where: { status: "APPROVED" } }),
+      ]),
+    [0, 0, 0],
+  );
+
+  const highlights = [
+    { value: staffCount, label: "Staff & volunteers", icon: "👥" },
+    { value: eventCount, label: "Events hosted", icon: "🎉" },
+    { value: galleryCount, label: "Community photos", icon: "📸" },
+  ];
+
+  return (
+    <div className="relative overflow-hidden border-t border-ink-200/80 dark:border-ink-800/80">
+      <div className="absolute inset-0 bg-grid opacity-20 dark:opacity-10" />
+      <Container className="relative py-16 sm:py-20">
+        <Section title="Community highlights" subtitle="A snapshot of what we've built together.">
+          <StaggeredList className="grid gap-6 sm:grid-cols-3">
+            {highlights.map((h, i) => (
+              <ScrollFadeIn key={h.label} delay={i * 80}>
+                <div className="card-premium flex flex-col items-center p-8 text-center">
+                  <span className="text-4xl mb-4">{h.icon}</span>
+                  <span className="text-4xl font-extrabold text-brand-700 dark:text-brand-200">
+                    {h.value}
+                  </span>
+                  <span className="mt-2 text-sm text-ink-500 dark:text-ink-400">
+                    {h.label}
+                  </span>
+                </div>
+              </ScrollFadeIn>
+            ))}
+          </StaggeredList>
         </Section>
       </Container>
     </div>
@@ -370,8 +523,61 @@ export default function HomePage() {
       {/* Community features */}
       <CommunitySection />
 
+      {/* What's Happening? hub */}
+      <div className="relative border-b border-ink-200/80 bg-surface-50 dark:border-ink-800/80 dark:bg-surface-950">
+        <div className="absolute inset-0 bg-grid opacity-20 dark:opacity-10" />
+        <Container className="relative py-16 sm:py-20">
+          <ScrollFadeIn>
+            <div className="flex items-center gap-3 mb-3">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow">
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a9 9 0 1 0 9 9" /><path d="M12 8v4l3 2" /></svg>
+              </span>
+              <h2 className="text-3xl font-extrabold tracking-tight text-ink-900 dark:text-white sm:text-4xl">
+                What&rsquo;s Happening
+              </h2>
+            </div>
+            <p className="max-w-2xl text-lg text-ink-500 dark:text-ink-400">
+              Live events, upcoming plans, the latest news, and active polls — everything you need to jump in.
+            </p>
+          </ScrollFadeIn>
+        </Container>
+      </div>
+
+      {/* Live Now + Upcoming events */}
+      <div className="border-b border-ink-200/80 dark:border-ink-800/80">
+        <Container className="py-16 sm:py-20">
+          <Suspense
+            fallback={
+              <div className="grid gap-4">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="rounded-2xl border border-ink-200 bg-white p-5 dark:border-ink-800 dark:bg-ink-900"
+                  >
+                    <Skeleton className="h-5 w-1/3" />
+                    <Skeleton className="mt-3 h-3 w-1/2" />
+                    <Skeleton className="mt-2 h-3 w-2/3" />
+                  </div>
+                ))}
+              </div>
+            }
+          >
+            <HomeEvents />
+          </Suspense>
+          <div className="mt-8">
+            <Link
+              href="/events"
+              className="group inline-flex items-center gap-2 font-semibold text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-300 dark:hover:text-brand-200"
+            >
+              All events
+              <IconArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
+            </Link>
+          </div>
+        </Container>
+      </div>
+
       {/* Latest announcements */}
-      <Container>
+      <Container className="py-16 sm:py-20">
         <Section
           title="Latest announcements"
           subtitle="Stay up to date with what's happening in the community."
@@ -383,35 +589,18 @@ export default function HomePage() {
         </Section>
       </Container>
 
-      {/* Upcoming events */}
-      <div className="border-t border-ink-200/80 dark:border-ink-800/80">
-        <Container>
-          <Section title="Upcoming events" subtitle="Come hang out with us soon.">
-            <Suspense
-              fallback={
-                <div className="grid gap-4">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="rounded-2xl border border-ink-200 bg-white p-5 dark:border-ink-800 dark:bg-ink-900"
-                    >
-                      <Skeleton className="h-5 w-1/3" />
-                      <Skeleton className="mt-3 h-3 w-1/2" />
-                      <Skeleton className="mt-2 h-3 w-2/3" />
-                    </div>
-                  ))}
-                </div>
-              }
-            >
-              <HomeEvents />
-            </Suspense>
-            <SectionFooter href="/events" label="All events" />
-          </Section>
-        </Container>
-      </div>
+      {/* Active polls */}
+      <Suspense fallback={null}>
+        <HomePolls />
+      </Suspense>
+
+      {/* Community highlights */}
+      <Suspense fallback={null}>
+        <CommunityHighlights />
+      </Suspense>
 
       {/* Featured staff */}
-      <Container>
+      <Container className="py-16 sm:py-20">
         <Section title="Meet the team" subtitle="The lovely humans who keep things running.">
           <Suspense fallback={<CardGridSkeleton count={6} />}>
             <HomeStaff />

@@ -5,13 +5,22 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 
+function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 80);
+}
+
 export async function createGalleryImage(formData: FormData) {
   await requireAdmin();
   const title = String(formData.get("title") || "").trim();
   const description = String(formData.get("description") || "").trim();
   const imageUrl = String(formData.get("imageUrl") || "").trim();
   if (!imageUrl) redirect("/admin/gallery/new?error=1");
-  await prisma.galleryImage.create({ data: { title, description, imageUrl } });
+  const slug = generateSlug(title) + "-" + Date.now().toString(36);
+  await prisma.galleryImage.create({ data: { title, description, imageUrl, slug } });
   revalidatePath("/", "layout");
   revalidatePath("/gallery");
   redirect("/admin/gallery");

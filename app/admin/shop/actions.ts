@@ -15,10 +15,10 @@ export async function createShopDesign(formData: FormData) {
   await requireAdmin();
   const name = String(formData.get("name") || "").trim();
   const description = String(formData.get("description") || "").trim();
-  const creator = String(formData.get("creator") || "").trim() || null;
-  const category = String(formData.get("category") || "").trim() || null;
+  const creator = String(formData.get("creator") || "").trim();
+  const category = String(formData.get("category") || "").trim();
   const imageUrl = String(formData.get("imageUrl") || "").trim();
-  const imageAlt = String(formData.get("imageAlt") || "").trim() || null;
+  const imageAlt = String(formData.get("imageAlt") || "").trim();
   const galleryUrls = cleanGalleryUrls(formData);
   const featured = formData.get("featured") === "on";
   const published = formData.get("published") === "on";
@@ -29,7 +29,7 @@ export async function createShopDesign(formData: FormData) {
   await prisma.shopDesign.create({
     data: {
       name,
-      description: description || null,
+      description,
       creator,
       category,
       imageUrl,
@@ -51,10 +51,10 @@ export async function updateShopDesign(id: string, formData: FormData) {
   await requireAdmin();
   const name = String(formData.get("name") || "").trim();
   const description = String(formData.get("description") || "").trim();
-  const creator = String(formData.get("creator") || "").trim() || null;
-  const category = String(formData.get("category") || "").trim() || null;
+  const creator = String(formData.get("creator") || "").trim();
+  const category = String(formData.get("category") || "").trim();
   const imageUrl = String(formData.get("imageUrl") || "").trim();
-  const imageAlt = String(formData.get("imageAlt") || "").trim() || null;
+  const imageAlt = String(formData.get("imageAlt") || "").trim();
   const galleryUrls = cleanGalleryUrls(formData);
   const featured = formData.get("featured") === "on";
   const published = formData.get("published") === "on";
@@ -66,7 +66,7 @@ export async function updateShopDesign(id: string, formData: FormData) {
     where: { id },
     data: {
       name,
-      description: description || null,
+      description,
       creator,
       category,
       imageUrl,

@@ -22,6 +22,10 @@ model Staff {
   sortOrder      Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  hostedEvents   Event[]  @relation("EventHost")
+  authoredAnnouncements Announcement[] @relation("AnnouncementAuthor")
+  reviewedSubmissions CommunitySubmission[] @relation("CommunitySubmissionReviewer")
+  moderationLogs CommunitySubmissionModerationLog[] @relation("ModerationLogStaff")
 }
 
 model Partner {
@@ -43,25 +47,142 @@ model Announcement {
   excerpt         String   @default("")
   content         String   @default("") // Markdown
   coverImage      String   @default("")
-  published       Boolean  @default(true)
-  publishedAt     DateTime @default(now())
+  state           String   @default("DRAFT") // DRAFT | PUBLISHED | ARCHIVED
+  publishedAt     DateTime?
+  scheduledAt     DateTime?
+  authorId        String?
+  author          Staff?   @relation("AnnouncementAuthor", fields: [authorId], references: [id])
+  categoryId      String?
+  category        AnnouncementCategory? @relation(fields: [categoryId], references: [id])
+  pinned          Boolean  @default(false)
   discordMessageId String?  @unique
+  discordPosted   Boolean  @default(false)
+  discordPostedAt DateTime?
+  discordPostStatus String  @default("pending") // pending | sent | failed
+  discordRoleIds  String[] @default([])
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  tags            AnnouncementTag[] @relation("AnnouncementTags")
+}
+
+model AnnouncementCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String   @default("")
+  color       String   @default("brand")
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  announcements Announcement[]
+}
+
+model AnnouncementTag {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String   @default("")
+  color       String   @default("ink")
+  usageCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  announcements Announcement[] @relation("AnnouncementTags")
+}
+
+enum PollType {
+  SINGLE
+  MULTIPLE
+}
+
+enum PollResultsVisibility {
+  LIVE
+  AFTER_CLOSE
+  HIDDEN
+}
+
+model Poll {
+  id                   String                @id @default(cuid())
+  title                String
+  slug                 String               @unique
+  description          String               @default("")
+  type                 PollType             @default(SINGLE)
+  allowAnonymous       Boolean              @default(false)
+  startAt              DateTime?
+  endAt                DateTime?
+  voteLimit            Int                  @default(0) // 0 = unlimited
+  resultsVisibility    PollResultsVisibility @default(AFTER_CLOSE)
+  closed               Boolean              @default(false)
+  published            Boolean              @default(true)
+  publishedAt          DateTime?
+  // Discord webhook delivery (see 19-Notifications)
+  discordPosted        Boolean              @default(false)
+  discordPostedAt      DateTime?
+  discordPostStatus    String               @default("pending") // pending | sent | failed
+  discordRoleIds       String[]             @default([])
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  options              PollOption[]
+  votes                PollVote[]
+
+  @@index([published, createdAt])
+  @@index([slug])
+}
+
+model PollOption {
+  id        String    @id @default(cuid())
+  pollId    String
+  label     String
+  sortOrder Int       @default(0)
+  poll      Poll      @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes     PollVote[]
+
+  @@index([pollId])
+}
+
+model PollVote {
+  id         String   @id @default(cuid())
+  pollId     String
+  optionId   String
+  userId     String?
+  anonId     String?
+  createdAt  DateTime @default(now())
+  poll       Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  option     PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([pollId, userId])
+  @@unique([pollId, anonId])
+  @@index([pollId, createdAt])
 }
 
 model Event {
   id            String    @id @default(cuid())
   title         String
+  slug          String    @unique
+  summary       String    @default("")
   description   String    @default("") // Markdown
-  location      String    @default("")
-  vrchatWorldUrl String   @default("")
   coverImage    String    @default("")
   startDateTime DateTime
   endDateTime   DateTime?
-  published     Boolean   @default(true)
+  timezone      String    @default("UTC")
+  hostId        String?
+  host          Staff?    @relation("EventHost", fields: [hostId], references: [id])
+  hostName      String    @default("")
+  location      String    @default("")
+  vrchatWorldUrl String   @default("")
+  category      String    @default("Other")
+  tags          String[]  @default([])
+  rules         String    @default("") // Markdown
+status        String   @default("UPCOMING")
+  published     Boolean  @default(true)
+  publishedAt   DateTime?
+  archivedAt    DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  reminders     EventReminder[]
+  discordPosted   Boolean  @default(false)
+  discordPostedAt DateTime?
+  discordPostStatus String  @default("pending") // pending | sent | failed
+  discordRoleIds  String[] @default([])
 }
 
 model Rule {
@@ -72,12 +193,37 @@ model Rule {
   sortOrder Int    @default(0)
 }
 
+enum GuideCategory {
+  GETTING_STARTED
+  VRCHAT
+  EVENTS
+  COMMUNITY
+  REPORTS
+  ACCOUNTS
+  SAFETY
+  WEBSITE
+  ACCESSIBILITY
+  GENERAL
+  SUPPORT
+  STAFF
+  DISCORD_SERVER
+}
+
 model Guide {
-  id        String @id @default(cuid())
-  category  String @default("General")
-  question  String
-  answer    String @default("") // Markdown
-  sortOrder Int    @default(0)
+  id              String        @id @default(cuid())
+  category        GuideCategory @default(GENERAL)
+  question        String
+  answer          String        @default("") // Markdown
+  sortOrder       Int           @default(0)
+  slug            String        @unique
+  relatedGuides   Guide[]       @relation("GuideRelations")
+  relatedTo       Guide?        @relation("GuideRelations", fields: [relatedToId], references: [id])
+  relatedToId     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([category])
+  @@index([slug])
 }
 
 model Link {
@@ -86,6 +232,12 @@ model Link {
   url       String
   icon      String @default("link") // emoji or icon name
   sortOrder Int    @default(0)
+}
+
+enum UpdateType {
+  MAJOR
+  MINOR
+  PATCH
 }
 
 model GalleryImage {
@@ -97,7 +249,125 @@ model GalleryImage {
   submitterName   String    @default("")
   rejectionReason String    @default("")
   reviewedAt      DateTime?
+  slug            String    @unique
+  published       Boolean   @default(false)
+  publishedAt     DateTime?
   createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([published, createdAt])
+  @@index([slug])
+}
+ 
+model Update {
+  id                  String    @id @default(cuid())
+  slug                String    @unique
+  version             String
+  type                UpdateType
+  title               String
+  summary             String    @default("")
+  whatsNew            String    @default("")
+  improvements        String    @default("")
+  bugFixes            String    @default("")
+  securityNotes       String    @default("")
+  images              String    @default("[]") // JSON array
+  authorId            String
+  publishedAt         DateTime?
+  discordPostedAt     DateTime?
+  discordPostStatus   String    @default("pending") // pending, sent, failed
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([publishedAt])
+  @@index([version])
+  @@index([slug])
+}
+
+enum CommunitySubmissionType {
+  ARTWORK
+  AVATAR
+  SCREENSHOT
+  PHOTOGRAPHY
+  VRCHAT_WORLD
+  CREATOR_PROJECT
+  OTHER
+}
+
+enum CommunitySubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REQUEST_CHANGES
+}
+
+enum ReportStatus {
+  RECEIVED
+  UNDER_REVIEW
+  ACTION_TAKEN
+  RESOLVED
+  DISMISSED
+}
+
+model CommunitySubmission {
+  id                  String                   @id @default(cuid())
+  type                CommunitySubmissionType
+  status              CommunitySubmissionStatus @default(PENDING)
+  title               String
+  description         String                   @default("")
+  imageUrl            String
+  submitterName       String                   @default("")
+  submitterEmail      String?                  @default("")
+  fileName            String
+  fileSize            Int
+  contentType         String
+  rejectionReason     String                   @default("")
+  changeRequestNote   String                   @default("")
+  reviewedAt          DateTime?
+  reviewedBy          String?
+  published           Boolean                  @default(false)
+  publishedAt         DateTime?
+  createdAt           DateTime                 @default(now())
+  updatedAt           DateTime                 @updatedAt
+  reports             CommunitySubmissionReport[]
+  moderationLogs      CommunitySubmissionModerationLog[]
+  reviewedByStaff     Staff?                   @relation("CommunitySubmissionReviewer", fields: [reviewedBy], references: [id])
+
+  @@index([status, createdAt])
+  @@index([type])
+  @@index([published])
+}
+
+model CommunitySubmissionReport {
+  id                String    @id @default(cuid())
+  submissionId      String
+  reason            String
+  details           String    @default("")
+  reporterName      String    @default("")
+  reporterEmail     String?    @default("")
+  anonymous         Boolean   @default(false)
+  reportToken       String    @unique @default(cuid())
+  status            ReportStatus @default(RECEIVED)
+  reviewedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  submission        CommunitySubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId])
+  @@index([status, createdAt])
+}
+
+model CommunitySubmissionModerationLog {
+  id                String    @id @default(cuid())
+  submissionId      String
+  action            String // APPROVED | REJECTED | REQUEST_CHANGES | UNPUBLISHED | REPORT_RESOLVED
+  note              String    @default("")
+  performedBy       String?
+  performedAt       DateTime @default(now())
+  submission        CommunitySubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  staff             Staff?   @relation("ModerationLogStaff", fields: [performedBy], references: [id])
+
+  @@index([submissionId])
+  @@index([performedAt])
 }
 
 model GroupPhoto {
@@ -120,15 +390,65 @@ model Setting {
 model ShopDesign {
   id          String   @id @default(cuid())
   name        String
-  description String?
-  creator     String?
-  category    String?
+  description String   @default("")
+  creator     String   @default("")
+  category    String   @default("")
   imageUrl    String
-  imageAlt    String?
+  imageAlt    String   @default("")
   galleryUrls String[] @default([])
   featured    Boolean  @default(false)
   published   Boolean  @default(true)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  name           String?
+  vrchatUsername String?  @unique
+  timezone       String   @default("UTC")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  reminders      EventReminder[]
+}
+
+model EventReminder {
+  id        String   @id @default(cuid())
+  userId    String
+  eventId   String
+  remindAt  DateTime
+  sentAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventId, remindAt])
+  @@index([remindAt, sentAt])
+  @@index([userId])
+  @@index([eventId])
+}
+
+model HealthCheck {
+  id        String   @id @default(cuid())
+  serviceId String
+  status    String
+  latencyMs Int?
+  error     String?
+  checkedAt DateTime @default(now())
+
+  @@index([serviceId, checkedAt])
+}
+
+model ErrorLog {
+  id         String    @id @default(cuid())
+  message    String
+  digest     String?
+  path       String?
+  userAgent  String?
+  createdAt  DateTime  @default(now())
+
+  @@index([createdAt])
+  @@index([digest])
 }

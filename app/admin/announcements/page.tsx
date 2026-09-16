@@ -40,7 +40,7 @@ export default async function AdminAnnouncementsList({
               ],
             }
           : {}),
-        ...(status === "published" ? { published: true } : status === "drafts" ? { published: false } : {}),
+        ...(status === "published" ? { state: "PUBLISHED" } : status === "drafts" ? { state: "DRAFT" } : status === "archived" ? { state: "ARCHIVED" } : {}),
       },
       orderBy: { publishedAt: "desc" },
     });
@@ -94,7 +94,7 @@ export default async function AdminAnnouncementsList({
       </Card>
 
       <Card className="animate-fade-in overflow-visible">
-        <form method="get" className="flex flex-col gap-3 border-b border-ink-100 p-4 dark:border-ink-800 sm:flex-row sm:items-center">
+<form method="get" className="flex flex-col gap-3 border-b border-ink-100 p-4 dark:border-ink-800 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <IconSearch size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
             <input name="q" defaultValue={q} placeholder="Search by title or excerpt…" className="input pl-9" />
@@ -105,6 +105,7 @@ export default async function AdminAnnouncementsList({
               <option value="">All statuses</option>
               <option value="published">Published</option>
               <option value="drafts">Drafts</option>
+              <option value="archived">Archived</option>
             </select>
           </div>
           {(q || status) && (
@@ -164,9 +165,11 @@ export default async function AdminAnnouncementsList({
                     </td>
                     <td className="hidden max-w-[280px] truncate px-5 py-3 text-ink-500 sm:table-cell">{a.excerpt}</td>
                     <td className="px-5 py-3">
-                      <StatusPill tone={a.published ? "success" : "neutral"}>{a.published ? "Published" : "Draft"}</StatusPill>
+                      <StatusPill tone={a.state === "PUBLISHED" ? "success" : a.state === "ARCHIVED" ? "warning" : "neutral"}>
+                        {a.state === "PUBLISHED" ? "Published" : a.state === "ARCHIVED" ? "Archived" : "Draft"}
+                      </StatusPill>
                     </td>
-                    <td className="hidden px-5 py-3 text-ink-500 md:table-cell">{formatDate(a.publishedAt)}</td>
+                    <td className="hidden px-5 py-3 text-ink-500 md:table-cell">{a.publishedAt ? formatDate(a.publishedAt) : "—"}</td>
                     <td className="px-5 py-3">
                       <div className="flex items-center justify-end gap-2">
                         <Link href={`/admin/announcements/${a.id}`} className="btn-secondary btn-sm">

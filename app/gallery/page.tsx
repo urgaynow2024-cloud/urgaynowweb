@@ -1,10 +1,11 @@
 import { Container, PageHeader } from "@/components/Container";
 import { prisma } from "@/lib/db";
+import { Badge, Card } from "@/components/ui";
 import { GalleryGrid } from "@/components/GalleryGrid";
 import { getSetting } from "@/lib/settings";
 import { Pagination } from "@/components/Pagination";
 import Link from "next/link";
-import { ScrollFadeIn, StaggeredList } from "@/components/ScrollAnimation";
+import { ScrollFadeIn } from "@/components/ScrollAnimation";
 
 export const revalidate = 60;
 
@@ -57,18 +58,16 @@ export default async function GalleryPage({
       <PageHeader title="Gallery" description="Snapshots of our favourite community moments." />
       <Container className="py-16">
         <div className="mb-8 space-y-4">
-          <Link
-            href="/gallery/submit"
-            className="card card-hover group flex items-center justify-between gap-4 border-brand-200 bg-brand-50 p-6 transition-colors hover:border-brand-300 dark:border-brand-800 dark:bg-brand-900/30 dark:text-brand-100 dark:hover:border-brand-700"
-          >
+          <Card hover className="group flex items-center justify-between gap-4 border-brand-200 bg-brand-50 p-6 transition-colors hover:border-brand-300 dark:border-brand-800 dark:bg-brand-900/30 dark:text-brand-100 dark:hover:border-brand-700">
             <span>
-              <span className="font-semibold text-brand-800 dark:text-brand-100">Share your photo</span> — submit it to the
-              gallery and our team will review it.
+              <span className="font-semibold text-brand-800 dark:text-brand-100">Share your photo</span> — submit it to the gallery and our team will review it.
             </span>
-            <span className="btn-primary btn-sm shrink-0">Submit a photo</span>
-          </Link>
+            <Link href="/gallery/submit" className="btn-primary btn-sm shrink-0">
+              Submit a photo
+            </Link>
+          </Card>
           {discord && (
-            <div className="card border-ink-200 bg-white p-6 text-base text-ink-700 dark:border-ink-800 dark:bg-ink-900 dark:text-ink-200">
+            <Card className="p-6 text-base text-ink-700 dark:text-ink-200">
               Chat with the community in our{" "}
               <a
                 href={discord}
@@ -79,13 +78,13 @@ export default async function GalleryPage({
                 Discord
               </a>
               !
-            </div>
+            </Card>
           )}
         </div>
         {pendingCount > 0 && (
-          <p className="mb-6 text-sm text-ink-500 dark:text-ink-400">
-            {pendingCount} photo{pendingCount === 1 ? "" : "s"} awaiting moderator review.
-          </p>
+          <Badge tone="warning" dot>
+            {pendingCount} photo{pendingCount === 1 ? "" : "s"} awaiting moderator review
+          </Badge>
         )}
 
         <ScrollFadeIn>

@@ -1,0 +1,1 @@
+ALTER TABLE "CommunitySubmissionReport" ADD COLUMN IF NOT EXISTS "anonymous" BOOLEAN NOT NULL DEFAULT FALSE;

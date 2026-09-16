@@ -1,0 +1,2 @@
+ALTER TABLE "CommunitySubmissionReport" ADD COLUMN IF NOT EXISTS "reportToken" TEXT NOT NULL DEFAULT gen_random_uuid()::text;
+CREATE UNIQUE INDEX IF NOT EXISTS "CommunitySubmissionReport_reportToken_key" ON "CommunitySubmissionReport"("reportToken");

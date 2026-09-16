@@ -24,7 +24,7 @@ export async function GET() {
   const items = await safeQuery(
     () =>
       prisma.announcement.findMany({
-        where: { published: true },
+        where: { state: "PUBLISHED" },
         orderBy: { publishedAt: "desc" },
         take: 20,
       }),
@@ -35,6 +35,7 @@ export async function GET() {
   const pubDate = rfc822(now);
 
   const entries = items
+    .filter(a => a.publishedAt)
     .map((a) => {
       const link = `${SITE_URL}/news/${a.slug}`;
       const description = escapeXml(a.excerpt || a.content.replace(/\s+/g, " ").slice(0, 400));
@@ -42,7 +43,7 @@ export async function GET() {
       <title>${escapeXml(a.title)}</title>
       <link>${link}</link>
       <guid isPermaLink="true">${link}</guid>
-      <pubDate>${rfc822(a.publishedAt)}</pubDate>
+      <pubDate>${rfc822(a.publishedAt!)}</pubDate>
       <description>${description}</description>
     </item>`;
     })

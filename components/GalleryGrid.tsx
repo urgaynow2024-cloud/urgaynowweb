@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { IconX, IconChevronLeft, IconChevronRight, IconMagnifyingGlass } from "@/components/admin/ui/icons";
+import { EmptyState } from "@/components/EmptyState";
+import { IconChevronLeft, IconChevronRight, IconX } from "@/components/admin/ui/icons";
 
 export type GalleryImageData = {
   id: string;
@@ -51,10 +52,11 @@ export function GalleryGrid({ images }: { images: GalleryImageData[] }) {
 
   if (images.length === 0) {
     return (
-      <div className="rounded-2xl border-2 border-dashed border-ink-300 p-12 text-center dark:border-ink-700">
-        <IconMagnifyingGlass size={48} className="mx-auto mb-4 text-ink-400" />
-        <p className="text-xl text-ink-500 dark:text-ink-400">No photos yet — check back soon!</p>
-      </div>
+      <EmptyState
+        icon="Gallery"
+        title="No photos yet"
+        description="Share a community moment and it will appear here after review."
+      />
     );
   }
 

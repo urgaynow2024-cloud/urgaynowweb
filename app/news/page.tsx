@@ -24,12 +24,12 @@ export default async function NewsPage({
   const page = Math.max(1, Number(searchParams.page) || 1);
   const [items, total] = await Promise.all([
     prisma.announcement.findMany({
-      where: { published: true },
+      where: { state: "PUBLISHED" },
       orderBy: { publishedAt: "desc" },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE,
     }),
-    prisma.announcement.count({ where: { published: true } }),
+    prisma.announcement.count({ where: { state: "PUBLISHED" } }),
   ]);
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const featured = items[0];
@@ -48,7 +48,7 @@ export default async function NewsPage({
         ) : (
           <div className="space-y-16">
             {/* Featured article */}
-            {featured && (
+            {featured && featured.publishedAt && (
               <section>
                 <ScrollFadeIn>
                   <AnnouncementCard
@@ -58,7 +58,7 @@ export default async function NewsPage({
                       slug: featured.slug,
                       excerpt: featured.excerpt,
                       coverImage: featured.coverImage,
-                      publishedAt: featured.publishedAt,
+                      publishedAt: featured.publishedAt!,
                     }}
                     featured
                   />
@@ -66,10 +66,10 @@ export default async function NewsPage({
               </section>
             )}
 
-            {rest.length > 0 && (
+            {rest.filter(a => a.publishedAt).length > 0 && (
               <section>
                 <StaggeredList className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {rest.map((a, i) => (
+                  {rest.filter(a => a.publishedAt).map((a, i) => (
                     <ScrollFadeIn key={a.id} delay={i * 80}>
                       <AnnouncementCard
                         item={{
@@ -78,7 +78,7 @@ export default async function NewsPage({
                           slug: a.slug,
                           excerpt: a.excerpt,
                           coverImage: a.coverImage,
-                          publishedAt: a.publishedAt,
+                          publishedAt: a.publishedAt!,
                         }}
                       />
                     </ScrollFadeIn>

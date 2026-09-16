@@ -13,10 +13,26 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
+    // Surface the failure to the console for local debugging.
     console.error("[app/error] Unhandled error", {
       message: error.message,
       digest: error.digest,
     });
+
+    // Persist it server-side so staff can review it later. Best-effort:
+    // never let error logging crash the recovery page.
+    if (typeof window !== "undefined") {
+      fetch("/api/error", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: error.message,
+          digest: error.digest,
+          path: window.location.pathname,
+        }),
+        keepalive: true,
+      }).catch(() => {});
+    }
   }, [error]);
 
   return (

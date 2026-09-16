@@ -5,6 +5,8 @@ import { Container } from "@/components/Container";
 import { prisma } from "@/lib/db";
 import { Markdown } from "@/components/Markdown";
 import { formatDate } from "@/lib/utils";
+import { normalizeRoleKey } from "@/lib/roles";
+import { RoleBadge } from "@/components/RoleBadge";
 
 export const revalidate = 300;
 
@@ -15,8 +17,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function AnnouncementPage({ params }: { params: { slug: string } }) {
-  const item = await prisma.announcement.findUnique({ where: { slug: params.slug } });
-  if (!item || !item.published) notFound();
+  const item = await prisma.announcement.findUnique({
+    where: { slug: params.slug },
+    include: { author: { select: { id: true, name: true, vrchatUsername: true, rank: true } } },
+  });
+  if (!item || item.state !== "PUBLISHED") notFound();
 
   return (
     <article>
@@ -42,12 +47,26 @@ export default async function AnnouncementPage({ params }: { params: { slug: str
             ← Back to news
           </Link>
           <time className="mt-6 block text-sm font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-300">
-            {formatDate(item.publishedAt)}
+            {item.publishedAt ? formatDate(item.publishedAt) : "—"}
           </time>
           <h1 className="mt-2 text-balance text-4xl font-extrabold tracking-tight text-ink-900 dark:text-white sm:text-5xl">
             {item.title}
           </h1>
           <div className="mt-2 h-1 w-12 rounded-full bg-gradient-to-r from-brand-600 to-brand-700" />
+          {item.author && (
+            <div className="mt-6 flex items-center gap-3">
+              <Link href={`/staff/${item.author.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white">
+                  {item.author.name?.[0] ?? "?"}
+                </span>
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-ink-900 dark:text-white">{item.author.name}</span>
+                  <span className="text-xs text-ink-500 dark:text-ink-400">@{item.author.vrchatUsername}</span>
+                </div>
+              </Link>
+              <RoleBadge role={normalizeRoleKey(item.author.rank)} />
+            </div>
+          )}
           <div className="mt-8 border-t border-ink-200/80 pt-8 dark:border-ink-800/80">
             <Markdown content={item.content} />
           </div>

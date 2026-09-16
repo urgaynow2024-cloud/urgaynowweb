@@ -14,7 +14,7 @@ export default async function EditShopDesignPage({ params }: { params: { id: str
   if (!d) notFound();
 
   const categoryRows = await prisma.shopDesign.findMany({
-    where: { category: { not: null } },
+    where: { category: { not: "" } },
     select: { category: true },
     distinct: ["category"],
     orderBy: { category: "asc" },

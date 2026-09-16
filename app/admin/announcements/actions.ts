@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
 import { fetchDiscordMessages, renderDiscordMessage } from "@/lib/discord";
+import { sendContentWebhook } from "@/lib/discord-webhook";
 
 function fail(path: string) {
   redirect(`${path}?error=1`);
@@ -14,6 +15,41 @@ function fail(path: string) {
 function uniqueSlug(base: string): string {
   const slug = slugify(base) || "discord-announcement";
   return `${slug}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function parseDiscordRoleIds(raw: string): string[] {
+  try {
+    const parsed = JSON.parse(raw || "[]");
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((id) => String(id)).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+async function postAnnouncementWebhook(id: string) {
+  const announcement = await prisma.announcement.findUnique({ where: { id } });
+  if (!announcement || !announcement.publishedAt) return;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://urgaynow.com";
+  const result = await sendContentWebhook("DISCORD_ANNOUNCEMENTS_WEBHOOK_URL", {
+    surface: "ANNOUNCEMENT",
+    title: announcement.title,
+    summary: announcement.excerpt || announcement.title,
+    url: `${siteUrl}/news/${announcement.slug}`,
+    roleIds: announcement.discordRoleIds,
+    fields: [
+      { name: "Published", value: announcement.publishedAt.toLocaleString("en-GB"), inline: true },
+    ],
+    timestamp: announcement.publishedAt.toISOString(),
+  });
+  await prisma.announcement.update({
+    where: { id },
+    data: {
+      discordPosted: result.ok,
+      discordPostStatus: result.ok ? "sent" : "failed",
+      discordPostedAt: result.ok ? new Date() : null,
+    },
+  });
 }
 
 export async function importFromDiscord() {
@@ -52,10 +88,11 @@ export async function importFromDiscord() {
         excerpt,
         content,
         coverImage: image?.url ?? "",
-        published: true,
+        state: "PUBLISHED",
         // Use the message's own (unix) timestamp as the publish date.
         publishedAt: new Date(m.timestamp),
         discordMessageId: m.id,
+        discordPosted: true,
       },
     });
     revalidatePath("/", "layout");
@@ -73,18 +110,44 @@ export async function createAnnouncement(formData: FormData) {
   const excerpt = String(formData.get("excerpt") || "").trim();
   const content = String(formData.get("content") || "").trim();
   const coverImage = String(formData.get("coverImage") || "").trim();
-  const published = formData.get("published") === "on";
+  const state = String(formData.get("state") || "DRAFT");
+  const postToDiscord = formData.get("postToDiscord") === "on";
+  const discordRoleIds = parseDiscordRoleIds(String(formData.get("discordRoleIds") || "[]"));
   const publishedAt = formData.get("publishedAt")
     ? new Date(String(formData.get("publishedAt")))
-    : new Date();
+    : state === "PUBLISHED" ? new Date() : null;
+  const scheduledAt = formData.get("scheduledAt")
+    ? new Date(String(formData.get("scheduledAt")))
+    : null;
+  const categoryId = String(formData.get("categoryId") || "").trim() || null;
+  const authorId = String(formData.get("authorId") || "").trim() || null;
+  const pinned = formData.get("pinned") === "on";
   const slug = String(formData.get("slug") || "").trim() || slugify(title);
 
   if (!title || !slug) fail("/admin/announcements/new");
 
   try {
-    await prisma.announcement.create({
-      data: { title, slug, excerpt, content, coverImage, published, publishedAt },
+    const announcement = await prisma.announcement.create({
+      data: {
+        title,
+        slug,
+        excerpt,
+        content,
+        coverImage,
+        state,
+        publishedAt,
+        scheduledAt,
+        categoryId,
+        authorId,
+        pinned,
+        discordRoleIds,
+        discordPosted: false,
+        discordPostStatus: "pending",
+      },
     });
+    if (state === "PUBLISHED" && postToDiscord) {
+      await postAnnouncementWebhook(announcement.id);
+    }
   } catch {
     fail("/admin/announcements/new");
   }
@@ -99,10 +162,18 @@ export async function updateAnnouncement(id: string, formData: FormData) {
   const excerpt = String(formData.get("excerpt") || "").trim();
   const content = String(formData.get("content") || "").trim();
   const coverImage = String(formData.get("coverImage") || "").trim();
-  const published = formData.get("published") === "on";
+  const state = String(formData.get("state") || "DRAFT");
+  const postToDiscord = formData.get("postToDiscord") === "on";
+  const discordRoleIds = parseDiscordRoleIds(String(formData.get("discordRoleIds") || "[]"));
   const publishedAt = formData.get("publishedAt")
     ? new Date(String(formData.get("publishedAt")))
-    : new Date();
+    : state === "PUBLISHED" ? new Date() : null;
+  const scheduledAt = formData.get("scheduledAt")
+    ? new Date(String(formData.get("scheduledAt")))
+    : null;
+  const categoryId = String(formData.get("categoryId") || "").trim() || null;
+  const authorId = String(formData.get("authorId") || "").trim() || null;
+  const pinned = formData.get("pinned") === "on";
   const slug = String(formData.get("slug") || "").trim() || slugify(title);
 
   if (!title || !slug) fail(`/admin/announcements/${id}`);
@@ -110,14 +181,38 @@ export async function updateAnnouncement(id: string, formData: FormData) {
   try {
     await prisma.announcement.update({
       where: { id },
-      data: { title, slug, excerpt, content, coverImage, published, publishedAt },
+      data: {
+        title,
+        slug,
+        excerpt,
+        content,
+        coverImage,
+        state,
+        publishedAt,
+        scheduledAt,
+        categoryId,
+        authorId,
+        pinned,
+        discordRoleIds,
+      },
     });
+    if (state === "PUBLISHED" && postToDiscord) {
+      await postAnnouncementWebhook(id);
+    }
   } catch {
     fail(`/admin/announcements/${id}`);
   }
   revalidatePath("/", "layout");
   revalidatePath("/news");
   revalidatePath(`/news/${slug}`);
+  redirect("/admin/announcements");
+}
+
+export async function retryAnnouncementWebhook(id: string) {
+  await requireAdmin();
+  await postAnnouncementWebhook(id);
+  revalidatePath("/", "layout");
+  revalidatePath("/news");
   redirect("/admin/announcements");
 }
 

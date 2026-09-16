@@ -1,31 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { formatDateTime, formatDate } from "@/lib/client-utils";
+import { useEffect, useState } from "react";
+import { formatEventDateTime, formatEventMonthDay, getEventState, getEventStateClasses, type EventCardData } from "@/lib/event-utils";
 import { EventCountdown } from "@/components/EventCountdown";
 
-export type EventCardData = {
-  id: string;
-  title: string;
-  description: string;
-  location: string;
-  vrchatWorldUrl: string;
-  coverImage: string;
-  startDateTime: Date | string;
-  endDateTime: Date | string | null;
-};
-
 export function EventCard({ event }: { event: EventCardData }) {
-  const start = new Date(event.startDateTime);
-  const isUpcoming = start.getTime() > Date.now();
-  const month = start.toLocaleString("en-GB", { month: "short" }).toUpperCase();
-  const day = start.getDate();
+  const [now, setNow] = useState(Date.now());
+  const state = getEventState(event, new Date(now));
+  const { month, day } = formatEventMonthDay(event.startDateTime, event.timezone);
+  const isLive = state === "LIVE";
+  const isUpcoming = state === "UPCOMING";
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 30000);
+    return () => window.clearInterval(id);
+  }, []);
 
   return (
     <article
-      className="group relative flex overflow-hidden rounded-2xl border border-ink-200/60 bg-white shadow-card-premium transition-all duration-500 hover:-translate-y-1 hover:shadow-card-premium-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-brand-800/30 dark:bg-ink-900/80 dark:hover:border-brand-700/50 dark:focus-visible:ring-offset-surface-950"
+      className={`group relative flex overflow-hidden rounded-2xl border bg-white shadow-card-premium transition-all duration-500 hover:-translate-y-1 hover:shadow-card-premium-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:bg-ink-900/80 dark:focus-visible:ring-offset-surface-950 ${
+        isLive
+          ? "border-brand-400 shadow-glow dark:border-brand-500/70"
+          : "border-ink-200/60 dark:border-brand-800/30"
+      }`}
     >
-      {event.coverImage && (
+      {event.coverImage ? (
         <div className="absolute inset-0 h-full w-full opacity-10 transition-opacity duration-500 group-hover:opacity-15">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -36,11 +36,13 @@ export function EventCard({ event }: { event: EventCardData }) {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-ink-950/60 via-transparent to-transparent" />
         </div>
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-50 to-brand-100 dark:from-brand-950/40 dark:to-ink-900" />
       )}
 
       <div className="relative flex w-full flex-col">
         <div className="flex items-start gap-4 p-5">
-          <div className="flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-glow transition-all duration-300 group-hover:shadow-glow-strong">
+          <div className={`flex h-16 w-16 shrink-0 flex-col items-center justify-center rounded-xl text-white shadow-glow transition-all duration-300 group-hover:shadow-glow-strong ${isLive ? "bg-gradient-to-br from-brand-600 to-brand-700" : "bg-gradient-to-br from-brand-500 to-brand-700"}`}>
             <span className="text-[10px] font-bold uppercase tracking-widest opacity-90">{month}</span>
             <span className="text-2xl font-extrabold leading-none">{day}</span>
           </div>
@@ -49,20 +51,21 @@ export function EventCard({ event }: { event: EventCardData }) {
               <h3 className="text-lg font-bold text-ink-900 dark:text-white group-hover:text-brand-700 dark:group-hover:text-brand-200 transition-colors truncate">
                 {event.title}
               </h3>
-              <span
-                className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                  isUpcoming
-                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                    : "bg-ink-100 text-ink-500 dark:bg-ink-800 dark:text-ink-400"
-                }`}
-              >
-                {isUpcoming ? "Upcoming" : "Past"}
+              <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${getEventStateClasses(state)}`}>
+                {state === "LIVE" ? "Live Now" : state === "UPCOMING" ? "Upcoming" : state === "ARCHIVED" ? "Archived" : "Past"}
               </span>
             </div>
             <p className="mt-1 text-sm font-medium text-brand-600 dark:text-brand-300">
-              {formatDateTime(event.startDateTime)}
-              {event.endDateTime ? ` – ${formatDateTime(event.endDateTime)}` : ""}
+              {formatEventDateTime(event.startDateTime, event.timezone)}
+              {event.endDateTime ? ` – ${formatEventDateTime(event.endDateTime, event.timezone)}` : ""}
             </p>
+            {(event.hostName || event.category) && (
+              <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink-500 dark:text-ink-400">
+                {event.hostName && <span>Host: {event.hostName}</span>}
+                {event.hostName && event.category && <span aria-hidden>•</span>}
+                {event.category && <span>{event.category}</span>}
+              </div>
+            )}
             {event.location && (
               <p className="mt-1 text-sm text-ink-500 dark:text-ink-400 flex items-center gap-1">
                 <span aria-hidden>📍</span> {event.location}
@@ -71,6 +74,11 @@ export function EventCard({ event }: { event: EventCardData }) {
             {isUpcoming && (
               <div className="mt-2">
                 <EventCountdown target={event.startDateTime} />
+              </div>
+            )}
+            {isLive && event.endDateTime && (
+              <div className="mt-2">
+                <EventCountdown target={event.endDateTime} label="Ends in" />
               </div>
             )}
             {event.description && (
@@ -83,7 +91,7 @@ export function EventCard({ event }: { event: EventCardData }) {
 
         <div className="mt-auto flex flex-wrap gap-2 p-5 pt-3 border-t border-ink-100/80 dark:border-ink-800/60">
           <Link
-            href={`/events#${event.id}`}
+            href={`/events/${event.slug}`}
             className="btn-primary btn-sm group/btn relative overflow-hidden"
           >
             <span className="relative z-10 flex items-center gap-1 transition-transform group-hover/btn:translate-x-0.5">

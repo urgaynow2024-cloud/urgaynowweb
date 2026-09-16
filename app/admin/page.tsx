@@ -65,7 +65,7 @@ async function DashboardContent() {
 
   const activity = [
     ...recentStaff.map((s) => ({ type: "Staff", title: s.name, href: `/admin/staff/${s.id}`, at: s.createdAt, icon: "👥" })),
-    ...recentAnnouncements.map((a) => ({ type: "Announcement", title: a.title, href: `/admin/announcements/${a.id}`, at: a.publishedAt, icon: "📣" })),
+    ...recentAnnouncements.filter((a) => a.publishedAt).map((a) => ({ type: "Announcement", title: a.title, href: `/admin/announcements/${a.id}`, at: a.publishedAt!, icon: "📣" })),
     ...recentEvents.map((e) => ({ type: "Event", title: e.title, href: `/admin/events/${e.id}`, at: e.createdAt, icon: "📅" })),
     ...recentGroups.map((g) => ({ type: "Group Photo", title: g.title, href: `/admin/group-photos/${g.id}`, at: g.createdAt, icon: "📷" })),
   ]

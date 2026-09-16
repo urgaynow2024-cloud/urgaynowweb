@@ -60,9 +60,10 @@ export async function POST(req: Request) {
       excerpt,
       content: resolved,
       coverImage: image?.url ?? "",
-      published: true,
+      state: "PUBLISHED",
       publishedAt: body.timestamp ? new Date(body.timestamp) : new Date(),
       discordMessageId: messageId || null,
+      discordPosted: true,
     },
   });
 

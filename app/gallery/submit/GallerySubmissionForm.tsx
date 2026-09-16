@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useState, type DragEvent, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Button, Alert } from "@/components/ui";
 import { IconUpload, IconImage, IconX, IconCheck, IconSpinner } from "@/components/admin/ui/icons";
 
 const ACCEPT = "image/png,image/jpeg,image/jpg,image/gif,image/webp,image/avif";
@@ -155,20 +157,16 @@ export function GallerySubmissionForm() {
           approved, it will appear in the gallery.
         </p>
         <div className="mt-6 flex justify-center gap-3">
-          <a href="/gallery" className="btn-secondary btn-sm">Back to gallery</a>
-          <button
-            type="button"
-            className="btn-primary btn-sm"
-            onClick={() => {
-              setStatus("idle");
-              setFile(null);
-              setPreview(null);
-              setProgress(0);
-              formRef.current?.reset();
-            }}
-          >
+          <Link href="/gallery" className="btn-secondary btn-sm">Back to gallery</Link>
+          <Button variant="secondary" size="sm" onClick={() => {
+            setStatus("idle");
+            setFile(null);
+            setPreview(null);
+            setProgress(0);
+            formRef.current?.reset();
+          }}>
             Submit another
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -202,12 +200,12 @@ export function GallerySubmissionForm() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={preview} alt="Preview" className="h-64 w-full object-cover" />
             <div className="absolute inset-0 flex items-center justify-center gap-2 bg-ink-950/55 opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100">
-              <button type="button" className="btn-secondary btn-sm" onClick={() => fileRef.current?.click()} disabled={busy}>
+              <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()} disabled={busy}>
                 <IconUpload size={15} /> Replace
-              </button>
-              <button
-                type="button"
-                className="btn-danger btn-sm"
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
                 onClick={() => {
                   setFile(null);
                   setPreview(null);
@@ -216,7 +214,7 @@ export function GallerySubmissionForm() {
                 disabled={busy}
               >
                 <IconX size={15} /> Remove
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
@@ -254,15 +252,13 @@ export function GallerySubmissionForm() {
         </div>
       )}
 
-      {error && (
-        <p role="alert" className="field-error">{error}</p>
-      )}
+      {error && <Alert tone="danger">{error}</Alert>}
 
       <div className="flex items-center gap-3 border-t border-ink-100 pt-5 dark:border-ink-800">
-        <button type="submit" className="btn-primary" disabled={busy}>
-          {busy ? "Submitting…" : "Submit for review"}
-        </button>
-        <a href="/gallery" className="btn-ghost">Cancel</a>
+        <Button type="submit" loading={busy}>
+          Submit for review
+        </Button>
+        <Link href="/gallery" className="btn-ghost">Cancel</Link>
       </div>
 
       <p className="text-xs text-ink-400">

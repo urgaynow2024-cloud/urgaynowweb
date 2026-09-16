@@ -46,11 +46,15 @@ function CloseIcon({ size = 16, className }: { size?: number; className?: string
 export function SearchBox({
   initial = "",
   autoFocus = false,
+  placeholder = "Search announcements, guides, staff…",
   className = "",
+  onSearch,
 }: {
   initial?: string;
   autoFocus?: boolean;
+  placeholder?: string;
   className?: string;
+  onSearch?: (q: string) => void;
 }) {
   const router = useRouter();
   const [q, setQ] = useState(initial);
@@ -58,7 +62,11 @@ export function SearchBox({
   function submit(e: React.FormEvent) {
     e.preventDefault();
     const term = q.trim();
-    router.push(term ? `/search?q=${encodeURIComponent(term)}` : "/search");
+    if (onSearch) {
+      onSearch(term);
+    } else {
+      router.push(term ? `/search?q=${encodeURIComponent(term)}` : "/search");
+    }
   }
 
   return (
@@ -73,7 +81,7 @@ export function SearchBox({
         value={q}
         autoFocus={autoFocus}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search announcements, guides, staff…"
+        placeholder={placeholder}
         aria-label="Search the site"
         className="input w-full pl-10 pr-10"
       />
@@ -83,7 +91,11 @@ export function SearchBox({
           aria-label="Clear search"
           onClick={() => {
             setQ("");
-            router.push("/search");
+            if (onSearch) {
+              onSearch("");
+            } else {
+              router.push("/search");
+            }
           }}
           className="absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-ink-400 transition hover:text-ink-700 hover:bg-ink-100 dark:hover:text-ink-200 dark:hover:bg-ink-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
         >

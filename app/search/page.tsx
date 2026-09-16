@@ -1,13 +1,8 @@
-import Link from "next/link";
 import { Container, PageHeader } from "@/components/Container";
-import { SearchBox } from "@/components/SearchBox";
-import { AnnouncementCard } from "@/components/AnnouncementCard";
-import { EventCard } from "@/components/EventCard";
-import { StaffCard } from "@/components/StaffCard";
 import { prisma } from "@/lib/db";
 import { safeQuery } from "@/lib/safeQuery";
-import { ScrollFadeIn } from "@/components/ScrollAnimation";
-import { EmptyState } from "@/components/EmptyState";
+import { eventMatchesSearch, toEventCard, type EventCardSource } from "@/lib/event-utils";
+import SearchResults from "@/components/SearchResults";
 
 export const revalidate = 60;
 
@@ -18,6 +13,27 @@ export const metadata = {
 
 type Result = { href: string; title: string; snippet: string; kind: string };
 
+type Announcement = {
+  id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  coverImage: string;
+  publishedAt: Date | null;
+};
+
+type Event = EventCardSource;
+
+type Staff = {
+  id: string;
+  name: string;
+  vrchatUsername: string;
+  rank: string;
+  bio: string;
+  photoUrl: string;
+  socials: string;
+};
+
 export default async function SearchPage({
   searchParams,
 }: {
@@ -25,21 +41,32 @@ export default async function SearchPage({
 }) {
   const q = (searchParams.q ?? "").trim();
 
-  let announcements: Awaited<ReturnType<typeof prisma.announcement.findMany>> = [];
-  let events: Awaited<ReturnType<typeof prisma.event.findMany>> = [];
-  let staff: Awaited<ReturnType<typeof prisma.staff.findMany>> = [];
+  let announcements: Announcement[] = [];
+  let events: Event[] = [];
+  let staff: Staff[] = [];
   let guides: Result[] = [];
   let partners: Result[] = [];
   let links: Result[] = [];
+  let galleryImages: Result[] = [];
+  let updates: Result[] = [];
 
   if (q) {
     const term = q;
-    [announcements, events, staff, guides, partners, links] = await Promise.all([
+    [
+      announcements,
+      events,
+      staff,
+      guides,
+      partners,
+      links,
+      galleryImages,
+      updates,
+    ] = await Promise.all([
       safeQuery(
         () =>
           prisma.announcement.findMany({
             where: {
-              published: true,
+              state: "PUBLISHED",
               OR: [
                 { title: { contains: term } },
                 { excerpt: { contains: term } },
@@ -54,15 +81,24 @@ export default async function SearchPage({
       safeQuery(
         () =>
           prisma.event.findMany({
-            where: {
-              OR: [
-                { title: { contains: term } },
-                { description: { contains: term } },
-                { location: { contains: term } },
-              ],
-            },
+            where: { published: true },
             orderBy: { startDateTime: "asc" },
-            take: 12,
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              description: true,
+              location: true,
+              vrchatWorldUrl: true,
+              coverImage: true,
+              startDateTime: true,
+              endDateTime: true,
+              hostName: true,
+              category: true,
+              tags: true,
+              timezone: true,
+              archivedAt: true,
+            },
           }),
         [],
       ),
@@ -89,14 +125,13 @@ export default async function SearchPage({
                 OR: [
                   { question: { contains: term } },
                   { answer: { contains: term } },
-                  { category: { contains: term } },
                 ],
               },
               take: 12,
             })
             .then((rows) =>
               rows.map((g) => ({
-                href: "/guides",
+                href: `/guides/${g.slug}`,
                 title: g.question,
                 snippet: g.answer.replace(/\s+/g, " ").slice(0, 160),
                 kind: g.category,
@@ -141,174 +176,78 @@ export default async function SearchPage({
             ),
         [],
       ),
+      safeQuery(
+        () =>
+          prisma.galleryImage
+            .findMany({
+              where: {
+                published: true,
+                OR: [
+                  { title: { contains: term } },
+                  { description: { contains: term } },
+                  { submitterName: { contains: term } },
+                ],
+              },
+              orderBy: { publishedAt: "desc" },
+              take: 12,
+            })
+            .then((rows) =>
+              rows.map((g) => ({
+                href: `/gallery`,
+                title: g.title,
+                snippet: g.description.replace(/\s+/g, " ").slice(0, 160) || "Gallery image",
+                kind: "Gallery",
+              })),
+            ),
+        [],
+      ),
+      safeQuery(
+        () =>
+          prisma.update
+            .findMany({
+              where: {
+                publishedAt: { not: null },
+                OR: [
+                  { title: { contains: term } },
+                  { summary: { contains: term } },
+                  { whatsNew: { contains: term } },
+                  { version: { contains: term } },
+                ],
+              },
+              orderBy: { publishedAt: "desc" },
+              take: 12,
+            })
+            .then((rows) =>
+              rows.map((u) => ({
+                href: `/updates/${u.slug}`,
+                title: `${u.version} — ${u.title}`,
+                snippet: u.summary.replace(/\s+/g, " ").slice(0, 160),
+                kind: u.type,
+              })),
+            ),
+        [],
+      ),
     ]);
   }
 
-  const total =
-    announcements.length +
-    events.length +
-    staff.length +
-    guides.length +
-    partners.length +
-    links.length;
+  events = events
+    .filter((event) => eventMatchesSearch(event as any, q))
+    .slice(0, 12);
+  const eventCards = events.map(toEventCard);
 
   return (
-    <>
-      <PageHeader
-        title="Search"
-        description="Find announcements, guides, staff, events and more across the community."
-      />
-      <Container className="py-16">
-        <div className="mx-auto max-w-2xl">
-          <SearchBox initial={q} autoFocus={!q} />
-        </div>
-
-        {!q ? (
-          <EmptyState
-            icon="🔍"
-            title="What can we help you find?"
-            description='Type something above to search the site — announcements, guides, staff, events, partners, and more.'
-            className="mt-10"
-          />
-        ) : total === 0 ? (
-          <EmptyState
-            icon="😔"
-            title={`No results for “${q}”`}
-            description="Try a different keyword or check the spelling."
-            className="mt-10"
-          />
-        ) : (
-          <div className="mt-10 space-y-12">
-            {announcements.length > 0 && (
-              <section>
-                <h2 className="eyebrow mb-4">Announcements</h2>
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {announcements.map((a) => (
-                    <ScrollFadeIn key={a.id}>
-                      <AnnouncementCard
-                        item={{
-                          id: a.id,
-                          title: a.title,
-                          slug: a.slug,
-                          excerpt: a.excerpt,
-                          coverImage: a.coverImage,
-                          publishedAt: a.publishedAt,
-                        }}
-                      />
-                    </ScrollFadeIn>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {events.length > 0 && (
-              <section>
-                <h2 className="eyebrow mb-4">Events</h2>
-                <div className="grid gap-4">
-                  {events.map((e) => (
-                    <ScrollFadeIn key={e.id}>
-                      <EventCard
-                        event={{
-                          id: e.id,
-                          title: e.title,
-                          description: e.description,
-                          location: e.location,
-                          vrchatWorldUrl: e.vrchatWorldUrl,
-                          coverImage: e.coverImage,
-                          startDateTime: e.startDateTime,
-                          endDateTime: e.endDateTime,
-                        }}
-                      />
-                    </ScrollFadeIn>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {staff.length > 0 && (
-              <section>
-                <h2 className="eyebrow mb-4">Staff</h2>
-                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {staff.map((s) => (
-                    <ScrollFadeIn key={s.id}>
-                      <StaffCard
-                        staff={{
-                          id: s.id,
-                          name: s.name,
-                          vrchatUsername: s.vrchatUsername,
-                          rank: s.rank,
-                          bio: s.bio,
-                          photoUrl: s.photoUrl,
-                          socials: s.socials,
-                        }}
-                      />
-                    </ScrollFadeIn>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            <SimpleResults title="Guides" results={guides} />
-            <SimpleResults title="Partners" results={partners} />
-            <SimpleResults title="Links" results={links} external />
-          </div>
-        )}
-      </Container>
-    </>
-  );
-}
-
-function SimpleResults({
-  title,
-  results,
-  external = false,
-}: {
-  title: string;
-  results: Result[];
-  external?: boolean;
-}) {
-  if (results.length === 0) return null;
-  return (
-    <section>
-      <h2 className="eyebrow mb-4">{title}</h2>
-      <ul className="card divide-y divide-ink-200 overflow-hidden dark:divide-ink-800">
-        {results.map((r, i) => {
-          const inner = (
-            <>
-              <div className="flex items-center justify-between gap-3">
-                <p className="font-semibold text-ink-900 dark:text-white">{r.title}</p>
-                {r.kind && (
-                  <span className="badge-neutral shrink-0">{r.kind}</span>
-                )}
-              </div>
-              {r.snippet && (
-                <p className="mt-1 line-clamp-2 text-sm text-ink-500 dark:text-ink-400">{r.snippet}</p>
-              )}
-            </>
-          );
-          return (
-            <li key={i}>
-              {external ? (
-                <a
-                  href={r.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block px-4 py-3 transition hover:bg-surface-100 dark:hover:bg-ink-800/60"
-                >
-                  {inner}
-                </a>
-              ) : (
-                <Link
-                  href={r.href}
-                  className="block px-4 py-3 transition hover:bg-surface-100 dark:hover:bg-ink-800/60"
-                >
-                  {inner}
-                </Link>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </section>
+    <SearchResults
+      initialQ={q}
+      initialResults={{
+        announcements,
+        events: eventCards,
+        staff,
+        guides,
+        galleryImages,
+        updates,
+        partners,
+        links,
+      }}
+    />
   );
 }

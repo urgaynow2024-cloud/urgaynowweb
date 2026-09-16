@@ -44,7 +44,7 @@ export default async function AdminShopList({
   const [designs, categories, total, publishedCount, hiddenCount, featuredCount] = await Promise.all([
     prisma.shopDesign.findMany({ where, orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }] }),
     prisma.shopDesign.findMany({
-      where: { category: { not: null } },
+      where: { category: { not: "" } },
       select: { category: true },
       distinct: ["category"],
       orderBy: { category: "asc" },

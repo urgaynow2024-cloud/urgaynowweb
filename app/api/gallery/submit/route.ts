@@ -77,6 +77,12 @@ export async function POST(req: Request) {
     title = decodeURIComponent(seg).replace(/\.[^.]+$/, "") || "Untitled submission";
   }
 
+  const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "")
+    .slice(0, 80) + "-" + Date.now().toString(36);
+
   try {
     await prisma.galleryImage.create({
       data: {
@@ -85,6 +91,7 @@ export async function POST(req: Request) {
         imageUrl,
         submitterName,
         status: "PENDING",
+        slug,
       },
     });
     return NextResponse.json({ success: true });

@@ -9,7 +9,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     safeQuery(
       () =>
         prisma.announcement.findMany({
-          where: { published: true },
+          where: { state: "PUBLISHED" },
           select: { slug: true, publishedAt: true },
         }),
       [] as { slug: string; publishedAt: Date }[],
@@ -46,12 +46,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const announcementRoutes: MetadataRoute.Sitemap = (
     announcements as { slug: string; publishedAt: Date }[]
-  ).map((a) => ({
-    url: `${SITE}/news/${a.slug}`,
-    lastModified: new Date(a.publishedAt),
-    changeFrequency: "monthly",
-    priority: 0.6,
-  }));
+  )
+    .filter(a => a.publishedAt)
+    .map((a) => ({
+      url: `${SITE}/news/${a.slug}`,
+      lastModified: new Date(a.publishedAt!),
+      changeFrequency: "monthly",
+      priority: 0.6,
+    }));
 
   return [...staticRoutes, ...announcementRoutes];
 }

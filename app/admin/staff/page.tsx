@@ -5,10 +5,11 @@ import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { Card } from "@/components/admin/ui/Card";
 import { Avatar } from "@/components/admin/ui/Avatar";
-import { Badge } from "@/components/admin/ui/Badge";
 import { EmptyState } from "@/components/admin/ui/Avatar";
 import { IconUsers, IconPlus, IconSearch, IconEdit, IconFilter } from "@/components/admin/ui/icons";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { normalizeRoleKey } from "@/lib/roles";
+import { RoleBadge } from "@/components/RoleBadge";
 
 export const metadata = { title: "Staff", robots: { index: false, follow: false } };
 
@@ -106,7 +107,7 @@ export default async function AdminStaffList({
                     </td>
                     <td className="px-5 py-3 text-ink-500">@{s.vrchatUsername}</td>
                     <td className="hidden px-5 py-3 sm:table-cell">
-                      <Badge tone={s.rank ? "brand" : "neutral"}>{s.rank || "Member"}</Badge>
+                      <RoleBadge role={normalizeRoleKey(s.rank)} />
                     </td>
                     <td className="hidden px-5 py-3 text-ink-400 md:table-cell">{s.sortOrder}</td>
                     <td className="px-5 py-3">

@@ -4,14 +4,26 @@ export function Pagination({
   page,
   totalPages,
   basePath,
+  queryParams = {},
 }: {
   page: number;
   totalPages: number;
   basePath: string;
+  queryParams?: Record<string, string | number | undefined>;
 }) {
   if (totalPages <= 1) return null;
 
-  const href = (p: number) => (p <= 1 ? basePath : `${basePath}?page=${p}`);
+  const href = (p: number) => {
+    const params = new URLSearchParams(
+      Object.entries(queryParams)
+        .filter((entry): entry is [string, string] => entry[1] !== undefined && entry[1] !== "")
+        .map(([key, value]) => [key, String(value)]),
+    );
+    params.set("page", String(p));
+    if (p <= 1) params.delete("page");
+    const query = params.toString();
+    return query ? `${basePath}?${query}` : basePath;
+  };
   const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
 
   return (

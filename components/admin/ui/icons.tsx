@@ -115,6 +115,9 @@ export const IconClock = (p: IconProps) => (
 export const IconGrid = (p: IconProps) => (
   <svg {...base(p)}><rect x="4" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5" /><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5" /><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5" /></svg>
 );
+export const IconMapPin = (p: IconProps) => (
+  <svg {...base(p)}><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></svg>
+);
 export const IconImage = (p: IconProps) => (
   <svg {...base(p)}><rect x="3.5" y="5" width="17" height="14" rx="2.5" /><circle cx="8.5" cy="10" r="1.6" /><path d="m4 17 4.5-4.5L13 16l3-3 4 4" /></svg>
 );
@@ -157,6 +160,9 @@ export const IconSpinner = (p: IconProps) => (
 export const IconAlert = (p: IconProps) => (
   <svg {...base(p)}><path d="M12 4 2.5 20h19Z" /><path d="M12 10v4M12 17.5v.01" /></svg>
 );
+export const IconInfo = (p: IconProps) => (
+  <svg {...base(p)}><circle cx="12" cy="12" r="9" /><path d="M12 11v5M12 8v.01" /></svg>
+);
 export const IconInbox = (p: IconProps) => (
   <svg {...base(p)}><path d="M4 13.5 7 5h10l3 8.5V18a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z" /><path d="M4 13.5h4l1.5 2.5h5L16 13.5h4" /></svg>
 );
@@ -174,4 +180,15 @@ export const IconDiscord = (p: IconProps) => (
 );
 export const IconVrchat = (p: IconProps) => (
   <svg {...base(p)} fill="currentColor"><path d="M12 2 3 7v10l9 5 9-5V7l-9-5Zm0 2.3 6.5 3.6v7.8L12 19.7 5.5 15.7V7.9L12 4.3ZM12 7c-2.2 0-4 1.8-4 4 0 1.5.8 2.8 2 3.4V17h4v-2.6c1.2-.6 2-1.9 2-3.4 0-2.2-1.8-4-4-4Zm0 2c1.1 0 2 .9 2 2s-.9 2-2 2-2-.9-2-2 .9-2 2-2Z" /></svg>
+);
+
+export const IconShare = (p: IconProps) => (
+  <svg {...base(p)}><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /><path d="M16 6 12 2 8 6" /><path d="M12 2v15" /></svg>
+);
+
+export const IconBellOff = (p: IconProps) => (
+  <svg {...base(p)}><path d="M6.5 9a5.5 5.5 0 0 1 11 0c0 5 1.5 6 1.5 6H5s1.5-1 1.5-6Z" /><path d="M10 20a2 2 0 0 0 4 0" /><path d="M3 3l18 18" /></svg>
+);
+export const IconRefresh = (p: IconProps) => (
+  <svg {...base(p)}><path d="M21 12a9 9 0 1 1-3-6.7" /><path d="M21 4v5h-5" /></svg>
 );

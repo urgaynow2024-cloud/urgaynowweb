@@ -7,7 +7,10 @@ import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
 import { IconBook } from "@/components/admin/ui/icons";
 
 export default async function EditGuidePage({ params }: { params: { id: string } }) {
-  const g = await prisma.guide.findUnique({ where: { id: params.id } });
+  const g = await prisma.guide.findUnique({
+    where: { id: params.id },
+    include: { relatedGuides: { select: { id: true } } },
+  });
   if (!g) notFound();
 
   const initial: GuideFormValues = {
@@ -15,6 +18,8 @@ export default async function EditGuidePage({ params }: { params: { id: string }
     question: g.question,
     answer: g.answer,
     sortOrder: g.sortOrder,
+    slug: g.slug,
+    relatedGuides: g.relatedGuides?.map((r) => r.id).join(",") ?? "",
   };
 
   return (

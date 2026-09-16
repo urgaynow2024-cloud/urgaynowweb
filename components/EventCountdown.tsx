@@ -12,15 +12,30 @@ function calculateTimeLeft(target: Date) {
   return { days, hours, minutes, seconds };
 }
 
-export function EventCountdown({ target }: { target: Date | string }) {
+function useReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduced(mediaQuery.matches);
+    const handler = (e: MediaQueryListEvent) => setReduced(e.matches);
+    mediaQuery.addEventListener("change", handler);
+    return () => mediaQuery.removeEventListener("change", handler);
+  }, []);
+  return reduced;
+}
+
+export function EventCountdown({ target, label = "Starts in" }: { target: Date | string; label?: string }) {
   const [timeLeft, setTimeLeft] = useState<ReturnType<typeof calculateTimeLeft>>(null);
+  const reducedMotion = useReducedMotion();
+  const intervalMs = reducedMotion ? 60000 : 1000;
 
   useEffect(() => {
     const update = () => setTimeLeft(calculateTimeLeft(new Date(target)));
     update();
-    const id = setInterval(update, 1000);
+    const id = setInterval(update, intervalMs);
     return () => clearInterval(id);
-  }, [target]);
+  }, [target, intervalMs]);
 
   if (!timeLeft) return null;
 
@@ -33,23 +48,16 @@ export function EventCountdown({ target }: { target: Date | string }) {
 
   return (
     <div className="flex items-center gap-1.5 text-center font-mono">
-      {segments.map((s, i) => (
-        <>
-          <div
-            key={s.label}
-            className="flex flex-col items-center"
-          >
-            <span className="text-xs uppercase tracking-wider opacity-60">
-              {s.label}
-            </span>
-            <span className="text-2xl font-bold tabular-nums">
-              {String(s.value).padStart(2, "0")}
-            </span>
-          </div>
-          {i < segments.length - 1 && (
-            <span className="text-2xl font-bold text-brand-500/40">:</span>
-          )}
-        </>
+      <span className="mr-1 text-xs uppercase tracking-wider opacity-60">{label}</span>
+      {segments.map((s) => (
+        <div key={s.label} className="flex flex-col items-center">
+          <span className="text-xs uppercase tracking-wider opacity-60">
+            {s.label}
+          </span>
+          <span className="text-2xl font-bold tabular-nums">
+            {String(s.value).padStart(2, "0")}
+          </span>
+        </div>
       ))}
     </div>
   );

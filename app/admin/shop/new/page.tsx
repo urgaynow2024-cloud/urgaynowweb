@@ -11,7 +11,7 @@ export const metadata = { title: "New Shop Design", robots: { index: false, foll
 
 export default async function NewShopDesignPage() {
   const categoryRows = await prisma.shopDesign.findMany({
-    where: { category: { not: null } },
+    where: { category: { not: "" } },
     select: { category: true },
     distinct: ["category"],
     orderBy: { category: "asc" },

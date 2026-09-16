@@ -17,14 +17,21 @@ export function Section({
   className = "",
   title,
   subtitle,
+  eyebrow,
 }: {
   children: ReactNode;
   className?: string;
   title?: string;
   subtitle?: string;
+  eyebrow?: string;
 }) {
   return (
     <section className={`section ${className}`}>
+      {eyebrow && (
+        <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-brand-600 dark:text-brand-300">
+          {eyebrow}
+        </p>
+      )}
       {title && (
         <div className="mb-10">
           <h2 className="text-3xl font-extrabold tracking-tight text-ink-900 dark:text-white sm:text-4xl">

@@ -1,5 +1,7 @@
 import Image from "next/image";
 import { parseSocials, type Social } from "@/lib/utils";
+import { normalizeRoleKey } from "@/lib/roles";
+import { RoleBadge } from "@/components/RoleBadge";
 
 export type StaffCardData = {
   id: string;
@@ -97,8 +99,8 @@ export function StaffCard({ staff }: { staff: StaffCardData }) {
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-ink-950/30 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-        <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-brand-700 shadow-sm backdrop-blur-sm dark:bg-ink-900/90 dark:text-brand-200">
-          {staff.rank}
+        <span className="absolute left-3 top-3 inline-flex items-center rounded-full">
+          <RoleBadge role={normalizeRoleKey(staff.rank)} size="sm" />
         </span>
       </div>
 

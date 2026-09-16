@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { CalendarExportMenu, type CalendarEvent } from "@/components/CalendarExportMenu";
-import { IconShare, IconBell, IconLink, IconCheck, IconX, IconExternal } from "@/components/admin/ui/icons";
+import { Markdown } from "@/components/Markdown";
+import { IconShare, IconBell, IconLink, IconCheck, IconX, IconExternal, IconArrowLeft } from "@/components/admin/ui/icons";
 import { Button, StatusBadge as SharedStatusBadge } from "@/components/ui";
 import { useToast } from "@/components/Toast";
 import { formatEventDateTime, formatEventDate, getEventState, getEventStateClasses } from "@/lib/event-utils";
@@ -273,11 +276,14 @@ export function EventClient({ event, relatedEvents, userReminders, isAdmin }: Ev
       <header className="relative h-64 md:h-96 lg:h-[500px] w-full overflow-hidden">
         {event.coverImage ? (
           <>
-            <img
+            <Image
               src={event.coverImage}
               alt=""
               aria-hidden
-              className="absolute inset-0 h-full w-full object-cover object-center"
+              fill
+              sizes="100vw"
+              className="object-cover object-center"
+              priority
             />
             <div className="absolute inset-0 bg-gradient-to-t from-ink-950/80 via-transparent to-transparent" />
           </>
@@ -307,6 +313,12 @@ export function EventClient({ event, relatedEvents, userReminders, isAdmin }: Ev
           </div>
         </div>
       </header>
+
+      <div className="container mx-auto px-4 max-w-4xl -mt-4 mb-6">
+        <Link href="/events" className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-600 transition-colors hover:text-brand-600 dark:text-ink-300 dark:hover:text-brand-300">
+          <IconArrowLeft size={16} /> Back to Events
+        </Link>
+      </div>
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
@@ -344,7 +356,7 @@ export function EventClient({ event, relatedEvents, userReminders, isAdmin }: Ev
                     className="flex items-center gap-2 text-lg font-medium text-ink-900 dark:text-white hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
                   >
                     {event.host.photoUrl && (
-                      <img src={event.host.photoUrl} alt="" className="h-8 w-8 rounded-full object-cover" />
+                      <Image src={event.host.photoUrl} alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover" />
                     )}
                     {event.host.name}
                     {event.host.vrchatUsername && (
@@ -429,7 +441,7 @@ export function EventClient({ event, relatedEvents, userReminders, isAdmin }: Ev
         </div>
 
         {/* Action Bar: Calendar, Reminder, Share */}
-        <div className="flex flex-wrap items-center gap-3 mb-8 p-4 rounded-xl bg-surface-50 dark:bg-ink-900/50 border border-ink-100 dark:border-ink-800">
+        <div className="sticky top-2 z-20 flex flex-wrap items-center gap-3 mb-8 p-4 rounded-xl bg-surface-50/95 dark:bg-ink-900/95 backdrop-blur border border-ink-100 dark:border-ink-800 shadow-card">
           <CalendarExportMenu event={calendarEvent} />
           <ReminderButton event={event} userReminders={userReminders} isAdmin={isAdmin} />
           <ShareButton event={event} siteUrl={siteUrl} />
@@ -438,23 +450,15 @@ export function EventClient({ event, relatedEvents, userReminders, isAdmin }: Ev
         {/* Description */}
         {event.description && (
           <Section id="description" title="Description">
-            <div className="prose prose-lg dark:prose-invert max-w-none">
-              {event.description.split("\n\n").map((para, i) => (
-                <p key={i} className="text-ink-700 dark:text-ink-300 leading-relaxed">
-                  {para}
-                </p>
-              ))}
-            </div>
+            <Markdown content={event.description} />
           </Section>
         )}
 
         {/* Rules */}
         {event.rules && (
           <Section id="rules" title="Rules & Expectations">
-            <div className="prose prose-lg dark:prose-invert max-w-none bg-surface-50 dark:bg-ink-900/50 rounded-xl p-6 border border-ink-100 dark:border-ink-800">
-              {event.rules.split("\n").map((line, i) => (
-                <p key={i} className="text-ink-700 dark:text-ink-300">{line}</p>
-              ))}
+            <div className="rounded-xl border border-ink-100 dark:border-ink-800 bg-surface-50 dark:bg-ink-900/50 p-6">
+              <Markdown content={event.rules} />
             </div>
           </Section>
         )}
@@ -470,8 +474,8 @@ export function EventClient({ event, relatedEvents, userReminders, isAdmin }: Ev
                   className="group relative flex overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-card-premium transition-all duration-500 hover:-translate-y-1 hover:shadow-card-premium-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:bg-ink-900/80 dark:border-brand-800/30"
                 >
                   {relEvent.coverImage ? (
-                    <div className="absolute inset-0 h-full w-full opacity-10 transition-opacity duration-500 group-hover:opacity-15">
-                      <img src={relEvent.coverImage} alt="" aria-hidden className="h-full w-full object-cover object-center opacity-30" />
+                    <div className="absolute inset-0 h-full w-full overflow-hidden">
+                      <Image src={relEvent.coverImage} alt="" aria-hidden fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover object-center opacity-30 transition-opacity duration-500 group-hover:opacity-50" />
                       <div className="absolute inset-0 bg-gradient-to-t from-ink-950/60 via-transparent to-transparent" />
                     </div>
                   ) : (

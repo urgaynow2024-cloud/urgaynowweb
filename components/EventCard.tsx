@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { formatEventDateTime, formatEventMonthDay, getEventState, getEventStateClasses, type EventCardData } from "@/lib/event-utils";
 import { EventCountdown } from "@/components/EventCountdown";
@@ -26,13 +27,14 @@ export function EventCard({ event }: { event: EventCardData }) {
       }`}
     >
       {event.coverImage ? (
-        <div className="absolute inset-0 h-full w-full opacity-10 transition-opacity duration-500 group-hover:opacity-15">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+        <div className="absolute inset-0 h-full w-full overflow-hidden">
+          <Image
             src={event.coverImage}
             alt=""
             aria-hidden
-            className="h-full w-full object-cover object-center opacity-30"
+            fill
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            className="object-cover object-center opacity-30 transition-opacity duration-500 group-hover:opacity-50"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-ink-950/60 via-transparent to-transparent" />
         </div>

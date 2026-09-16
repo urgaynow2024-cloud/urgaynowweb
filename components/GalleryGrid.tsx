@@ -8,16 +8,34 @@ import { IconChevronLeft, IconChevronRight, IconX } from "@/components/admin/ui/
 
 export type GalleryImageData = {
   id: string;
+  sourceType?: "SUBMISSION" | "GALLERY_IMAGE" | "GROUP_PHOTO";
+  sourceId?: string;
   title: string;
   description: string;
   imageUrl: string;
+  submitterName?: string;
+  category?: string;
+  createdAt?: string;
+  href?: string;
   isGroup?: boolean;
   groupId?: string;
 };
 
 type Lightbox = { images: GalleryImageData[]; index: number } | null;
 
-export function GalleryGrid({ images }: { images: GalleryImageData[] }) {
+type EmptyStateContext = {
+  q?: string;
+  type?: string;
+  total?: number;
+};
+
+export function GalleryGrid({
+  images,
+  emptyState,
+}: {
+  images: GalleryImageData[];
+  emptyState?: EmptyStateContext;
+}) {
   const [lightbox, setLightbox] = useState<Lightbox>(null);
   const [loaded, setLoaded] = useState<Set<string>>(new Set());
 
@@ -51,12 +69,23 @@ export function GalleryGrid({ images }: { images: GalleryImageData[] }) {
   }, [lightbox, closeLightbox, step]);
 
   if (images.length === 0) {
+    const ctx = emptyState ?? {};
+    const title = ctx.q
+      ? "Nothing matched those filters."
+      : ctx.type
+        ? "No photos in this category yet."
+        : ctx.total === 0
+          ? "The community gallery is waiting for its first approved photo."
+          : "No photos to display.";
+    const description = ctx.q
+      ? "Try a different search or clear your filters."
+      : ctx.type
+        ? "Be the first to share something in this category."
+        : ctx.total === 0
+          ? "Submit a photo and it will appear here after a moderator reviews it."
+          : "Check back soon — more content is on the way.";
     return (
-      <EmptyState
-        icon="Gallery"
-        title="No photos yet"
-        description="Share a community moment and it will appear here after review."
-      />
+      <EmptyState icon="Gallery" title={title} description={description} />
     );
   }
 
@@ -165,29 +194,72 @@ export function GalleryGrid({ images }: { images: GalleryImageData[] }) {
           )}
 
           <figure
-            className="max-h-[88vh] max-w-5xl"
+            className="flex max-h-[88vh] max-w-5xl flex-col overflow-hidden rounded-2xl bg-ink-950/90 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <Image
-              src={lightbox.images[lightbox.index].imageUrl}
-              alt={lightbox.images[lightbox.index].title || "Gallery image"}
-              width={1200}
-              height={800}
-              className="max-h-[80vh] w-auto rounded-2xl object-contain shadow-2xl"
-              placeholder="blur"
-              blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3C/svg%3E"
-            />
-            <figcaption className="mt-3 text-center text-sm text-white/70">
-              {lightbox.images[lightbox.index].title}
-              {lightbox.images.length > 1 && (
-                <span className="mx-2 opacity-40">·</span>
+            <div className="relative max-h-[80vh] overflow-hidden">
+              <Image
+                src={lightbox.images[lightbox.index].imageUrl}
+                alt={lightbox.images[lightbox.index].title || "Gallery image"}
+                width={1200}
+                height={800}
+                className="h-full w-full object-contain"
+                placeholder="blur"
+                blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3C/svg%3E"
+              />
+            </div>
+            <div className="space-y-3 p-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="truncate text-lg font-semibold text-white">
+                    {lightbox.images[lightbox.index].title || "Untitled"}
+                  </h3>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-white/70">
+                    {lightbox.images[lightbox.index].category && (
+                      <span className="rounded-full bg-brand-500/20 px-2 py-0.5 text-brand-200">
+                        {lightbox.images[lightbox.index].category}
+                      </span>
+                    )}
+                    {lightbox.images[lightbox.index].submitterName && (
+                      <span>by {lightbox.images[lightbox.index].submitterName}</span>
+                    )}
+                    {lightbox.images[lightbox.index].createdAt && (
+                      <span>· {new Date(lightbox.images[lightbox.index].createdAt!).toLocaleDateString()}</span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {lightbox.images[lightbox.index].href && (
+                    <Link
+                      href={lightbox.images[lightbox.index].href!}
+                      className="btn-secondary btn-sm"
+                      onClick={closeLightbox}
+                    >
+                      View page
+                    </Link>
+                  )}
+                  <a
+                    href={lightbox.images[lightbox.index].imageUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-ghost btn-sm"
+                    aria-label="Open image in new tab"
+                  >
+                    Open
+                  </a>
+                </div>
+              </div>
+              {lightbox.images[lightbox.index].description && (
+                <p className="text-sm text-white/70">
+                  {lightbox.images[lightbox.index].description}
+                </p>
               )}
               {lightbox.images.length > 1 && (
-                <span>
-                  {lightbox.index + 1} / {lightbox.images.length}
-                </span>
+                <p className="text-xs text-white/50">
+                  {lightbox.index + 1} of {lightbox.images.length}
+                </p>
               )}
-            </figcaption>
+            </div>
           </figure>
 
           {lightbox.images.length > 1 && (

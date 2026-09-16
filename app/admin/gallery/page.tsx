@@ -20,6 +20,7 @@ import {
   IconClock,
 } from "@/components/admin/ui/icons";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { CommunityPendingQueue } from "@/components/admin/CommunityPendingQueue";
 
 export const metadata = { title: "Media", robots: { index: false, follow: false } };
 
@@ -35,16 +36,18 @@ export default async function AdminGalleryList({
     ? searchParams.status
     : "all") as StatusFilter;
 
-  const [allImages, groupPhotos, pendingGroups, pendingCount, approvedCount] = await Promise.all([
-    prisma.galleryImage.findMany({
-      where: q ? { title: { contains: q, mode: "insensitive" } } : undefined,
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.groupPhoto.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
-    prisma.groupPhoto.count({ where: { bannerUrl: "" } }),
-    prisma.galleryImage.count({ where: { status: "PENDING" } }),
-    prisma.galleryImage.count({ where: { status: "APPROVED" } }),
-  ]);
+  const [allImages, groupPhotos, pendingGroups, pendingCount, approvedCount, pendingSubmissions] =
+    await Promise.all([
+      prisma.galleryImage.findMany({
+        where: q ? { title: { contains: q, mode: "insensitive" } } : undefined,
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.groupPhoto.findMany({ orderBy: { createdAt: "desc" }, take: 8 }),
+      prisma.groupPhoto.count({ where: { bannerUrl: "" } }),
+      prisma.galleryImage.count({ where: { status: "PENDING" } }),
+      prisma.galleryImage.count({ where: { status: "APPROVED" } }),
+      prisma.communitySubmission.count({ where: { status: "PENDING" } }),
+    ]);
 
   const images =
     status === "all"
@@ -88,12 +91,14 @@ export default async function AdminGalleryList({
           <StatCard label="Gallery images" value={allImages.length} icon={<IconImages size={20} />} accent="brand" hint="Standalone gallery uploads" />
         </div>
         <div className="animate-fade-in">
-          <StatCard label="Pending review" value={pendingCount} icon={<IconClock size={20} />} accent="amber" hint="Member submissions awaiting approval" />
+          <StatCard label="Pending review" value={pendingCount + pendingSubmissions} icon={<IconClock size={20} />} accent="amber" hint="Gallery images + member submissions awaiting approval" />
         </div>
         <div className="animate-fade-in">
           <StatCard label="Missing banners" value={pendingGroups} icon={<IconUpload size={20} />} accent="amber" hint="Group photos without banners" />
         </div>
       </section>
+
+      <CommunityPendingQueue />
 
       <Card className="mt-5 animate-fade-in">
         <CardHeader

@@ -8,7 +8,6 @@ import { safeQuery } from "@/lib/safeQuery";
 import { SectionHeading } from "@/components/SectionHeading";
 import { ScrollFadeIn, StaggeredList } from "@/components/ScrollAnimation";
 import { EmptyState } from "@/components/EmptyState";
-import { STAFF_ROLES } from "@/lib/roles";
 
 export const revalidate = 300;
 
@@ -25,6 +24,7 @@ type StaffDirectoryEntry = {
   bio: string;
   photoUrl: string;
   socials: string;
+  sortOrder: number;
   hostedEvents: { id: string }[];
 };
 
@@ -82,7 +82,6 @@ export default async function StaffPage({
   ]);
 
   const ranks = Array.from(new Set(allStaff.map((s) => s.rank).filter(Boolean))).sort((a, b) => a.localeCompare(b));
-  const roleOrder = new Map(STAFF_ROLES.map((role, index) => [role.label.toLowerCase(), index]));
   const groups = Array.from(
     staff.reduce((acc, person) => {
       const current = acc.get(person.rank) ?? [];
@@ -91,11 +90,15 @@ export default async function StaffPage({
       return acc;
     }, new Map<string, StaffDirectoryEntry[]>()),
   )
-    .sort(([a], [b]) => {
-      const aOrder = roleOrder.get(a.toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
-      const bOrder = roleOrder.get(b.toLowerCase()) ?? Number.MAX_SAFE_INTEGER;
-      if (aOrder !== bOrder) return aOrder - bOrder;
-      return a.localeCompare(b);
+    // Order section groups by the ranking of the highest-ranked member in each
+    // group (i.e. by `sortOrder`), so the visible hierarchy matches the staff
+    // ranking exactly. This preserves the existing sortOrder source of truth
+    // and must NOT be replaced with alphabetical / role-name sorting.
+    .sort(([, aMembers], [, bMembers]) => {
+      const aFirst = aMembers[0]?.sortOrder ?? Number.MAX_SAFE_INTEGER;
+      const bFirst = bMembers[0]?.sortOrder ?? Number.MAX_SAFE_INTEGER;
+      if (aFirst !== bFirst) return aFirst - bFirst;
+      return aMembers[0]?.rank.localeCompare(bMembers[0]?.rank ?? "") ?? 0;
     });
 
   return (

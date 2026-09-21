@@ -1,65 +1,50 @@
 import { getRoleDefinition } from "@/lib/roles";
-import type { ReactNode } from "react";
 
-type Tone = "neutral" | "brand" | "success" | "warning" | "danger";
+type Tone = "neutral" | "brand" | "success" | "warning" | "danger" | "info";
 
-const toneClass: Record<Tone, string> = {
-  neutral: "badge-neutral",
-  brand: "badge-brand",
-  success: "badge-success",
-  warning: "badge-warning",
-  danger: "badge-danger",
-};
+/**
+ * Presentational staff/community role badge.
+ *
+ * Intentionally read-only: receives a canonical role key supplied by a server
+ * component and renders decoration only. It never calls an API, never
+ * inspects permissions, and never grants access.
+ *
+ * Visual design goals (see 12-Staff-Profile-Role-Tag / 13-15 in the spec):
+ *  - small + clean + readable + premium (never tiny/faded/cramped)
+ *  - a consistent diamond marker identifies it as a *role* (not a status/alert)
+ *  - colour is a secondary cue only — the label is always rendered
+ *  - strong contrast in light + dark, never pale enough to wash out
+ */
 
-const dotTone: Record<Tone, string> = {
-  neutral: "bg-ink-400",
-  brand: "bg-brand-500",
-  success: "bg-emerald-500",
-  warning: "bg-amber-500",
-  danger: "bg-red-500",
+/* Background + ring + text per role tone. All text colours stay well within
+   WCAG contrast on their tinted backgrounds for both light and dark modes. */
+const bgClass: Record<Tone, string> = {
+  neutral: "bg-ink-50 text-ink-800 ring-ink-200 dark:bg-ink-800/50 dark:text-ink-100 dark:ring-ink-700",
+  brand: "bg-brand-50 text-brand-900 ring-brand-200 dark:bg-brand-900/30 dark:text-brand-100 dark:ring-brand-800",
+  success: "bg-emerald-50 text-emerald-900 ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-200 dark:ring-emerald-800",
+  warning: "bg-amber-50 text-amber-900 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-200 dark:ring-amber-800",
+  danger: "bg-red-50 text-red-900 ring-red-200 dark:bg-red-500/15 dark:text-red-200 dark:ring-red-800",
+  info: "bg-sky-50 text-sky-900 ring-sky-200 dark:bg-sky-500/15 dark:text-sky-200 dark:ring-sky-800",
 };
 
 const sizeClass: Record<"sm" | "md", string> = {
-  sm: "px-2 py-0.5 text-[10px] gap-1",
-  md: "px-2.5 py-1 text-xs gap-1.5",
+  sm: "px-2.5 py-1 text-xs",
+  md: "px-3 py-1.5 text-sm",
 };
 
-const iconForTone: Record<Tone, ReactNode> = {
-  neutral: (
-    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 2 3 7v10l9 5 9-5V7l-9-5Z" />
-      <path d="M9 12l2 2 4-4" />
+/** A single diamond (◆) path used as the role marker for every role. */
+function DiamondIcon({ size = 3 }: { size?: number }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={`h-${size} w-${size} shrink-0 fill-current`}
+      aria-hidden="true"
+    >
+      <path d="M12 2 20 12 12 22 2 12z" />
     </svg>
-  ),
-  brand: (
-    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="currentColor" aria-hidden="true">
-      <path d="M12 2 3 7v10l9 5 9-5V7l-9-5Zm0 2.3 6.5 3.6v7.8L12 19.7 5.5 15.7V7.9L12 4.3Z" />
-    </svg>
-  ),
-  success: (
-    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M20 6 9 17l-5-5" />
-    </svg>
-  ),
-  warning: (
-    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="currentColor" aria-hidden="true">
-      <path d="M12 2 2 22h20L12 2Zm0 6 6 10H6l6-10Z" />
-    </svg>
-  ),
-  danger: (
-    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="currentColor" aria-hidden="true">
-      <path d="M12 2 2 22h20L12 2Zm0 6 6 10H6l6-10Z" />
-    </svg>
-  ),
-};
+  );
+}
 
-/**
- * Presentational role/status badge.
- *
- * This component is intentionally read-only: it receives a canonical role key
- * (or badge key) supplied by a server component and renders decoration only.
- * It never calls an API, never inspects permissions, and never grants access.
- */
 export function RoleBadge({
   role,
   tooltip,
@@ -78,10 +63,9 @@ export function RoleBadge({
   return (
     <span
       title={title}
-      className={`badge inline-flex items-center rounded-full font-semibold shadow-sm ${toneClass[tone]} ${sizeClass[size]} ${className}`}
+      className={`role-badge inline-flex items-center gap-1 rounded-full font-semibold shadow-sm ring-1 ${bgClass[tone]} ${sizeClass[size]} ${className}`}
     >
-      <span className={`h-1.5 w-1.5 rounded-full ${dotTone[tone]}`} aria-hidden="true" />
-      {iconForTone[tone]}
+      <DiamondIcon size={size === "md" ? 4 : 3} />
       <span>{def.label}</span>
     </span>
   );

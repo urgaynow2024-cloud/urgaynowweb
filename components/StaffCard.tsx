@@ -131,10 +131,7 @@ export function StaffCard({ staff }: { staff: StaffCardData }) {
               {staff.name?.[0] ?? "?"}
             </div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-ink-950/30 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-          <span className="absolute left-3 top-3 inline-flex items-center rounded-full">
-            <RoleBadge role={normalizeRoleKey(staff.rank)} size="sm" />
-          </span>
+          <div className="absolute inset-0 bg-gradient-to-t from-ink-950/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         </div>
 
         <div className="flex flex-1 flex-col p-5">
@@ -144,10 +141,13 @@ export function StaffCard({ staff }: { staff: StaffCardData }) {
               <p className="truncate text-sm font-medium text-brand-600 dark:text-brand-300">
                 @{staff.vrchatUsername}
               </p>
+              <div className="mt-2">
+                <RoleBadge role={normalizeRoleKey(staff.rank)} size="sm" />
+              </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {staff.hostedEventCount ? (
-                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-ink-100 px-2 py-1 text-[10px] font-semibold text-ink-600 dark:bg-ink-800 dark:text-ink-300">
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-ink-100 px-2.5 py-1 text-xs font-semibold text-ink-600 dark:bg-ink-800 dark:text-ink-300">
                   <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                     <rect x="3.5" y="5" width="17" height="16" rx="2.5" />
                     <path d="M3.5 9.5h17M8 3v4M16 3v4" />

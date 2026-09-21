@@ -69,40 +69,40 @@ export default async function StaffProfilePage({ params }: StaffProfilePageProps
         </Link>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-          <section className="card overflow-hidden">
-            <div className="relative aspect-square bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-900/40 dark:to-brand-800/30">
-              {staff.photoUrl ? (
-                <Image src={staff.photoUrl} alt={`${staff.name} profile photo`} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 360px" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-8xl font-bold text-brand-400 dark:text-brand-700">
-                  {staff.name.charAt(0) || "?"}
-                </div>
-              )}
-              <div className="absolute left-4 top-4">
-                <RoleBadge role={normalizeRoleKey(staff.rank)} size="md" />
-              </div>
-            </div>
-            <div className="p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-ink-900 dark:text-white">{staff.name}</h2>
-                  <p className="mt-1 text-sm font-medium text-brand-600 dark:text-brand-300">@{staff.vrchatUsername}</p>
-                </div>
-                <ReportButton contentType="STAFF_PROFILE" contentId={staff.id} contentTitle={staff.name} size="sm" variant="outline" className="rounded-full border-ink-300 text-ink-700 hover:bg-ink-100 dark:border-ink-600 dark:text-ink-300 dark:hover:bg-ink-800 shrink-0" />
-              </div>
-              <dl className="mt-6 space-y-3 text-sm">
-                <div className="flex justify-between gap-4 border-b border-ink-100 pb-3 dark:border-ink-800">
-                  <dt className="text-ink-500 dark:text-ink-400">Rank</dt>
-                  <dd className="font-semibold text-ink-900 dark:text-white">{staff.rank || "Member"}</dd>
-                </div>
-                <div className="flex justify-between gap-4 border-b border-ink-100 pb-3 dark:border-ink-800">
-                  <dt className="text-ink-500 dark:text-ink-400">Hosted events</dt>
-                  <dd className="font-semibold text-ink-900 dark:text-white">{staff.hostedEvents.length}</dd>
-                </div>
-              </dl>
-              {staff.socials && <StaffSocialLinks socials={staff.socials} />}
-            </div>
-          </section>
+         <section className="card overflow-hidden">
+             <div className="relative aspect-square bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-900/40 dark:to-brand-800/30">
+               {staff.photoUrl ? (
+                 <Image src={staff.photoUrl} alt={`${staff.name} profile photo`} fill className="object-cover" sizes="(max-width: 1024px) 100vw, 360px" />
+               ) : (
+                 <div className="flex h-full w-full items-center justify-center text-8xl font-bold text-brand-400 dark:text-brand-700">
+                   {staff.name.charAt(0) || "?"}
+                 </div>
+               )}
+             </div>
+             <div className="p-6">
+               <div className="flex items-start justify-between gap-4">
+                 <div className="min-w-0">
+                   <h2 className="text-2xl font-bold text-ink-900 dark:text-white">{staff.name}</h2>
+                   <p className="mt-1 text-sm font-medium text-brand-600 dark:text-brand-300">@{staff.vrchatUsername}</p>
+                   <div className="mt-2">
+                     <RoleBadge role={normalizeRoleKey(staff.rank)} size="md" />
+                   </div>
+                 </div>
+                 <ReportButton contentType="STAFF_PROFILE" contentId={staff.id} contentTitle={staff.name} size="sm" variant="outline" className="rounded-full border-ink-300 text-ink-700 hover:bg-ink-100 dark:border-ink-600 dark:text-ink-300 dark:hover:bg-ink-800 shrink-0" />
+               </div>
+               <dl className="mt-6 space-y-3 text-sm">
+                 <div className="flex justify-between gap-4 border-b border-ink-100 pb-3 dark:border-ink-800">
+                   <dt className="text-ink-500 dark:text-ink-400">Rank</dt>
+                   <dd className="font-semibold text-ink-900 dark:text-white">{staff.rank || "Member"}</dd>
+                 </div>
+                 <div className="flex justify-between gap-4 border-b border-ink-100 pb-3 dark:border-ink-800">
+                   <dt className="text-ink-500 dark:text-ink-400">Hosted events</dt>
+                   <dd className="font-semibold text-ink-900 dark:text-white">{staff.hostedEvents.length}</dd>
+                 </div>
+               </dl>
+               {staff.socials && <StaffSocialLinks socials={staff.socials} />}
+             </div>
+           </section>
 
           <div className="space-y-6">
             <section className="card p-6 sm:p-8">

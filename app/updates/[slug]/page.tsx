@@ -9,7 +9,7 @@ import { getUpdateTypeLabel, getUpdateCategoryLabel, getUpdateCategoryTone } fro
 import Link from "next/link";
 import { Badge, Card } from "@/components/ui";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const u = await prisma.update.findUnique({ where: { slug: params.slug } });

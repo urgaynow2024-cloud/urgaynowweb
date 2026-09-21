@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { createReleaseFromCommits, getPreviousReleaseCommit } from "@/lib/release-generator";
 import { sendContentWebhook } from "@/lib/discord-webhook";
@@ -36,6 +37,10 @@ export async function POST(request: NextRequest) {
     }
 
     const { updateId, releaseInfo } = result;
+
+    // Revalidate the public changelog so newly published releases appear
+    // immediately without waiting for a manual rebuild or ISR window.
+    try { revalidatePath("/updates"); } catch {}
 
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://urgaynow.com";
     const webhookResult = await sendContentWebhook("DISCORD_UPDATES_WEBHOOK_URL", {

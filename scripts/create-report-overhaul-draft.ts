@@ -55,7 +55,13 @@ const IMPROVEMENTS = `### Notifications
 ### Community
 - Community page data aggregation
 - Approved/published filtering
-- Newest-first sorting`;
+- Newest-first sorting
+
+### Infrastructure
+- SupportRequest model
+- Prisma migration
+- Schema fixes
+- sharp image optimization`;
 
 const SECURITY_NOTES = `### Security
 - Database-backed rate limiting
@@ -100,7 +106,6 @@ async function main() {
       securityNotes: SECURITY_NOTES,
       authorId: "system",
       generatedAutomatically: false,
-      releaseStatus: "DRAFT",
     },
   });
 

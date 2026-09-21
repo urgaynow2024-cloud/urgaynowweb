@@ -1,0 +1,79 @@
+name: Auto Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: "Commit SHA to release (optional, defaults to latest on main)"
+        required: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine commit SHA
+        id: sha
+        run: |
+          if [ -n "${{ github.event.inputs.sha }}" ]; then
+            echo "sha=${{ github.event.inputs.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Wait for deployment (if using Vercel/Netlify/etc)
+        # Uncomment and configure if you have a deployment check
+        # uses: actions/github-script@v7
+        # with:
+        #   script: |
+        #     // Wait for deployment to complete
+        #     // Example for Vercel:
+        #     // const deployment = await github.rest.repos.getDeploymentStatus({...})
+        #   env:
+        #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release
+        id: release
+        env:
+          RELEASE_CRON_SECRET: ${{ secrets.RELEASE_CRON_SECRET }}
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          DISCORD_UPDATES_WEBHOOK_URL: ${{ secrets.DISCORD_UPDATES_WEBHOOK_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST "${{ secrets.NEXT_PUBLIC_SITE_URL }}/api/releases" \
+            -H "Authorization: Bearer ${RELEASE_CRON_SECRET}" \
+            -H "Content-Type: application/json" \
+            -d "{\"headSha\": \"${{ steps.sha.outputs.sha }}\", \"branch\": \"main\"}")
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n-1)
+          
+          echo "Response: $body"
+          
+          if [ "$http_code" -eq 200 ] || [ "$http_code" -eq 201 ]; then
+            echo "Release created successfully"
+            update_id=$(echo "$body" | jq -r '.updateId')
+            echo "update_id=$update_id" >> $GITHUB_OUTPUT
+          elif [ "$http_code" -eq 409 ]; then
+            echo "Release already exists for this commit"
+            update_id=$(echo "$body" | jq -r '.updateId')
+            echo "update_id=$update_id" >> $GITHUB_OUTPUT
+          else
+            echo "Release creation failed with status $http_code"
+            exit 1
+          fi
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Auto-release workflow failed for commit ${{ steps.sha.outputs.sha }}"
+          # Could add Slack/Discord notification here

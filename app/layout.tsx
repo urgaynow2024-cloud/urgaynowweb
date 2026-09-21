@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { HeaderWrapper } from "@/components/HeaderWrapper";
 import { Footer } from "@/components/Footer";
-import { ThemeProvider, themeInitScript } from "@/components/ThemeProvider";
+import { ThemeProvider, SeasonalThemeProvider, themeInitScript } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/Toast";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -50,16 +50,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ThemeProvider>
-          <ToastProvider>
-          <a href="#main" className="skip-link">
-            Skip to content
-          </a>
-          <HeaderWrapper />
-            <main id="main" className="min-h-[60vh]">
-              {children}
-            </main>
-            <Footer />
-          </ToastProvider>
+          <SeasonalThemeProvider>
+            <ToastProvider>
+            <a href="#main" className="skip-link">
+              Skip to content
+            </a>
+            <HeaderWrapper />
+              <main id="main" className="min-h-[60vh]">
+                {children}
+              </main>
+              <Footer />
+            </ToastProvider>
+          </SeasonalThemeProvider>
         </ThemeProvider>
         <Analytics />
         <SpeedInsights />

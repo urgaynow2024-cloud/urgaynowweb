@@ -192,3 +192,51 @@ export const IconBellOff = (p: IconProps) => (
 export const IconRefresh = (p: IconProps) => (
   <svg {...base(p)}><path d="M21 12a9 9 0 1 1-3-6.7" /><path d="M21 4v5h-5" /></svg>
 );
+
+export const IconRefreshCw = (p: IconProps) => (
+  <svg {...base(p)}><path d="M21 12a9 9 0 1 1-3-6.7" /><path d="M21 4v5h-5" /></svg>
+);
+
+export const IconZap = (p: IconProps) => (
+  <svg {...base(p)}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+);
+
+export const IconPalette = (p: IconProps) => (
+  <svg {...base(p)}><path d="M12 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z" /><circle cx="19" cy="5" r="2" /><circle cx="5" cy="19" r="2" /><circle cx="19" cy="19" r="2" /><circle cx="5" cy="5" r="2" /></svg>
+);
+
+export const IconSun = (p: IconProps) => (
+  <svg {...base(p)}><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42" /></svg>
+);
+
+export const IconMoon = (p: IconProps) => (
+  <svg {...base(p)}><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z" /></svg>
+);
+
+export const IconSend = (p: IconProps) => (
+  <svg {...base(p)}><path d="M14.5 2.5 21 10l-6.5 7.5-2.5-2.5-2.5 6-6.5-6 2.5-6-2.5-5L10 3.5 14.5 2.5Z" /></svg>
+);
+
+export const IconFileImage = (p: IconProps) => (
+  <svg {...base(p)}><path d="M14 2.5h5.5a2 2 0 0 1 2 2V19.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8h5z" /><path d="M10 2v6h6" /></svg>
+);
+
+export const IconNote = (p: IconProps) => (
+  <svg {...base(p)}><path d="M14 2.5H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8z" /><path d="M14 2.5v6h6" /><path d="M8 12h8M8 16h8" /></svg>
+);
+
+export const IconClipboardText = (p: IconProps) => (
+  <svg {...base(p)}><path d="M9 11h6M9 15h6M9 7h6" /><rect x="4" y="5" width="16" height="16" rx="2" /></svg>
+);
+
+export const IconList = (p: IconProps) => (
+  <svg {...base(p)}><path d="M9 6h12M9 12h12M9 18h12" /><circle cx="5" cy="6" r="2" /><circle cx="5" cy="12" r="2" /><circle cx="5" cy="18" r="2" /></svg>
+);
+
+export const IconGlobe = (p: IconProps) => (
+  <svg {...base(p)}><circle cx="12" cy="12" r="9" /><path d="M4.5 12h15M12 3a15 15 0 0 1 0 18" /></svg>
+);
+
+export const IconUserCircle = (p: IconProps) => (
+  <svg {...base(p)}><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2Z" /><path d="M12 6.5a5.5 5.5 0 1 0 0 11 0 5.5 5.5 0 0 0 0-11Z" /><path d="M2 13.5a8 8 0 0 1 12-6.5 8 8 0 0 1 8 6.5" /></svg>
+);

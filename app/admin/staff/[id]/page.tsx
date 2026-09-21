@@ -27,10 +27,10 @@ export default async function EditStaffPage({ params }: { params: { id: string }
       <PageHeader
         breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Staff", href: "/admin/staff" }, { label: "Edit" }]}
         title={`Edit: ${s.name}`}
-        description="Update this team member's profile."
+        description="Update this team member's public profile and directory details."
       />
       <Card>
-        <CardHeader title="Staff details" icon={<IconUsers size={18} />} />
+        <CardHeader title="Staff profile" subtitle="Changes are reflected on the public team directory." icon={<IconUsers size={18} />} />
         <CardBody>
           <StaffForm action={updateStaff.bind(null, s.id)} initial={initial} />
         </CardBody>

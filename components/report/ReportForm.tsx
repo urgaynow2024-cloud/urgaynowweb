@@ -3,6 +3,7 @@
 import { useState, FormEvent, ChangeEvent } from "react";
 import Link from "next/link";
 import { Alert, Button } from "@/components/ui";
+import { DESCRIPTION_MAX_LENGTH } from "@/lib/reports";
 
 export interface ReportFormProps {
   submissionId: string;
@@ -43,9 +44,10 @@ export function ReportForm({ submissionId, submissionTitle, onSuccess }: ReportF
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          submissionId,
+          contentType: "COMMUNITY_SUBMISSION",
+          contentId: submissionId,
           reason,
-          details,
+          description: details,
           reporterName,
           reporterEmail,
           anonymous,
@@ -124,6 +126,10 @@ export function ReportForm({ submissionId, submissionTitle, onSuccess }: ReportF
           placeholder="Describe what happened. Include links, timestamps, or any other relevant information."
           className="textarea"
         />
+        <div className="mt-1 flex justify-between gap-4 text-xs text-ink-500 dark:text-ink-400">
+          <span>Be specific — include links, timestamps, or any other relevant information.</span>
+          <span>{details.length}/{DESCRIPTION_MAX_LENGTH}</span>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

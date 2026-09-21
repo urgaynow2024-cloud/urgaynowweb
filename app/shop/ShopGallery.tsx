@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { IconStar, IconChevronLeft, IconChevronRight, IconX } from "@/components/admin/ui/icons";
+import { ReportButton } from "@/components/report/ReportModal";
 
 export type ShopDesignPublic = {
   id: string;
@@ -149,10 +150,18 @@ export function ShopGallery({ designs }: { designs: ShopDesignPublic[] }) {
                 </button>
 
                 <div className="flex flex-1 flex-col p-5">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">{d.name}</h3>
-                  </div>
-                  {d.category && (
+<div className="flex items-start justify-between gap-2">
+                      <h3 className="text-sm font-semibold text-zinc-900 dark:text-white">{d.name}</h3>
+                      <ReportButton
+                        contentType="SHOP_DESIGN"
+                        contentId={d.id}
+                        contentTitle={d.name}
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800 shrink-0"
+                      />
+                    </div>
+                    {d.category && (
                     <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-brand-600 dark:text-brand-300">
                       {d.category}
                     </p>

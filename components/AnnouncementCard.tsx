@@ -1,6 +1,9 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
 import { formatDate } from "@/lib/utils";
+import { ReportButton } from "@/components/report/ReportModal";
 
 export type AnnouncementCardData = {
   id: string;
@@ -18,10 +21,17 @@ export function AnnouncementCard({
   item: AnnouncementCardData;
   featured?: boolean;
 }) {
+  const router = useRouter();
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (e.currentTarget.contains((e.target as Element).closest('button'))) return;
+    router.push(`/news/${item.slug}`);
+  };
+
   return (
-    <Link
-      href={`/news/${item.slug}`}
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border border-ink-200/60 bg-white shadow-card-premium transition-all duration-500 hover:-translate-y-1 hover:shadow-card-premium-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-brand-800/30 dark:bg-ink-900/80 dark:hover:border-brand-700/50 dark:focus-visible:ring-offset-surface-950 ${
+    <article
+      onClick={handleClick}
+      className={`group relative flex flex-col overflow-hidden rounded-2xl border border-ink-200/60 bg-white shadow-card-premium transition-all duration-500 hover:-translate-y-1 hover:shadow-card-premium-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-brand-800/30 dark:bg-ink-900/80 dark:hover:border-brand-700/50 dark:focus-visible:ring-offset-surface-950 cursor-pointer ${
         featured ? "md:col-span-2 lg:col-span-1" : ""
       }`}
     >
@@ -39,6 +49,16 @@ export function AnnouncementCard({
               sizes={featured ? "(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 50vw" : "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"}
               className="object-cover"
             />
+            <div className="absolute right-2 top-2">
+              <ReportButton
+                contentType="ANNOUNCEMENT"
+                contentId={item.id}
+                contentTitle={item.title}
+                size="sm"
+                variant="ghost"
+                className="rounded-full bg-ink-950/70 text-white/90 hover:bg-ink-950/90"
+              />
+            </div>
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
           {featured && (
@@ -74,6 +94,6 @@ export function AnnouncementCard({
       {featured && (
         <div className="absolute inset-0 rounded-2xl border-2 border-dashed border-brand-300/30 dark:border-brand-700/30 pointer-events-none" aria-hidden />
       )}
-    </Link>
+    </article>
   );
 }

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
 import { IconChevronLeft, IconChevronRight, IconX } from "@/components/admin/ui/icons";
+import { ReportButton } from "@/components/report/ReportModal";
 
 export type GalleryImageData = {
   id: string;
@@ -93,6 +94,8 @@ export function GalleryGrid({
     <>
       <div className="gallery-grid">
         {images.map((img, idx) => {
+          const isGroupLink = img.isGroup && img.groupId;
+
           const content = (
             <>
               <div className="relative aspect-square w-full overflow-hidden bg-ink-100 dark:bg-ink-800">
@@ -101,7 +104,7 @@ export function GalleryGrid({
                   alt={img.title}
                   fill
                   sizes="(max-width: 640px) 50vw, (max-width: 1024px) 25vw, 25vw"
-                   className={`object-cover transition-all duration-500 ease-spring-bounce ${loaded.has(img.imageUrl) ? "scale-100 opacity-100" : "scale-105 opacity-0 group-hover:scale-110"}`}
+                  className={`object-cover transition-all duration-500 ease-spring-bounce ${loaded.has(img.imageUrl) ? "scale-100 opacity-100" : "scale-105 opacity-0 group-hover:scale-110"}`}
                   placeholder="blur"
                   blurDataURL="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3C/svg%3E"
                   loading={idx < 8 ? "eager" : "lazy"}
@@ -111,6 +114,24 @@ export function GalleryGrid({
                 {(img.title || img.description) && (
                   <div className="absolute bottom-0 left-0 right-0 translate-y-2 p-3 text-xs text-white/0 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:text-white/80 group-hover:opacity-100">
                     {img.title && <span className="font-semibold">{img.title}</span>}
+                  </div>
+                )}
+                {!isGroupLink && (
+                  <div className="absolute right-2 top-2">
+                    <ReportButton
+                      contentType={
+                        img.sourceType === "SUBMISSION"
+                          ? "COMMUNITY_PHOTO"
+                          : img.sourceType === "GALLERY_IMAGE"
+                          ? "GALLERY_IMAGE"
+                          : "GROUP_PHOTO"
+                      }
+                      contentId={img.sourceId || img.id}
+                      contentTitle={img.title}
+                      size="sm"
+                      variant="ghost"
+                      className="rounded-full bg-ink-950/70 text-white/90 hover:bg-ink-950/90"
+                    />
                   </div>
                 )}
               </div>

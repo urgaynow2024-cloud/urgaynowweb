@@ -1,7 +1,8 @@
-export const revalidate = 60;
-
 import { getSession } from "@/lib/auth";
+import { getAttentionCounts } from "@/lib/admin-dashboard";
 import { AdminShell } from "@/components/admin/AdminShell";
+
+export const revalidate = 60;
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   let session;
@@ -11,10 +12,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     session = null;
   }
 
-  // Login page (no session) renders without the admin shell.
   if (!session) {
     return <div className="admin-bg min-h-screen">{children}</div>;
   }
 
-  return <AdminShell user={{ name: session.name }}>{children}</AdminShell>;
+  const attention = await getAttentionCounts();
+  return <AdminShell user={{ name: session.name }} attention={attention}>{children}</AdminShell>;
 }

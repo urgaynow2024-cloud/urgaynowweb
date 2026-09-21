@@ -25,6 +25,8 @@ export default async function NewUpdatePage() {
     authorId: "",
     published: false,
     postToDiscord: false,
+    generatedAutomatically: false,
+    releaseStatus: "DRAFT",
   };
 
   return (

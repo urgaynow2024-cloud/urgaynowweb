@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { execSync } from "child_process";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
@@ -56,6 +57,84 @@ async function postUpdateWebhook(updateId: string) {
       discordPostStatus: result.ok ? "sent" : "failed",
     },
   });
+}
+
+function execGit(args: string): string {
+  try {
+    return execSync(`git ${args}`, { encoding: "utf-8", stdio: "pipe" }).trim();
+  } catch {
+    return "";
+  }
+}
+
+function classifyCommits(commits: Array<{ sha: string; subject: string; body: string }>) {
+  const result = { breaking: [] as string[], features: [] as string[], fixes: [] as string[], improvements: [] as string[], other: [] as string[] };
+  for (const commit of commits) {
+    const subject = commit.subject.toLowerCase();
+    const fullMessage = `${commit.subject}\n${commit.body}`.toLowerCase();
+    const isBreaking = subject.includes("breaking change") || subject.startsWith("!") || fullMessage.includes("breaking change:");
+    if (isBreaking) { result.breaking.push(commit.subject); continue; }
+    if (subject.startsWith("feat:")) result.features.push(commit.subject);
+    else if (subject.startsWith("fix:")) result.fixes.push(commit.subject);
+    else if (subject.startsWith("perf:") || subject.startsWith("refactor:")) result.improvements.push(commit.subject);
+    else result.other.push(commit.subject);
+  }
+  return result;
+}
+
+function formatCommitList(items: string[]): string {
+  return items.length > 0 ? items.map((s) => `- ${s}`).join("\n") : "";
+}
+
+function sanitize(text: string): string {
+  return text
+    .replace(/((?:password|secret|token|key|credential|api[_-]?key)\s*[:=]\s*)[^\s]+/gi, "$1[REDACTED]")
+    .replace(/(?:ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{36}/g, "[REDACTED]")
+    .replace(/sk-[A-Za-z0-9]{48}/g, "[REDACTED]")
+    .replace(/xoxb-[A-Za-z0-9-]{50,}/g, "[REDACTED]")
+    .replace(/[A-Za-z0-9+/]{40,}={0,2}/g, "[REDACTED]");
+}
+
+export async function regenerateSummary(id: string, formData: FormData) {
+  await requireAdmin();
+  const existing = await prisma.update.findUnique({ where: { id } });
+  if (!existing || !existing.generatedAutomatically || !existing.sourceCommit) {
+    redirect(`/admin/updates/${id}?error=1`);
+  }
+
+  const previousSha = existing.sourcePreviousCommit ?? execGit("rev-list --max-parents=0 HEAD");
+  const headSha = existing.sourceCommit;
+
+  const format = "%H|%s|%b";
+  const log = execGit(`log --format="${format}" ${previousSha}..${headSha}`);
+  const commits = log ? log.split("\n").map((line) => {
+    const [sha, subject, body] = line.split("|");
+    return { sha, subject, body: body || "" };
+  }) : [];
+
+  const classified = classifyCommits(commits);
+  const summary = `${commits.length} change${commits.length !== 1 ? "s" : ""} in this release`;
+  const whatsNew = formatCommitList(classified.features);
+  const improvements = formatCommitList([...classified.improvements, ...classified.other]);
+  const bugFixes = formatCommitList(classified.fixes);
+
+  try {
+    await prisma.update.update({
+      where: { id },
+      data: {
+        summary: sanitize(summary),
+        whatsNew: sanitize(whatsNew),
+        improvements: sanitize(improvements),
+        bugFixes: sanitize(bugFixes),
+      },
+    });
+  } catch {
+    fail(`/admin/updates/${id}`);
+  }
+  revalidatePath("/", "layout");
+  revalidatePath("/updates");
+  revalidatePath(`/updates/${existing.slug}`);
+  redirect("/admin/updates");
 }
 
 export async function createUpdate(formData: FormData) {

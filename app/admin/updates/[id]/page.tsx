@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { updateUpdate, retryUpdateWebhook } from "../actions";
+import { updateUpdate, retryUpdateWebhook, regenerateSummary } from "../actions";
 import { UpdateForm, type UpdateFormValues } from "../UpdateForm";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
 import { ErrorAnnouncer } from "@/components/admin/ErrorAnnouncer";
-import { IconMegaphone, IconRefresh } from "@/components/admin/ui/icons";
+import { IconMegaphone, IconRefresh, IconZap } from "@/components/admin/ui/icons";
 import { Suspense } from "react";
 
 export default async function EditUpdatePage({ params }: { params: { id: string } }) {
@@ -25,6 +25,11 @@ export default async function EditUpdatePage({ params }: { params: { id: string 
     authorId: u.authorId,
     published: !!u.publishedAt,
     postToDiscord: u.discordPostStatus === "failed" ? false : !!u.discordPostedAt,
+    generatedAutomatically: u.generatedAutomatically,
+    releaseStatus: u.releaseStatus as "DRAFT" | "PUBLISHED" | "FAILED",
+    sourceCommit: u.sourceCommit || undefined,
+    sourceBranch: u.sourceBranch || undefined,
+    deploymentId: u.deploymentId || undefined,
   };
 
   return (
@@ -37,13 +42,22 @@ export default async function EditUpdatePage({ params }: { params: { id: string 
         title={`Edit: ${u.title}`}
         description="Update this changelog entry and its settings."
         actions={
-          u.discordPostStatus === "failed" && (
-            <form action={retryUpdateWebhook.bind(null, u.id)}>
-              <button type="submit" className="btn-secondary btn-sm">
-                <IconRefresh size={14} /> Retry Discord post
-              </button>
-            </form>
-          )
+          <>
+            {u.discordPostStatus === "failed" && (
+              <form action={retryUpdateWebhook.bind(null, u.id)}>
+                <button type="submit" className="btn-secondary btn-sm">
+                  <IconRefresh size={14} /> Retry Discord post
+                </button>
+              </form>
+            )}
+            {u.generatedAutomatically && (
+              <form action={(formData) => regenerateSummary(u.id, formData)}>
+                <button type="submit" className="btn-secondary btn-sm">
+                  <IconZap size={14} className="mr-1" /> Regenerate summary
+                </button>
+              </form>
+            )}
+          </>
         }
       />
       <Card className="animate-fade-in">

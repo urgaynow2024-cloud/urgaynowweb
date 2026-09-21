@@ -463,3 +463,273 @@ h1, h2, h3, h4 {
   opacity: 0.4;
   animation: pulse-ring 2s infinite;
 }
+
+/* ==========================================================================
+   Seasonal Theme Variables
+   These are set dynamically via data-site-theme attribute and JS
+   ========================================================================== */
+
+/* Default theme variables (base) */
+:root[data-site-theme="default"] {
+  --theme-brand: #750787;
+  --theme-brandSoft: rgba(117, 7, 135, 0.12);
+  --theme-brandGlow: rgba(117, 7, 135, 0.35);
+  --theme-background: #ffffff;
+  --theme-surface: #fafafa;
+  --theme-surfaceHover: #f0f0f0;
+  --theme-border: #e5e5e5;
+  --theme-text: #1a1a1a;
+  --theme-textMuted: #737373;
+}
+
+:root[data-site-theme="default"].dark {
+  --theme-brand: #c084d8;
+  --theme-brandSoft: rgba(192, 132, 216, 0.15);
+  --theme-brandGlow: rgba(192, 132, 216, 0.4);
+  --theme-background: #0a0a0a;
+  --theme-surface: #141414;
+  --theme-surfaceHover: #1e1e1e;
+  --theme-border: #2a2a2a;
+  --theme-text: #fafafa;
+  --theme-textMuted: #a3a3a3;
+}
+
+/* Christmas */
+:root[data-site-theme="christmas"] {
+  --theme-brand: #d62828;
+  --theme-brandSoft: rgba(214, 40, 40, 0.12);
+  --theme-brandGlow: rgba(214, 40, 40, 0.35);
+  --theme-background: #fefefe;
+  --theme-surface: #fffdf8;
+  --theme-surfaceHover: #faf5eb;
+  --theme-border: #e8dcc8;
+  --theme-text: #1b4332;
+  --theme-textMuted: #5d7b5d;
+  --theme-decorativePattern: radial-gradient(circle at 20% 80%, rgba(214, 40, 40, 0.08) 0%, transparent 40%), radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.06) 0%, transparent 40%);
+  --theme-decorativeGlow: rgba(255, 215, 0, 0.3);
+}
+
+:root[data-site-theme="christmas"].dark {
+  --theme-brand: #ff6b6b;
+  --theme-brandSoft: rgba(255, 107, 107, 0.15);
+  --theme-brandGlow: rgba(255, 107, 107, 0.4);
+  --theme-background: #0d1b0d;
+  --theme-surface: #142314;
+  --theme-surfaceHover: #1a2d1a;
+  --theme-border: #2d4a2d;
+  --theme-text: #e8f5e8;
+  --theme-textMuted: #8fab8f;
+  --theme-decorativePattern: radial-gradient(circle at 20% 80%, rgba(255, 107, 107, 0.1) 0%, transparent 40%), radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.08) 0%, transparent 40%);
+  --theme-decorativeGlow: rgba(255, 215, 0, 0.4);
+}
+
+/* Halloween */
+:root[data-site-theme="halloween"] {
+  --theme-brand: #ff6b00;
+  --theme-brandSoft: rgba(255, 107, 0, 0.12);
+  --theme-brandGlow: rgba(255, 107, 0, 0.4);
+  --theme-background: #f5eef8;
+  --theme-surface: #ebe0f5;
+  --theme-surfaceHover: #dfcceb;
+  --theme-border: #c9a8db;
+  --theme-text: #2d103d;
+  --theme-textMuted: #6b4a7d;
+  --theme-decorativePattern: radial-gradient(ellipse at 50% 0%, rgba(255, 107, 0, 0.08) 0%, transparent 50%), radial-gradient(circle at 10% 90%, rgba(128, 0, 128, 0.06) 0%, transparent 30%);
+  --theme-decorativeGlow: rgba(255, 107, 0, 0.5);
+}
+
+:root[data-site-theme="halloween"].dark {
+  --theme-brand: #ff6b00;
+  --theme-brandSoft: rgba(255, 107, 0, 0.15);
+  --theme-brandGlow: rgba(255, 107, 0, 0.4);
+  --theme-background: #0d0514;
+  --theme-surface: #1a0d26;
+  --theme-surfaceHover: #241436;
+  --theme-border: #3d1a5c;
+  --theme-text: #f0e6f5;
+  --theme-textMuted: #a890b8;
+  --theme-decorativePattern: radial-gradient(ellipse at 50% 0%, rgba(255, 107, 0, 0.1) 0%, transparent 50%), radial-gradient(circle at 10% 90%, rgba(128, 0, 128, 0.08) 0%, transparent 30%);
+  --theme-decorativeGlow: rgba(255, 107, 0, 0.5);
+}
+
+/* Valentine's */
+:root[data-site-theme="valentines"] {
+  --theme-brand: #e84393;
+  --theme-brandSoft: rgba(232, 67, 147, 0.12);
+  --theme-brandGlow: rgba(232, 67, 147, 0.35);
+  --theme-background: #fff0f5;
+  --theme-surface: #fff8fb;
+  --theme-surfaceHover: #ffeef5;
+  --theme-border: #f5d0e8;
+  --theme-text: #5c1a3d;
+  --theme-textMuted: #a85a7f;
+  --theme-decorativePattern: radial-gradient(circle at 30% 70%, rgba(232, 67, 147, 0.08) 0%, transparent 35%), radial-gradient(circle at 70% 30%, rgba(255, 107, 157, 0.06) 0%, transparent 35%);
+  --theme-decorativeGlow: rgba(232, 67, 147, 0.4);
+}
+
+:root[data-site-theme="valentines"].dark {
+  --theme-brand: #ff6b9d;
+  --theme-brandSoft: rgba(255, 107, 157, 0.15);
+  --theme-brandGlow: rgba(255, 107, 157, 0.4);
+  --theme-background: #2d0a1a;
+  --theme-surface: #3d1026;
+  --theme-surfaceHover: #4d1530;
+  --theme-border: #6b2545;
+  --theme-text: #ffeef5;
+  --theme-textMuted: #d4a5bc;
+  --theme-decorativePattern: radial-gradient(circle at 30% 70%, rgba(255, 107, 157, 0.1) 0%, transparent 35%), radial-gradient(circle at 70% 30%, rgba(255, 182, 193, 0.08) 0%, transparent 35%);
+  --theme-decorativeGlow: rgba(255, 107, 157, 0.45);
+}
+
+/* April Fools */
+:root[data-site-theme="aprilfools"] {
+  --theme-brand: #ff6b35;
+  --theme-brandSoft: rgba(255, 107, 53, 0.12);
+  --theme-brandGlow: rgba(255, 107, 53, 0.35);
+  --theme-background: #fffef7;
+  --theme-surface: #fffdf0;
+  --theme-surfaceHover: #fff9e0;
+  --theme-border: #f5e6a0;
+  --theme-text: #3d3500;
+  --theme-textMuted: #8a7d1a;
+  --theme-decorativePattern: repeating-linear-gradient(45deg, rgba(255, 107, 53, 0.03) 0, rgba(255, 107, 53, 0.03) 10px, transparent 10px, transparent 20px);
+  --theme-decorativeGlow: rgba(255, 107, 53, 0.3);
+}
+
+:root[data-site-theme="aprilfools"].dark {
+  --theme-brand: #f7b731;
+  --theme-brandSoft: rgba(247, 183, 49, 0.15);
+  --theme-brandGlow: rgba(247, 183, 49, 0.4);
+  --theme-background: #1a1800;
+  --theme-surface: #262200;
+  --theme-surfaceHover: #332d00;
+  --theme-border: #4d4400;
+  --theme-text: #fffef0;
+  --theme-textMuted: #b8a830;
+  --theme-decorativePattern: repeating-linear-gradient(45deg, rgba(247, 183, 49, 0.04) 0, rgba(247, 183, 49, 0.04) 10px, transparent 10px, transparent 20px);
+  --theme-decorativeGlow: rgba(247, 183, 49, 0.4);
+}
+
+/* Easter */
+:root[data-site-theme="easter"] {
+  --theme-brand: #88d8b0;
+  --theme-brandSoft: rgba(136, 216, 176, 0.15);
+  --theme-brandGlow: rgba(136, 216, 176, 0.35);
+  --theme-background: #fdfdfd;
+  --theme-surface: #fafafa;
+  --theme-surfaceHover: #f0f5f0;
+  --theme-border: #e0ebe0;
+  --theme-text: #2d4a3d;
+  --theme-textMuted: #6b8a75;
+  --theme-decorativePattern: radial-gradient(circle at 25% 25%, rgba(136, 216, 176, 0.08) 0%, transparent 30%), radial-gradient(circle at 75% 75%, rgba(255, 211, 182, 0.08) 0%, transparent 30%);
+  --theme-decorativeGlow: rgba(136, 216, 176, 0.4);
+}
+
+:root[data-site-theme="easter"].dark {
+  --theme-brand: #a8e6cf;
+  --theme-brandSoft: rgba(168, 230, 207, 0.15);
+  --theme-brandGlow: rgba(168, 230, 207, 0.4);
+  --theme-background: #0d1a12;
+  --theme-surface: #12261a;
+  --theme-surfaceHover: #163020;
+  --theme-border: #1e422e;
+  --theme-text: #e8f5ee;
+  --theme-textMuted: #8fc9a8;
+  --theme-decorativePattern: radial-gradient(circle at 25% 25%, rgba(168, 230, 207, 0.1) 0%, transparent 30%), radial-gradient(circle at 75% 75%, rgba(255, 211, 182, 0.08) 0%, transparent 30%);
+  --theme-decorativeGlow: rgba(168, 230, 207, 0.45);
+}
+
+/* Summer */
+:root[data-site-theme="summer"] {
+  --theme-brand: #ff9f1c;
+  --theme-brandSoft: rgba(255, 159, 28, 0.12);
+  --theme-brandGlow: rgba(255, 159, 28, 0.4);
+  --theme-background: #fffef8;
+  --theme-surface: #fffdf0;
+  --theme-surfaceHover: #fff9e0;
+  --theme-border: #ffeaa0;
+  --theme-text: #4d3500;
+  --theme-textMuted: #8a701a;
+  --theme-decorativePattern: radial-gradient(ellipse at 50% -20%, rgba(255, 159, 28, 0.1) 0%, transparent 60%);
+  --theme-decorativeGlow: rgba(255, 159, 28, 0.5);
+}
+
+:root[data-site-theme="summer"].dark {
+  --theme-brand: #ffbf69;
+  --theme-brandSoft: rgba(255, 191, 105, 0.15);
+  --theme-brandGlow: rgba(255, 191, 105, 0.4);
+  --theme-background: #1a1500;
+  --theme-surface: #261f00;
+  --theme-surfaceHover: #332a00;
+  --theme-border: #4d3f00;
+  --theme-text: #fffef0;
+  --theme-textMuted: #c4b030;
+  --theme-decorativePattern: radial-gradient(ellipse at 50% -20%, rgba(255, 191, 105, 0.12) 0%, transparent 60%);
+  --theme-decorativeGlow: rgba(255, 191, 105, 0.5);
+}
+
+/* Autumn */
+:root[data-site-theme="autumn"] {
+  --theme-brand: #c4722a;
+  --theme-brandSoft: rgba(196, 114, 42, 0.12);
+  --theme-brandGlow: rgba(196, 114, 42, 0.35);
+  --theme-background: #fdf8f3;
+  --theme-surface: #faf5ef;
+  --theme-surfaceHover: #f0ebe0;
+  --theme-border: #e0d4c0;
+  --theme-text: #3d2a1a;
+  --theme-textMuted: #8a755a;
+  --theme-decorativePattern: radial-gradient(circle at 10% 90%, rgba(196, 114, 42, 0.06) 0%, transparent 25%), radial-gradient(circle at 90% 10%, rgba(218, 165, 32, 0.05) 0%, transparent 25%);
+  --theme-decorativeGlow: rgba(196, 114, 42, 0.4);
+}
+
+:root[data-site-theme="autumn"].dark {
+  --theme-brand: #daa520;
+  --theme-brandSoft: rgba(218, 165, 32, 0.15);
+  --theme-brandGlow: rgba(218, 165, 32, 0.4);
+  --theme-background: #1a1208;
+  --theme-surface: #241a10;
+  --theme-surfaceHover: #2d2214;
+  --theme-border: #3d3018;
+  --theme-text: #f5efe8;
+  --theme-textMuted: #b8a070;
+  --theme-decorativePattern: radial-gradient(circle at 10% 90%, rgba(218, 165, 32, 0.08) 0%, transparent 25%), radial-gradient(circle at 90% 10%, rgba(196, 114, 42, 0.07) 0%, transparent 25%);
+  --theme-decorativeGlow: rgba(218, 165, 32, 0.45);
+}
+
+/* Spring */
+:root[data-site-theme="spring"] {
+  --theme-brand: #4ec9b0;
+  --theme-brandSoft: rgba(78, 201, 176, 0.12);
+  --theme-brandGlow: rgba(78, 201, 176, 0.35);
+  --theme-background: #f5fdf8;
+  --theme-surface: #f0faf5;
+  --theme-surfaceHover: #e5f5e5;
+  --theme-border: #d0e8d0;
+  --theme-text: #1a3d2e;
+  --theme-textMuted: #5a8a75;
+  --theme-decorativePattern: radial-gradient(circle at 20% 80%, rgba(78, 201, 176, 0.07) 0%, transparent 30%), radial-gradient(circle at 80% 20%, rgba(132, 182, 244, 0.06) 0%, transparent 30%);
+  --theme-decorativeGlow: rgba(78, 201, 176, 0.4);
+}
+
+:root[data-site-theme="spring"].dark {
+  --theme-brand: #77dd77;
+  --theme-brandSoft: rgba(119, 221, 119, 0.15);
+  --theme-brandGlow: rgba(119, 221, 119, 0.4);
+  --theme-background: #0a1a0f;
+  --theme-surface: #102616;
+  --theme-surfaceHover: #16301c;
+  --theme-border: #1e4228;
+  --theme-text: #e8f5eb;
+  --theme-textMuted: #8fc9a0;
+  --theme-decorativePattern: radial-gradient(circle at 20% 80%, rgba(119, 221, 119, 0.1) 0%, transparent 30%), radial-gradient(circle at 80% 20%, rgba(132, 182, 244, 0.08) 0%, transparent 30%);
+  --theme-decorativeGlow: rgba(119, 221, 119, 0.45);
+}
+
+/* Reduced motion - disable decorative animations */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-site-theme] {
+    --theme-decorativePattern: none;
+    --theme-decorativeGlow: transparent;
+  }
+}

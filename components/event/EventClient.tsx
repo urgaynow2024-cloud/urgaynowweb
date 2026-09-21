@@ -5,9 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { CalendarExportMenu, type CalendarEvent } from "@/components/CalendarExportMenu";
 import { Markdown } from "@/components/Markdown";
-import { IconShare, IconBell, IconLink, IconCheck, IconX, IconExternal, IconArrowLeft } from "@/components/admin/ui/icons";
+import { IconShare, IconBell, IconLink, IconCheck, IconX, IconExternal, IconArrowLeft, IconFlag } from "@/components/admin/ui/icons";
 import { Button, StatusBadge as SharedStatusBadge } from "@/components/ui";
 import { useToast } from "@/components/Toast";
+import { ReportButton } from "@/components/report/ReportModal";
 import { formatEventDateTime, formatEventDate, getEventState, getEventStateClasses } from "@/lib/event-utils";
 import { normalizeRoleKey } from "@/lib/roles";
 import { RoleBadge } from "@/components/RoleBadge";
@@ -304,6 +305,9 @@ export function EventClient({ event, relatedEvents, userReminders, isAdmin }: Ev
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white tracking-tight max-w-3xl">
               {event.title}
             </h1>
+            <div className="mt-3">
+              <ReportButton contentType="EVENT" contentId={event.id} contentTitle={event.title} size="sm" variant="outline" className="rounded-full border-white/30 text-white/90 hover:bg-white/10 dark:text-white/80 dark:hover:bg-white/10" />
+            </div>
             {event.isPreview && (
               <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 px-3 py-1 text-sm font-medium text-amber-300 border border-amber-500/30">
                 <span className="relative h-2 w-2 rounded-full bg-amber-400 animate-pulse" />

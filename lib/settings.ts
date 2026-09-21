@@ -18,6 +18,7 @@ const DEFAULT_SETTINGS: Record<string, string> = {
   socialYoutube: "",
   discordBotToken: "",
   discordAnnouncementChannelId: "",
+  discordReportsWebhookUrl: "",
 };
 
 export async function getSetting(key: string): Promise<string> {

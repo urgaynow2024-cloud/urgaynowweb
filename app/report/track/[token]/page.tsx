@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Container, PageHeader } from "@/components/Container";
 import { Alert, Card, CardBody, CardHeader, StatusBadge } from "@/components/ui";
@@ -9,7 +11,19 @@ import {
   IconShield,
   IconUsers,
   IconClock,
+  IconFlag,
 } from "@/components/admin/ui/icons";
+import { EmptyState } from "@/components/EmptyState";
+import Link from "next/link";
+import {
+  REPORT_STATUSES,
+  REPORT_REASONS,
+  REPORT_PRIORITIES,
+  getStatusTone,
+  getStatusLabel,
+  getReasonLabel,
+  getPriorityLabel,
+} from "@/lib/reports";
 
 export const metadata: Metadata = {
   title: "Track Report",
@@ -37,23 +51,13 @@ function formatDateTime(date: Date): string {
 
 function getStatusColor(status: string): "neutral" | "brand" | "success" | "warning" | "danger" {
   switch (status) {
-    case "RECEIVED":
-      return "brand";
-    case "UNDER_REVIEW":
-      return "warning";
-    case "ACTION_TAKEN":
-      return "success";
-    case "RESOLVED":
-      return "success";
-    case "DISMISSED":
-      return "neutral";
-    default:
-      return "neutral";
+    case "OPEN": return "brand";
+    case "IN_REVIEW": return "warning";
+    case "RESOLVED": return "success";
+    case "DISMISSED": return "neutral";
+    case "ESCALATED": return "danger";
+    default: return "neutral";
   }
-}
-
-function getStatusLabel(status: string): string {
-  return status.replace(/_/g, " ");
 }
 
 export default async function TrackReportPage({
@@ -63,23 +67,29 @@ export default async function TrackReportPage({
 }) {
   const { token } = await params;
 
-  const report = await prisma.communitySubmissionReport.findUnique({
+  const report = await prisma.report.findUnique({
     where: { reportToken: token },
-    include: {
-      submission: {
-        select: {
-          id: true,
-          title: true,
-          type: true,
-          status: true,
-        },
-      },
-    },
   });
+
+  let relatedContent: { title?: string; type?: string } | null = null;
+  if (report?.contentType && report?.contentId) {
+    try {
+      if (report.contentType === "COMMUNITY_SUBMISSION") {
+        relatedContent = await prisma.communitySubmission.findUnique({
+          where: { id: report.contentId },
+          select: { title: true, type: true },
+        });
+      }
+    } catch {
+      /* content lookup optional */
+    }
+  }
 
   if (!report) {
     notFound();
   }
+
+  const isOwnReport = true;
 
   return (
     <>
@@ -93,7 +103,7 @@ export default async function TrackReportPage({
           <CardBody className="space-y-6">
             <div className="flex items-center gap-3">
               <StatusBadge tone={getStatusColor(report.status)}>
-                {getStatusLabel(report.status)}
+                {getStatusLabel(report.status as any)}
               </StatusBadge>
               <span className="text-sm text-ink-500 dark:text-ink-400">
                 Reference: <code className="font-mono text-ink-700 dark:text-ink-200">{token.slice(0, 12)}…</code>
@@ -109,7 +119,6 @@ export default async function TrackReportPage({
                   {formatDateTime(report.createdAt)}
                 </dd>
               </div>
-
               <div>
                 <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
                   <IconClock size={14} /> Last Updated
@@ -118,48 +127,58 @@ export default async function TrackReportPage({
                   {formatDateTime(report.updatedAt)}
                 </dd>
               </div>
-
               <div>
                 <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
                   <IconInbox size={14} /> Category
                 </dt>
                 <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">
-                  {report.reason.replace(/_/g, " ")}
+                  {getReasonLabel(report.reason)}
                 </dd>
               </div>
-
               <div>
                 <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
-                  <IconShield size={14} /> Anonymous
+                  <IconShield size={14} /> Priority
                 </dt>
                 <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">
-                  {report.anonymous ? "Yes" : "No"}
+                  {getPriorityLabel(report.priority as any)}
                 </dd>
               </div>
+              <div>
+                <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
+                  <IconFlag size={14} /> Type
+                </dt>
+                <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">
+                  {report.contentType}
+                </dd>
+              </div>
+              {report.reportedUsername && (
+                <div>
+                  <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
+                    <IconUsers size={14} /> Reported User
+                  </dt>
+                  <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">
+                    {report.reportedUsername}
+                  </dd>
+                </div>
+              )}
             </dl>
 
-            {report.submission && (
+            {relatedContent && (
               <div className="pt-4 border-t border-ink-100 dark:border-ink-800">
                 <h3 className="text-sm font-semibold text-ink-800 dark:text-ink-100 mb-3">
-                  Related Submission
+                  Related Content
                 </h3>
                 <dl className="grid gap-4 sm:grid-cols-2">
                   <div>
                     <dt className="text-xs font-medium text-ink-500 dark:text-ink-400">Title</dt>
                     <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">
-                      {report.submission.title}
+                      {relatedContent.title}
                     </dd>
                   </div>
                   <div>
                     <dt className="text-xs font-medium text-ink-500 dark:text-ink-400">Type</dt>
                     <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">
-                      {report.submission.type}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs font-medium text-ink-500 dark:text-ink-400">Status</dt>
-                    <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">
-                      {report.submission.status}
+                      {relatedContent.type}
                     </dd>
                   </div>
                 </dl>

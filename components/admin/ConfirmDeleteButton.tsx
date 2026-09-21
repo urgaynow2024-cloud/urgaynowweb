@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ConfirmDialog } from "./ui/Dialog";
 import { IconTrash } from "./ui/icons";
 
@@ -10,12 +10,14 @@ export function ConfirmDeleteButton({
   label = "Delete",
   confirmLabel = "Delete",
   className = "btn-danger text-sm",
+  children,
 }: {
   action: (formData: FormData) => void | Promise<void>;
   message: string;
   label?: string;
   confirmLabel?: string;
   className?: string;
+  children?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -37,10 +39,12 @@ export function ConfirmDeleteButton({
   return (
     <>
       <button type="button" className={className} onClick={() => { setOpen(true); setError(null); }}>
-        <span className="flex items-center gap-1.5">
-          <IconTrash size={15} />
-          {label}
-        </span>
+          {children ?? (
+            <span className="flex items-center gap-1.5">
+              <IconTrash size={15} />
+              {label}
+            </span>
+          )}
       </button>
       {error && (
         <p role="alert" className="field-error mt-2">

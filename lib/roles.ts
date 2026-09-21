@@ -10,6 +10,7 @@ export type RoleDefinition = {
   key: string;
   label: string;
   tooltip: string;
+  summaryCategory?: "leadership" | "moderation" | "event" | "community";
   /** Optional tone used by the RoleBadge component. */
   tone?: "brand" | "success" | "warning" | "danger" | "neutral";
 };
@@ -20,30 +21,35 @@ export const STAFF_ROLES: RoleDefinition[] = [
     key: "founder",
     label: "Founder",
     tooltip: "Founder — sets platform direction and has unrestricted access.",
+    summaryCategory: "leadership",
     tone: "danger",
   },
   {
     key: "admin",
     label: "Admin",
     tooltip: "Admin — manages staff, settings, and oversees moderation.",
+    summaryCategory: "leadership",
     tone: "danger",
   },
   {
     key: "moderator",
     label: "Moderator",
     tooltip: "Moderator — reviews reports, submissions, and takes moderation action.",
+    summaryCategory: "moderation",
     tone: "warning",
   },
   {
     key: "event_manager",
     label: "Event Manager",
     tooltip: "Event Manager — creates, edits, and manages events.",
+    summaryCategory: "event",
     tone: "brand",
   },
   {
     key: "community_manager",
     label: "Community Manager",
     tooltip: "Community Manager — manages announcements, polls, and community content.",
+    summaryCategory: "community",
     tone: "brand",
   },
 ];

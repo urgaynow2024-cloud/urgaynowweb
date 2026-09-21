@@ -15,6 +15,10 @@ export default async function EditLinkPage({ params }: { params: { id: string } 
     label: l.label,
     url: l.url,
     icon: l.icon,
+    description: l.description,
+    category: l.category,
+    featured: l.featured,
+    active: l.active,
     sortOrder: l.sortOrder,
   };
 

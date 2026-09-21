@@ -26,6 +26,11 @@ model Staff {
   authoredAnnouncements Announcement[] @relation("AnnouncementAuthor")
   reviewedSubmissions CommunitySubmission[] @relation("CommunitySubmissionReviewer")
   moderationLogs CommunitySubmissionModerationLog[] @relation("ModerationLogStaff")
+  assignedReports Report[] @relation("ReportAssignee")
+  resolvedReports Report[] @relation("ReportResolver")
+  reportAuditLogs ReportAuditLog[] @relation("ReportAuditActor")
+
+  @@index([rank])
 }
 
 model Partner {
@@ -227,11 +232,19 @@ model Guide {
 }
 
 model Link {
-  id        String @id @default(cuid())
-  label     String
-  url       String
-  icon      String @default("link") // emoji or icon name
-  sortOrder Int    @default(0)
+  id          String  @id @default(cuid())
+  label       String
+  url         String
+  icon        String  @default("link") // emoji, icon identifier (discord/vrchat), or short text
+  description String  @default("")
+  category    String  @default("Other") // Community | VRChat | Socials | Support | Creators/Partners | Other
+  featured    Boolean @default(false)
+  active      Boolean @default(true)
+  sortOrder   Int     @default(0)
+
+  @@index([category])
+  @@index([featured])
+  @@index([active])
 }
 
 enum UpdateType {
@@ -259,28 +272,42 @@ model GalleryImage {
   @@index([slug])
 }
  
+enum ReleaseStatus {
+  DRAFT
+  PUBLISHED
+  FAILED
+}
+
 model Update {
-  id                  String    @id @default(cuid())
-  slug                String    @unique
-  version             String
-  type                UpdateType
-  title               String
-  summary             String    @default("")
-  whatsNew            String    @default("")
-  improvements        String    @default("")
-  bugFixes            String    @default("")
-  securityNotes       String    @default("")
-  images              String    @default("[]") // JSON array
-  authorId            String
-  publishedAt         DateTime?
-  discordPostedAt     DateTime?
-  discordPostStatus   String    @default("pending") // pending, sent, failed
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  id                    String       @id @default(cuid())
+  slug                  String       @unique
+  version               String
+  type                  UpdateType
+  title                 String
+  summary               String       @default("")
+  whatsNew              String       @default("")
+  improvements          String       @default("")
+  bugFixes              String       @default("")
+  securityNotes         String       @default("")
+  images                String       @default("[]") // JSON array
+  authorId              String
+  publishedAt           DateTime?
+  discordPostedAt       DateTime?
+  discordPostStatus     String       @default("pending") // pending, sent, failed
+  sourceCommit          String?      @unique
+  sourcePreviousCommit  String?
+  sourceBranch          String?
+  deploymentId          String?
+  generatedAutomatically Boolean     @default(false)
+  releaseStatus         ReleaseStatus @default(DRAFT)
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
 
   @@index([publishedAt])
   @@index([version])
   @@index([slug])
+  @@index([sourceCommit])
+  @@index([releaseStatus])
 }
 
 enum CommunitySubmissionType {
@@ -370,6 +397,54 @@ model CommunitySubmissionModerationLog {
   @@index([performedAt])
 }
 
+model Report {
+  id              String    @id @default(cuid())
+  reportToken     String    @unique @default(cuid())
+  contentType     String    // COMMUNITY_PHOTO | GALLERY_IMAGE | GROUP_PHOTO | EVENT | STAFF_PROFILE | SHOP_DESIGN | COMMUNITY_SUBMISSION | ANNOUNCEMENT
+  contentId         String
+  reporterId      String?   // authenticated session sub, if available
+  reporterName    String    @default("")
+  reporterEmail   String?   @default("")
+  anonymous       Boolean   @default(false)
+  reportedUserId  String?
+  reportedUsername String?
+  reason          String    // HARASSMENT | HATE_SPEECH | SEXUAL_CONTENT | NSFW | VIOLENCE | SCAM | SPAM | COPYRIGHT | IMPERSONATION | PERSONAL_INFO | RULE_VIOLATION | OTHER
+  description     String
+  evidence        String    @default("[]") // JSON array of { url, label? }
+  status          String    @default("OPEN") // OPEN | IN_REVIEW | RESOLVED | DISMISSED | ESCALATED
+  priority        String    @default("NORMAL") // LOW | NORMAL | HIGH | URGENT
+  assignedToId    String?
+  assignedTo      Staff?    @relation("ReportAssignee", fields: [assignedToId], references: [id])
+  resolvedById    String?
+  resolvedBy      Staff?    @relation("ReportResolver", fields: [resolvedById], references: [id])
+  resolution      String    @default("")
+  resolvedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  auditLogs       ReportAuditLog[]
+
+  @@index([contentType, contentId])
+  @@index([status, createdAt])
+  @@index([status, priority, createdAt])
+  @@index([assignedToId])
+  @@index([reportToken])
+}
+
+model ReportAuditLog {
+  id            String   @id @default(cuid())
+  reportId      String
+  report        Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  action        String   // SUBMITTED | ASSIGNED | STATUS_CHANGED | PRIORITY_CHANGED | NOTE_ADDED | RESOLVED | DISMISSED | ESCALATED | CONTENT_RESTORED
+  actorId       String?
+  actor         Staff?   @relation("ReportAuditActor", fields: [actorId], references: [id])
+  actorName     String   @default("")
+  detail        String   @default("")
+  createdAt     DateTime @default(now())
+
+  @@index([reportId, createdAt])
+  @@index([actorId])
+}
+
 model GroupPhoto {
   id          String   @id @default(cuid())
   title       String
@@ -385,6 +460,36 @@ model Setting {
   key       String   @id
   value     String   @default("")
   updatedAt DateTime @updatedAt
+}
+
+enum ThemeMode {
+  MANUAL
+  AUTOMATIC
+}
+
+model SiteTheme {
+  id             String     @id @default(cuid())
+  mode           ThemeMode  @default(MANUAL)
+  manualThemeId  String?    // references theme registry ID
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  schedules      ThemeSchedule[]
+}
+
+model ThemeSchedule {
+  id        String   @id @default(cuid())
+  themeId   String
+  start     DateTime
+  end       DateTime
+  enabled   Boolean  @default(true)
+  priority  Int      @default(0)
+  siteThemeId String
+  siteTheme SiteTheme @relation(fields: [siteThemeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([themeId])
+  @@index([start, end])
 }
 
 model ShopDesign {
@@ -439,6 +544,25 @@ model HealthCheck {
   checkedAt DateTime @default(now())
 
   @@index([serviceId, checkedAt])
+}
+
+model SupportRequest {
+  id                String   @id @default(cuid())
+  ticketNumber      String   @unique
+  category          String
+  subject           String
+  description       String
+  contactMethod     String
+  contactInfo       String
+  attachments       String   @default("[]")
+  status            String   @default("OPEN")
+  priority          String   @default("NORMAL")
+  assignedStaffId   String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([ticketNumber])
 }
 
 model ErrorLog {

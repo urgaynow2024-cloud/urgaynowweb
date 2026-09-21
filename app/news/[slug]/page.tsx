@@ -7,6 +7,7 @@ import { Markdown } from "@/components/Markdown";
 import { formatDate } from "@/lib/utils";
 import { normalizeRoleKey } from "@/lib/roles";
 import { RoleBadge } from "@/components/RoleBadge";
+import { ReportButton } from "@/components/report/ReportModal";
 
 export const revalidate = 300;
 
@@ -52,7 +53,10 @@ export default async function AnnouncementPage({ params }: { params: { slug: str
           <h1 className="mt-2 text-balance text-4xl font-extrabold tracking-tight text-ink-900 dark:text-white sm:text-5xl">
             {item.title}
           </h1>
-          <div className="mt-2 h-1 w-12 rounded-full bg-gradient-to-r from-brand-600 to-brand-700" />
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <div className="h-1 w-12 rounded-full bg-gradient-to-r from-brand-600 to-brand-700" />
+            <ReportButton contentType="ANNOUNCEMENT" contentId={item.id} contentTitle={item.title} size="sm" variant="outline" className="rounded-full border-ink-300 text-ink-700 hover:bg-ink-100 dark:border-ink-600 dark:text-ink-300 dark:hover:bg-ink-800" />
+          </div>
           {item.author && (
             <div className="mt-6 flex items-center gap-3">
               <Link href={`/staff/${item.author.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">

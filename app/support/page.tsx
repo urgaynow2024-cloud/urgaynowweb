@@ -2,6 +2,7 @@ import { Container, PageHeader } from "@/components/Container";
 import { getSetting } from "@/lib/settings";
 import { Alert, Card, EmptyState } from "@/components/ui";
 import Link from "next/link";
+import { SupportContactForm } from "@/components/support/SupportContactForm";
 
 export const revalidate = 3600;
 
@@ -101,6 +102,8 @@ export default async function SupportPage() {
           </Alert>
         </div>
       </Container>
+
+      <SupportContactForm />
     </>
   );
 }

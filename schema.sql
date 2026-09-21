@@ -224,9 +224,16 @@ CREATE TABLE IF NOT EXISTS "Link" (
     "label" TEXT NOT NULL,
     "url" TEXT NOT NULL,
     "icon" TEXT NOT NULL DEFAULT 'link',
+    "description" TEXT NOT NULL DEFAULT '',
+    "category" TEXT NOT NULL DEFAULT 'Other',
+    "featured" BOOLEAN NOT NULL DEFAULT FALSE,
+    "active" BOOLEAN NOT NULL DEFAULT TRUE,
     "sortOrder" INTEGER NOT NULL DEFAULT 0,
     CONSTRAINT "Link_pkey" PRIMARY KEY ("id")
 );
+CREATE INDEX IF NOT EXISTS "Link_category_idx" ON "Link"("category");
+CREATE INDEX IF NOT EXISTS "Link_featured_idx" ON "Link"("featured");
+CREATE INDEX IF NOT EXISTS "Link_active_idx" ON "Link"("active");
 
 CREATE TABLE IF NOT EXISTS "GalleryImage" (
     "id" TEXT NOT NULL,
@@ -325,6 +332,43 @@ CREATE TABLE IF NOT EXISTS "CommunitySubmissionModerationLog" (
     "performedBy" TEXT,
     "performedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "CommunitySubmissionModerationLog_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE IF NOT EXISTS "Report" (
+    "id"              TEXT NOT NULL,
+    "reportToken"     TEXT NOT NULL,
+    "contentType"     TEXT NOT NULL,
+    "contentId"       TEXT NOT NULL,
+    "reporterId"      TEXT,
+    "reporterName"    TEXT NOT NULL DEFAULT '',
+    "reporterEmail"   TEXT,
+    "anonymous"       BOOLEAN NOT NULL DEFAULT FALSE,
+    "reportedUserId"  TEXT,
+    "reportedUsername" TEXT,
+    "reason"          TEXT NOT NULL,
+    "description"     TEXT NOT NULL,
+    "evidence"        TEXT NOT NULL DEFAULT '[]',
+    "status"          TEXT NOT NULL DEFAULT 'OPEN',
+    "priority"        TEXT NOT NULL DEFAULT 'NORMAL',
+    "assignedToId"    TEXT,
+    "resolvedById"    TEXT,
+    "resolution"      TEXT NOT NULL DEFAULT '',
+    "resolvedAt"      TIMESTAMP(3),
+    "createdAt"       TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt"       TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "Report_pkey" PRIMARY KEY ("id")
+);
+CREATE UNIQUE INDEX IF NOT EXISTS "Report_reportToken_key" ON "Report"("reportToken");
+
+CREATE TABLE IF NOT EXISTS "ReportAuditLog" (
+    "id"        TEXT NOT NULL,
+    "reportId"  TEXT NOT NULL,
+    "action"    TEXT NOT NULL,
+    "actorId"   TEXT,
+    "actorName" TEXT NOT NULL DEFAULT '',
+    "detail"    TEXT NOT NULL DEFAULT '',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "ReportAuditLog_pkey" PRIMARY KEY ("id")
 );
 
 CREATE TABLE IF NOT EXISTS "Setting" (
@@ -545,6 +589,17 @@ CREATE UNIQUE INDEX IF NOT EXISTS "GalleryImage_slug_key" ON "GalleryImage"("slu
 CREATE INDEX IF NOT EXISTS "ErrorLog_createdAt_idx" ON "ErrorLog"("createdAt");
 CREATE INDEX IF NOT EXISTS "ErrorLog_digest_idx" ON "ErrorLog"("digest");
 
+-- Report indexes
+CREATE INDEX IF NOT EXISTS "Report_contentType_contentId_idx" ON "Report"("contentType", "contentId");
+CREATE INDEX IF NOT EXISTS "Report_status_createdAt_idx" ON "Report"("status", "createdAt");
+CREATE INDEX IF NOT EXISTS "Report_status_priority_createdAt_idx" ON "Report"("status", "priority", "createdAt");
+CREATE INDEX IF NOT EXISTS "Report_assignedToId_idx" ON "Report"("assignedToId");
+CREATE INDEX IF NOT EXISTS "Report_reportToken_key" ON "Report"("reportToken");
+
+-- ReportAuditLog indexes
+CREATE INDEX IF NOT EXISTS "ReportAuditLog_reportId_createdAt_idx" ON "ReportAuditLog"("reportId", "createdAt");
+CREATE INDEX IF NOT EXISTS "ReportAuditLog_actorId_idx" ON "ReportAuditLog"("actorId");
+
 -- GroupPhoto indexes
 CREATE INDEX IF NOT EXISTS "GroupPhoto_createdAt_idx" ON "GroupPhoto"("createdAt");
 
@@ -597,6 +652,7 @@ CREATE INDEX IF NOT EXISTS "ShopDesign_category_published_idx" ON "ShopDesign"("
 
 -- Staff indexes
 CREATE UNIQUE INDEX IF NOT EXISTS "Staff_vrchatUsername_key" ON "Staff"("vrchatUsername");
+CREATE INDEX IF NOT EXISTS "Staff_rank_idx" ON "Staff"("rank");
 CREATE INDEX IF NOT EXISTS "Staff_sortOrder_idx" ON "Staff"("sortOrder");
 
 -- User indexes
@@ -660,8 +716,37 @@ DO $$ BEGIN
         NOT VALID;
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
--- ============================================================
--- PHASE 5: TRIGGERS for updatedAt (consistent table order)
+DO $$ BEGIN
+    ALTER TABLE "Report"
+        ADD CONSTRAINT "Report_assignedToId_fkey"
+        FOREIGN KEY ("assignedToId") REFERENCES "Staff"("id")
+        ON DELETE SET NULL ON UPDATE CASCADE
+        NOT VALID;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "Report"
+        ADD CONSTRAINT "Report_resolvedById_fkey"
+        FOREIGN KEY ("resolvedById") REFERENCES "Staff"("id")
+        ON DELETE SET NULL ON UPDATE CASCADE
+        NOT VALID;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "ReportAuditLog"
+        ADD CONSTRAINT "ReportAuditLog_reportId_fkey"
+        FOREIGN KEY ("reportId") REFERENCES "Report"("id")
+        ON DELETE CASCADE ON UPDATE CASCADE
+        NOT VALID;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "ReportAuditLog"
+        ADD CONSTRAINT "ReportAuditLog_actorId_fkey"
+        FOREIGN KEY ("actorId") REFERENCES "Staff"("id")
+        ON DELETE SET NULL ON UPDATE CASCADE
+        NOT VALID;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 -- ============================================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -713,6 +798,9 @@ CREATE TRIGGER "update_CommunitySubmission_updatedAt" BEFORE UPDATE ON "Communit
 DROP TRIGGER IF EXISTS "update_CommunitySubmissionReport_updatedAt" ON "CommunitySubmissionReport";
 CREATE TRIGGER "update_CommunitySubmissionReport_updatedAt" BEFORE UPDATE ON "CommunitySubmissionReport" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS "update_Report_updatedAt" ON "Report";
+CREATE TRIGGER "update_Report_updatedAt" BEFORE UPDATE ON "Report" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 DROP TRIGGER IF EXISTS "update_Guide_updatedAt" ON "Guide";
 CREATE TRIGGER "update_Guide_updatedAt" BEFORE UPDATE ON "Guide" FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -751,21 +839,21 @@ INSERT INTO "EventTag" ("id", "name", "slug", "description", "color") VALUES
   (gen_random_uuid()::text, 'Music', 'music', 'Music and DJ events', 'cyan')
 ON CONFLICT ("slug") DO NOTHING;
 
-INSERT INTO "AnnouncementCategory" ("id", "name", "slug", "description", "color", "sortOrder") VALUES
-  (gen_random_uuid()::text, 'News', 'news', 'General community news', 'brand', 1),
-  (gen_random_uuid()::text, 'Update', 'update', 'Platform and feature updates', 'cyan', 2),
-  (gen_random_uuid()::text, 'Event', 'event-announcement', 'Event-related announcements', 'violet', 3),
-  (gen_random_uuid()::text, 'Community', 'community', 'Community spotlights and stories', 'pink', 4),
-  (gen_random_uuid()::text, 'Maintenance', 'maintenance', 'Scheduled maintenance notices', 'amber', 5),
-  (gen_random_uuid()::text, 'Safety', 'safety', 'Safety and moderation updates', 'red', 6)
+INSERT INTO "AnnouncementCategory" ("id", "name", "slug", "description", "color", "sortOrder", "createdAt", "updatedAt") VALUES
+  (gen_random_uuid()::text, 'News', 'news', 'General community news', 'brand', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  (gen_random_uuid()::text, 'Update', 'update', 'Platform and feature updates', 'cyan', 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  (gen_random_uuid()::text, 'Event', 'event-announcement', 'Event-related announcements', 'violet', 3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  (gen_random_uuid()::text, 'Community', 'community', 'Community spotlights and stories', 'pink', 4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  (gen_random_uuid()::text, 'Maintenance', 'maintenance', 'Scheduled maintenance notices', 'amber', 5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  (gen_random_uuid()::text, 'Safety', 'safety', 'Safety and moderation updates', 'red', 6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT ("slug") DO NOTHING;
 
-INSERT INTO "AnnouncementTag" ("id", "name", "slug", "description", "color") VALUES
-  (gen_random_uuid()::text, 'Important', 'important', 'High priority announcements', 'red'),
-  (gen_random_uuid()::text, 'Feature', 'feature', 'New feature announcements', 'cyan'),
-  (gen_random_uuid()::text, 'Schedule', 'schedule', 'Schedule changes', 'amber'),
-  (gen_random_uuid()::text, 'Welcome', 'welcome', 'New member welcomes', 'emerald'),
-  (gen_random_uuid()::text, 'Reminder', 'reminder', 'Reminders and follow-ups', 'violet')
+INSERT INTO "AnnouncementTag" ("id", "name", "slug", "description", "color", "createdAt", "updatedAt") VALUES
+  (gen_random_uuid()::text, 'Important', 'important', 'High priority announcements', 'red', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  (gen_random_uuid()::text, 'Feature', 'feature', 'New feature announcements', 'cyan', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  (gen_random_uuid()::text, 'Schedule', 'schedule', 'Schedule changes', 'amber', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  (gen_random_uuid()::text, 'Welcome', 'welcome', 'New member welcomes', 'emerald', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+  (gen_random_uuid()::text, 'Reminder', 'reminder', 'Reminders and follow-ups', 'violet', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 ON CONFLICT ("slug") DO NOTHING;
 
 -- ============================================================
@@ -968,7 +1056,7 @@ WHERE "category" IS NULL
 
 -- Guide: backfill nulls
 UPDATE "Guide" SET
-  "category" = COALESCE("category", 'General'),
+  "category" = COALESCE("category", 'GENERAL'),
   "question" = COALESCE("question", ''),
   "answer" = COALESCE("answer", ''),
   "sortOrder" = COALESCE("sortOrder", 0)
@@ -982,10 +1070,18 @@ UPDATE "Link" SET
   "label" = COALESCE("label", 'Link'),
   "url" = COALESCE("url", '#'),
   "icon" = COALESCE("icon", 'link'),
+  "description" = COALESCE("description", ''),
+  "category" = COALESCE("category", 'Other'),
+  "featured" = COALESCE("featured", FALSE),
+  "active" = COALESCE("active", TRUE),
   "sortOrder" = COALESCE("sortOrder", 0)
 WHERE "label" IS NULL
    OR "url" IS NULL
    OR "icon" IS NULL
+   OR "description" IS NULL
+   OR "category" IS NULL
+   OR "featured" IS NULL
+   OR "active" IS NULL
    OR "sortOrder" IS NULL;
 
 -- CommunitySubmission: backfill nulls

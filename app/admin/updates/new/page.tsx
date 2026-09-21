@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { createUpdate, suggestVersion } from "../actions";
+import { suggestCategory } from "@/lib/update-utils";
 import { UpdateForm, type UpdateFormValues } from "../UpdateForm";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
@@ -15,6 +16,7 @@ export default async function NewUpdatePage() {
   const initial: UpdateFormValues = {
     version: suggestedPatch,
     type: "PATCH",
+    category: suggestCategory("PATCH"),
     title: "",
     summary: "",
     whatsNew: "",
@@ -24,6 +26,7 @@ export default async function NewUpdatePage() {
     images: "[]",
     authorId: "",
     published: false,
+    featured: false,
     postToDiscord: false,
     generatedAutomatically: false,
     releaseStatus: "DRAFT",

@@ -277,6 +277,8 @@ CREATE TABLE IF NOT EXISTS "Update" (
     "securityNotes" TEXT NOT NULL DEFAULT '',
     "images" TEXT NOT NULL DEFAULT '[]',
     "authorId" TEXT NOT NULL,
+    "category" TEXT NOT NULL DEFAULT '',
+    "featured" BOOLEAN NOT NULL DEFAULT FALSE,
     "publishedAt" TIMESTAMP(3),
     "discordPostedAt" TIMESTAMP(3),
     "discordPostStatus" TEXT NOT NULL DEFAULT 'pending',
@@ -607,6 +609,8 @@ CREATE INDEX IF NOT EXISTS "GroupPhoto_createdAt_idx" ON "GroupPhoto"("createdAt
 CREATE UNIQUE INDEX IF NOT EXISTS "Update_slug_key" ON "Update"("slug");
 CREATE INDEX IF NOT EXISTS "Update_publishedAt_idx" ON "Update"("publishedAt");
 CREATE INDEX IF NOT EXISTS "Update_version_idx" ON "Update"("version");
+CREATE INDEX IF NOT EXISTS "Update_category_idx" ON "Update"("category");
+CREATE INDEX IF NOT EXISTS "Update_featured_publishedAt_idx" ON "Update"("featured", "publishedAt");
 
 -- CommunitySubmission indexes
 CREATE INDEX IF NOT EXISTS "CommunitySubmission_status_createdAt_idx" ON "CommunitySubmission"("status", "createdAt");

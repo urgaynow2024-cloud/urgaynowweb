@@ -6,7 +6,17 @@ import { execSync } from "child_process";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { slugify } from "@/lib/utils";
+import { normalizeUpdateCategory } from "@/lib/update-utils";
 import { sendContentWebhook } from "@/lib/discord-webhook";
+import {
+  getCommitsBetween,
+  classifyCommits as classifyCommitsRG,
+  determineVersionType,
+  getLatestPublishedVersion,
+  incrementVersion,
+  generateReleaseInfo,
+  getPreviousReleaseCommit,
+} from "@/lib/release-generator";
 
 function fail(path: string): never {
   redirect(`${path}?error=1`);
@@ -148,6 +158,8 @@ export async function createUpdate(formData: FormData) {
   const bugFixes = String(formData.get("bugFixes") || "").trim();
   const securityNotes = String(formData.get("securityNotes") || "").trim();
   const images = String(formData.get("images") || "[]");
+  const category = normalizeUpdateCategory(String(formData.get("category") || ""));
+  const featured = formData.get("featured") === "on";
   const authorId = String(formData.get("authorId") || "").trim();
   const published = formData.get("published") === "on";
   const postToDiscord = formData.get("postToDiscord") === "on";
@@ -164,6 +176,7 @@ export async function createUpdate(formData: FormData) {
         slug,
         version,
         type,
+        category,
         title,
         summary,
         whatsNew,
@@ -172,6 +185,7 @@ export async function createUpdate(formData: FormData) {
         securityNotes,
         images,
         authorId,
+        featured,
         publishedAt: published ? new Date() : null,
       },
     });
@@ -200,6 +214,8 @@ export async function updateUpdate(id: string, formData: FormData) {
   const bugFixes = String(formData.get("bugFixes") || "").trim();
   const securityNotes = String(formData.get("securityNotes") || "").trim();
   const images = String(formData.get("images") || "[]");
+  const category = normalizeUpdateCategory(String(formData.get("category") || ""));
+  const featured = formData.get("featured") === "on";
   const authorId = String(formData.get("authorId") || "").trim();
   const published = formData.get("published") === "on";
   const postToDiscord = formData.get("postToDiscord") === "on";
@@ -214,6 +230,7 @@ export async function updateUpdate(id: string, formData: FormData) {
         slug,
         version,
         type,
+        category,
         title,
         summary,
         whatsNew,
@@ -222,6 +239,7 @@ export async function updateUpdate(id: string, formData: FormData) {
         securityNotes,
         images,
         authorId,
+        featured,
         publishedAt: published ? (existing.publishedAt ?? new Date()) : null,
       },
     });
@@ -275,4 +293,76 @@ export async function suggestVersion(type: "MAJOR" | "MINOR" | "PATCH" = "PATCH"
     return `${parts[0]}.${parts[1] + 1}.0`;
   }
   return `${parts[0]}.${parts[1]}.${parts[2] + 1}`;
+}
+
+export async function toggleFeatured(id: string, featured: boolean) {
+  await requireAdmin();
+  try {
+    const update = await prisma.update.update({ where: { id }, data: { featured } });
+    revalidatePath("/", "layout");
+    revalidatePath("/updates");
+    revalidatePath(`/updates/${update.slug}`);
+  } catch {
+    redirect("/admin/updates");
+  }
+  redirect("/admin/updates");
+}
+
+/**
+ * Generate a changelog DRAFT from recent git commits.
+ *
+ * Spec (§5 / §7): "Development Changes → Generate Changelog Draft → Staff
+ * Review → Publish → /updates". Generated entries always start as DRAFT and must
+ * be reviewed before publication. Git metadata is only used as the internal
+ * source for the draft — staff edit/publish it via the admin manager.
+ */
+export async function generateDraftFromRecentChanges() {
+  await requireAdmin();
+
+  const headSha = execGit("rev-parse HEAD").trim();
+  if (!headSha) redirect("/admin/updates?error=1");
+
+  const previousSha =
+    (await getPreviousReleaseCommit()) || execGit("rev-list --max-parents=0 HEAD").trim() || headSha;
+  const commits = getCommitsBetween(previousSha, headSha);
+  if (commits.length === 0) redirect("/admin/updates?error=1");
+
+  const classified = classifyCommitsRG(commits);
+  const versionType = determineVersionType(classified);
+  const latestVersion = await getLatestPublishedVersion();
+  const newVersion = incrementVersion(latestVersion, versionType);
+  const releaseInfo = generateReleaseInfo(classified, newVersion, versionType);
+
+  const slug = await uniqueSlug(releaseInfo.title);
+
+  try {
+    await prisma.update.create({
+      data: {
+        slug,
+        version: releaseInfo.version,
+        type: releaseInfo.type,
+        category: releaseInfo.type === "MAJOR" ? "NEW" : releaseInfo.type === "MINOR" ? "IMPROVEMENT" : "FIX",
+        title: releaseInfo.title,
+        summary: releaseInfo.summary,
+        whatsNew: releaseInfo.whatsNew,
+        improvements: releaseInfo.improvements,
+        bugFixes: releaseInfo.bugFixes,
+        securityNotes: releaseInfo.securityNotes,
+        images: "[]",
+        authorId: "system",
+        featured: false,
+        publishedAt: null,
+        generatedAutomatically: true,
+        releaseStatus: "DRAFT",
+        sourceCommit: headSha,
+        sourceBranch: execGit("rev-parse --abbrev-ref HEAD"),
+      },
+    });
+  } catch {
+    redirect("/admin/updates?error=1");
+  }
+  revalidatePath("/", "layout");
+  revalidatePath("/updates");
+  revalidatePath("/admin/updates");
+  redirect("/admin/updates");
 }

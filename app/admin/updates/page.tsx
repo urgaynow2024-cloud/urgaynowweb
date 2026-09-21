@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { deleteUpdate, retryUpdateWebhook } from "./actions";
+import { deleteUpdate, retryUpdateWebhook, toggleFeatured, generateDraftFromRecentChanges } from "./actions";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { Card } from "@/components/admin/ui/Card";
 import { Badge } from "@/components/admin/ui/Badge";
 import { EmptyState } from "@/components/admin/ui/Avatar";
-import { IconMegaphone, IconPlus, IconSearch, IconEdit, IconTrash, IconRefresh, IconFilter } from "@/components/admin/ui/icons";
+import { IconMegaphone, IconPlus, IconSearch, IconEdit, IconTrash, IconRefresh, IconFilter, IconStar, IconZap } from "@/components/admin/ui/icons";
+import { getUpdateCategoryLabel, getUpdateCategoryTone } from "@/lib/update-utils";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { ErrorAnnouncer } from "@/components/admin/ErrorAnnouncer";
 import { Suspense } from "react";
@@ -71,9 +72,16 @@ export default async function AdminUpdatesList({
         title="Updates & changelog"
         description="Manage website releases and the public changelog."
         actions={
-          <Link href="/admin/updates/new" className="btn-primary btn-sm">
-            <IconPlus size={16} /> New update
-          </Link>
+          <>
+            <form action={generateDraftFromRecentChanges}>
+              <button type="submit" className="btn-secondary btn-sm">
+                <IconZap size={14} className="mr-1" /> Generate from recent changes
+              </button>
+            </form>
+            <Link href="/admin/updates/new" className="btn-primary btn-sm">
+              <IconPlus size={16} /> New update
+            </Link>
+          </>
         }
       />
 
@@ -84,28 +92,28 @@ export default async function AdminUpdatesList({
             <input name="q" defaultValue={q} placeholder="Search by title, version, or summary…" className="input pl-9" />
           </div>
           <div className="flex flex-wrap gap-2">
-            <select name="type" className="select min-w-[140px]">
+            <select name="type" className="select min-w-[140px]" defaultValue={typeFilter || ""}>
               <option value="">All types</option>
-              <option value="MAJOR" selected={typeFilter === "MAJOR"}>Major</option>
-              <option value="MINOR" selected={typeFilter === "MINOR"}>Minor</option>
-              <option value="PATCH" selected={typeFilter === "PATCH"}>Patch</option>
+              <option value="MAJOR">Major</option>
+              <option value="MINOR">Minor</option>
+              <option value="PATCH">Patch</option>
             </select>
-            <select name="source" className="select min-w-[140px]">
+            <select name="source" className="select min-w-[140px]" defaultValue={sourceFilter || ""}>
               <option value="">All sources</option>
-              <option value="auto" selected={sourceFilter === "auto"}>Automatic</option>
-              <option value="manual" selected={sourceFilter === "manual"}>Manual</option>
+              <option value="auto">Automatic</option>
+              <option value="manual">Manual</option>
             </select>
-            <select name="status" className="select min-w-[140px]">
+            <select name="status" className="select min-w-[140px]" defaultValue={statusFilter || ""}>
               <option value="">All statuses</option>
-              <option value="PUBLISHED" selected={statusFilter === "PUBLISHED"}>Published</option>
-              <option value="DRAFT" selected={statusFilter === "DRAFT"}>Draft</option>
-              <option value="FAILED" selected={statusFilter === "FAILED"}>Failed</option>
+              <option value="PUBLISHED">Published</option>
+              <option value="DRAFT">Draft</option>
+              <option value="FAILED">Failed</option>
             </select>
-            <select name="discord" className="select min-w-[140px]">
+            <select name="discord" className="select min-w-[140px]" defaultValue={discordFilter || ""}>
               <option value="">Discord status</option>
-              <option value="sent" selected={discordFilter === "sent"}>Sent</option>
-              <option value="failed" selected={discordFilter === "failed"}>Failed</option>
-              <option value="pending" selected={discordFilter === "pending"}>Pending</option>
+              <option value="sent">Sent</option>
+              <option value="failed">Failed</option>
+              <option value="pending">Pending</option>
             </select>
             {hasFilters && <Link href="/admin/updates" className="btn-ghost btn-sm"><IconFilter size={14} className="mr-1" /> Clear</Link>}
           </div>
@@ -134,6 +142,7 @@ export default async function AdminUpdatesList({
                   <th className="px-5 py-3">Version</th>
                   <th className="px-5 py-3">Title</th>
                   <th className="px-5 py-3">Type</th>
+                  <th className="px-5 py-3">Category</th>
                   <th className="px-5 py-3">Source</th>
                   <th className="px-5 py-3">Status</th>
                   <th className="px-5 py-3">Published</th>
@@ -156,6 +165,9 @@ export default async function AdminUpdatesList({
                     </td>
                     <td className="px-5 py-3">
                       <Badge tone={typeTone[u.type] ?? "neutral"}>{u.type}</Badge>
+                    </td>
+                    <td className="px-5 py-3">
+                      <Badge tone={getUpdateCategoryTone(u.category)}>{getUpdateCategoryLabel(u.category)}</Badge>
                     </td>
                     <td className="px-5 py-3">
                       {u.generatedAutomatically ? (
@@ -181,6 +193,17 @@ export default async function AdminUpdatesList({
                     </td>
                     <td className="px-5 py-3">
                       <div className="flex justify-end gap-2">
+                        {u.publishedAt && (
+                          <form action={toggleFeatured.bind(null, u.id, !u.featured)} title={u.featured ? "Unfeature" : "Feature"}>
+                            <button
+                              type="submit"
+                              className={u.featured ? "btn-icon-active" : "btn-icon"}
+                              aria-label={u.featured ? "Unfeature update" : "Feature update"}
+                            >
+                              <IconStar size={14} />
+                            </button>
+                          </form>
+                        )}
                         {u.discordPostStatus === "failed" && (
                           <form action={retryUpdateWebhook.bind(null, u.id)}>
                             <button type="submit" className="btn-ghost btn-sm" title="Retry Discord post">
@@ -192,7 +215,7 @@ export default async function AdminUpdatesList({
                           <IconEdit size={14} /> Edit
                         </Link>
                         <ConfirmDeleteButton
-                          action={() => deleteUpdate(u.id)}
+                          action={deleteUpdate.bind(null, u.id)}
                           message={`Delete "${u.title}" (v${u.version})? This cannot be undone.`}
                           label="Delete"
                           className="btn-danger btn-sm"

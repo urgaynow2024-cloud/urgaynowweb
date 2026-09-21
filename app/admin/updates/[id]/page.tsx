@@ -5,7 +5,7 @@ import { UpdateForm, type UpdateFormValues } from "../UpdateForm";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
 import { ErrorAnnouncer } from "@/components/admin/ErrorAnnouncer";
-import { IconMegaphone, IconRefresh, IconZap } from "@/components/admin/ui/icons";
+import { IconMegaphone, IconRefresh, IconZap, IconEye } from "@/components/admin/ui/icons";
 import { Suspense } from "react";
 
 export default async function EditUpdatePage({ params }: { params: { id: string } }) {
@@ -15,6 +15,7 @@ export default async function EditUpdatePage({ params }: { params: { id: string 
   const initial: UpdateFormValues = {
     version: u.version,
     type: u.type as "MAJOR" | "MINOR" | "PATCH",
+    category: u.category,
     title: u.title,
     summary: u.summary,
     whatsNew: u.whatsNew,
@@ -24,6 +25,7 @@ export default async function EditUpdatePage({ params }: { params: { id: string 
     images: u.images,
     authorId: u.authorId,
     published: !!u.publishedAt,
+    featured: u.featured,
     postToDiscord: u.discordPostStatus === "failed" ? false : !!u.discordPostedAt,
     generatedAutomatically: u.generatedAutomatically,
     releaseStatus: u.releaseStatus as "DRAFT" | "PUBLISHED" | "FAILED",
@@ -57,6 +59,9 @@ export default async function EditUpdatePage({ params }: { params: { id: string 
                 </button>
               </form>
             )}
+            <a href={`/updates/${u.slug}`} target="_blank" rel="noreferrer" className="btn-secondary btn-sm">
+              <IconEye size={14} className="mr-1" /> Preview
+            </a>
           </>
         }
       />

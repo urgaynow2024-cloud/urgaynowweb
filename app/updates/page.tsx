@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
-import { Container, Section } from "@/components/Container";
-import { Markdown } from "@/components/Markdown";
+import { Section } from "@/components/Container";
 import { formatDate } from "@/lib/utils";
-import { getUpdateTypeLabel } from "@/lib/update-utils";
+import { getUpdateTypeLabel, getUpdateCategoryLabel, getUpdateCategoryTone } from "@/lib/update-utils";
 import { Badge, Card, EmptyState } from "@/components/ui";
 
 export const revalidate = 300;
@@ -20,7 +19,7 @@ export default async function UpdatesPage() {
   try {
     updates = await prisma.update.findMany({
       where: { publishedAt: { not: null } },
-      orderBy: { publishedAt: "desc" },
+      orderBy: [{ featured: "desc" }, { publishedAt: "desc" }],
     });
   } catch (e) {
     console.error("Failed to load updates:", e);
@@ -54,7 +53,22 @@ export default async function UpdatesPage() {
                     <Badge tone={u.type === "MAJOR" ? "danger" : u.type === "MINOR" ? "brand" : "neutral"}>
                       {getUpdateTypeLabel(u.type)}
                     </Badge>
-                    <span className="text-ink-400 dark:text-ink-500">
+                    <Badge tone={getUpdateCategoryTone(u.category)} dot>
+                      {getUpdateCategoryLabel(u.category)}
+                    </Badge>
+                    {u.featured && (
+                      <span
+                        className="inline-flex items-center gap-1 text-amber-500"
+                        aria-label="Featured update"
+                        title="Featured update"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor" aria-hidden="true">
+                          <path d="M12 2l2.7 5.4A5 5 0 0 0 17.8 11l3 2.4-3.6 1L12 17l-5.2 3.4L3.2 13.4 0 11a5 5 0 0 0 2.5-3.3z" />
+                        </svg>
+                        Featured
+                      </span>
+                    )}
+                    <span className="ml-auto text-ink-400 dark:text-ink-500">
                       {u.publishedAt ? formatDate(u.publishedAt) : ""}
                     </span>
                   </div>
@@ -81,5 +95,4 @@ export default async function UpdatesPage() {
       </Section>
     </div>
   );
-
 }

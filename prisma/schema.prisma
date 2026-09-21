@@ -283,6 +283,7 @@ model Update {
   slug                  String       @unique
   version               String
   type                  UpdateType
+  category              String       @default("") // New | Improvement | Fix | Security | Performance | Maintenance | Community | Moderation | Support
   title                 String
   summary               String       @default("")
   whatsNew              String       @default("")
@@ -290,6 +291,7 @@ model Update {
   bugFixes              String       @default("")
   securityNotes         String       @default("")
   images                String       @default("[]") // JSON array
+  featured              Boolean      @default(false)
   authorId              String
   publishedAt           DateTime?
   discordPostedAt       DateTime?
@@ -308,6 +310,8 @@ model Update {
   @@index([slug])
   @@index([sourceCommit])
   @@index([releaseStatus])
+  @@index([featured, publishedAt])
+  @@index([category])
 }
 
 enum CommunitySubmissionType {

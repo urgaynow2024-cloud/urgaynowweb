@@ -3,9 +3,11 @@ import "./globals.css";
 import { HeaderWrapper } from "@/components/HeaderWrapper";
 import { Footer } from "@/components/Footer";
 import { ThemeProvider, SeasonalThemeProvider, themeInitScript } from "@/components/ThemeProvider";
+import { ThemeCSS } from "@/components/ThemeCSS";
 import { ToastProvider } from "@/components/Toast";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { getActiveThemeId } from "@/lib/theme-resolver";
 
 const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "Ur Gay Now";
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://urgaynow.com";
@@ -42,7 +44,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  let initialTheme = "default";
+  try {
+    initialTheme = await getActiveThemeId();
+  } catch {
+    // Fall back to default if the database is unreachable at build time
+  }
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -51,6 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ThemeProvider>
           <SeasonalThemeProvider>
+            <ThemeCSS initialTheme={initialTheme} />
             <ToastProvider>
             <a href="#main" className="skip-link">
               Skip to content

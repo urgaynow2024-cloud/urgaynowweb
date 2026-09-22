@@ -3,7 +3,6 @@ import "./globals.css";
 import { HeaderWrapper } from "@/components/HeaderWrapper";
 import { Footer } from "@/components/Footer";
 import { ThemeProvider, SeasonalThemeProvider, themeInitScript } from "@/components/ThemeProvider";
-import { ThemeCSS } from "@/components/ThemeCSS";
 import { ToastProvider } from "@/components/Toast";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -52,7 +51,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ThemeProvider>
           <SeasonalThemeProvider>
-            <ThemeCSS initialTheme="default" />
             <ToastProvider>
             <a href="#main" className="skip-link">
               Skip to content

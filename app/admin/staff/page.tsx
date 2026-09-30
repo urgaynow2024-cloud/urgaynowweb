@@ -18,7 +18,6 @@ import {
   IconEdit,
   IconFilter,
   IconGrid,
-  IconCalendar,
   IconShield,
   IconActivity,
   IconClock,
@@ -27,7 +26,7 @@ import {
   IconCopy,
 } from "@/components/admin/ui/icons";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { normalizeRoleKey, STAFF_ROLES, type RoleDefinition, getRoleDefinition } from "@/lib/roles";
+import { normalizeRoleKey, STAFF_ROLES, getRoleDefinition } from "@/lib/roles";
 import { RoleBadge } from "@/components/RoleBadge";
 import { formatDate } from "@/lib/utils";
 
@@ -62,7 +61,7 @@ function listHref(query: { q?: string; rank?: string; view?: string }) {
   return search ? `/admin/staff?${search}` : "/admin/staff";
 }
 
-function roleKeys(category: RoleDefinition["summaryCategory"]) {
+function roleKeys(category: "leadership" | "moderation" | "event" | "community") {
   return new Set(STAFF_ROLES.filter((role) => role.summaryCategory === category).map((role) => role.key));
 }
 
@@ -72,6 +71,16 @@ function errorMessage(error: string | undefined) {
   if (error) return "Could not save — something went wrong. Please try again.";
   return null;
 }
+
+// Canonical rank order for consistent display
+const RANK_ORDER = [
+  "founder",
+  "co_founder",
+  "co_owner",
+  "safeguarding",
+  "admin",
+  "moderator",
+];
 
 export default async function AdminStaffList({
   searchParams,
@@ -95,25 +104,50 @@ export default async function AdminStaffList({
     ...(rank ? { rank } : {}),
   };
 
-  const [staff, allStaff] = await Promise.all([
-    prisma.staff.findMany({ where, orderBy: [{ sortOrder: "asc" }, { name: "asc" }] }),
-    prisma.staff.findMany({ orderBy: [{ sortOrder: "asc" }, { name: "asc" }] }),
-  ]);
-  const ranks = Array.from(new Set(allStaff.map((s) => s.rank).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+  // Single query with select to fetch only needed fields
+  const staff = await prisma.staff.findMany({
+    where,
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    select: {
+      id: true,
+      name: true,
+      vrchatUsername: true,
+      rank: true,
+      bio: true,
+      photoUrl: true,
+      sortOrder: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
+  
+  // Use all staff (unfiltered) for stats - separate lightweight query
+  const allStaff = await prisma.staff.findMany({
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+    select: {
+      id: true,
+      name: true,
+      vrchatUsername: true,
+      rank: true,
+      createdAt: true,
+    },
+  });
+  
+  // Use canonical rank labels for filter dropdown (from STAFF_ROLES)
+  const canonicalRanks = STAFF_ROLES.map((r) => r.label);
   const leadershipKeys = roleKeys("leadership");
   const moderationKeys = roleKeys("moderation");
-  const eventCommunityKeys = new Set([...roleKeys("event"), ...roleKeys("community")]);
   const recentlyAdded = allStaff.filter((s) => s.createdAt.getTime() >= Date.now() - 30 * 24 * 60 * 60 * 1000);
   const stats = {
     total: allStaff.length,
     leadership: allStaff.filter((s) => leadershipKeys.has(normalizeRoleKey(s.rank))).length,
     moderation: allStaff.filter((s) => moderationKeys.has(normalizeRoleKey(s.rank))).length,
-    eventCommunity: allStaff.filter((s) => eventCommunityKeys.has(normalizeRoleKey(s.rank))).length,
+    eventCommunity: 0, // No event/community roles in new system
     recent: recentlyAdded.length,
   };
 
-  // Group staff by rank for display, ordered by role hierarchy
-  const roleOrder = new Map(STAFF_ROLES.map((role, index) => [role.key, index]));
+  // Group staff by rank for display, ordered by canonical rank hierarchy
+  const roleOrder = new Map(RANK_ORDER.map((role, index) => [role, index]));
   const groups = Array.from(
     staff.reduce((acc, person) => {
       const key = normalizeRoleKey(person.rank);
@@ -144,9 +178,8 @@ export default async function AdminStaffList({
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <AdminStatCard title="Total staff" value={stats.total} icon={<IconUsers size={22} />} description="Profiles in the directory" />
-        <AdminStatCard title="Founders / owners" value={stats.leadership} icon={<IconShield size={22} />} description="Configured leadership roles" />
-        <AdminStatCard title="Moderation roles" value={stats.moderation} icon={<IconActivity size={22} />} description="Configured moderation roles" />
-        <AdminStatCard title="Event / community" value={stats.eventCommunity} icon={<IconCalendar size={22} />} description="Configured community roles" />
+        <AdminStatCard title="Leadership" value={stats.leadership} icon={<IconShield size={22} />} description="Founder, Co-Founder, Co-Owner" />
+        <AdminStatCard title="Moderation" value={stats.moderation} icon={<IconActivity size={22} />} description="Safeguarding, Admin, Moderator" />
         <AdminStatCard title="Recently added" value={stats.recent} icon={<IconClock size={22} />} description={recentlyAdded.length ? `Last 30 days · ${recentlyAdded.slice(0, 2).map((s) => s.name).join(", ")}${recentlyAdded.length > 2 ? "…" : ""}` : "No new profiles in 30 days"} />
       </div>
 
@@ -161,7 +194,7 @@ export default async function AdminStaffList({
             <IconFilter size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400" />
             <select name="rank" defaultValue={rank} className="select pl-9 pr-9" aria-label="Filter by rank">
               <option value="">All ranks</option>
-              {ranks.map((r) => <option key={r} value={r}>{r}</option>)}
+              {canonicalRanks.map((r) => <option key={r} value={r}>{r}</option>)}
             </select>
           </div>
           <button type="submit" className="btn-secondary btn-sm sm:self-stretch">Apply</button>

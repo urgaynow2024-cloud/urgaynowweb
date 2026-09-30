@@ -15,7 +15,7 @@ export type RoleDefinition = {
   tone?: "brand" | "success" | "warning" | "danger" | "neutral";
 };
 
-/** Canonical staff roles — must stay in sync with 10-Staff-Moderation-Dashboard. */
+/** Canonical staff ranks — must stay in sync with 10-Staff-Moderation-Dashboard. */
 export const STAFF_ROLES: RoleDefinition[] = [
   {
     key: "founder",
@@ -25,11 +25,32 @@ export const STAFF_ROLES: RoleDefinition[] = [
     tone: "danger",
   },
   {
+    key: "co_founder",
+    label: "Co-Founder",
+    tooltip: "Co-Founder — co-leads the platform with the Founder.",
+    summaryCategory: "leadership",
+    tone: "danger",
+  },
+  {
+    key: "co_owner",
+    label: "Co-Owner",
+    tooltip: "Co-Owner — shares ownership responsibilities.",
+    summaryCategory: "leadership",
+    tone: "danger",
+  },
+  {
+    key: "safeguarding",
+    label: "Safeguarding",
+    tooltip: "Safeguarding — protects community wellbeing and handles safety concerns.",
+    summaryCategory: "moderation",
+    tone: "warning",
+  },
+  {
     key: "admin",
     label: "Admin",
     tooltip: "Admin — manages staff, settings, and oversees moderation.",
-    summaryCategory: "leadership",
-    tone: "danger",
+    summaryCategory: "moderation",
+    tone: "warning",
   },
   {
     key: "moderator",
@@ -37,20 +58,6 @@ export const STAFF_ROLES: RoleDefinition[] = [
     tooltip: "Moderator — reviews reports, submissions, and takes moderation action.",
     summaryCategory: "moderation",
     tone: "warning",
-  },
-  {
-    key: "event_manager",
-    label: "Event Manager",
-    tooltip: "Event Manager — creates, edits, and manages events.",
-    summaryCategory: "event",
-    tone: "brand",
-  },
-  {
-    key: "community_manager",
-    label: "Community Manager",
-    tooltip: "Community Manager — manages announcements, polls, and community content.",
-    summaryCategory: "community",
-    tone: "brand",
   },
 ];
 
@@ -85,6 +92,22 @@ export const ROLE_MAP: Record<string, RoleDefinition> = [
   return acc;
 }, {} as Record<string, RoleDefinition>);
 
+/** Legacy rank mappings for backward compatibility with existing database values. */
+export const LEGACY_RANK_MAP: Record<string, string> = {
+  "co~founder": "co_founder",
+  "co~owner": "co_owner",
+  "safe~guarding": "safeguarding",
+  "moderator/media": "moderator",
+  "moderator / media": "moderator",
+  "owner": "co_owner",
+  "co-founder": "co_founder",
+  "co-owner": "co_owner",
+  "safeguarding": "safeguarding",
+  "admin": "admin",
+  "moderator": "moderator",
+  "founder": "founder",
+};
+
 /**
  * Normalize a raw `Staff.rank` string to a canonical role key.
  * Falls back to the raw value (lowercased) if no match is found, so unknown
@@ -95,16 +118,23 @@ export function normalizeRoleKey(rank: string | null | undefined): string {
   const trimmed = rank.trim();
   if (!trimmed) return "";
 
+  const lower = trimmed.toLowerCase();
+
+  // Check legacy mappings first (handles tildes, slashes, case variations)
+  if (LEGACY_RANK_MAP[lower]) {
+    return LEGACY_RANK_MAP[lower];
+  }
+
   // Direct match against canonical keys (case-insensitive).
   const direct = Object.keys(ROLE_MAP).find(
-    (k) => k.toLowerCase() === trimmed.toLowerCase(),
+    (k) => k.toLowerCase() === lower,
   );
   if (direct) return direct;
 
-  // Human-readable label match (e.g. "Event Manager" -> event_manager).
+  // Human-readable label match (e.g. "Co-Founder" -> co_founder).
   const byLabel = ROLE_MAP[
     Object.keys(ROLE_MAP).find(
-      (k) => ROLE_MAP[k].label.toLowerCase() === trimmed.toLowerCase(),
+      (k) => ROLE_MAP[k].label.toLowerCase() === lower,
     ) as string
   ];
   if (byLabel) return byLabel.key;

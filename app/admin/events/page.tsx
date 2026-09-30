@@ -28,31 +28,82 @@ export default async function AdminEventsList({
 }) {
   const q = searchParams.q?.trim() || "";
   const status = searchParams.status || "";
+  const now = new Date();
 
-  let items: Awaited<ReturnType<typeof prisma.event.findMany>> = [];
-  try {
-    items = await prisma.event.findMany({
-      where: {
-        ...(q
-          ? {
-              OR: [
-                { title: { contains: q, mode: "insensitive" } },
-                { summary: { contains: q, mode: "insensitive" } },
-                { description: { contains: q, mode: "insensitive" } },
-                { location: { contains: q, mode: "insensitive" } },
-                { hostName: { contains: q, mode: "insensitive" } },
-                { category: { contains: q, mode: "insensitive" } },
-              ],
-            }
-          : {}),
-      },
-      orderBy: { startDateTime: "desc" },
-    });
-  } catch (e) {
-    console.error("Failed to load events:", e);
+  // Build where clause with proper database filtering
+  const where: any = {
+    ...(q
+      ? {
+          OR: [
+            { title: { contains: q, mode: "insensitive" } },
+            { summary: { contains: q, mode: "insensitive" } },
+            { description: { contains: q, mode: "insensitive" } },
+            { location: { contains: q, mode: "insensitive" } },
+            { hostName: { contains: q, mode: "insensitive" } },
+            { category: { contains: q, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
+
+  // Apply status filter at database level
+  if (status === "UPCOMING") {
+    where.published = true;
+    where.startDateTime = { gte: now };
+    where.status = { not: "ARCHIVED" };
+  } else if (status === "LIVE") {
+    where.published = true;
+    where.startDateTime = { lte: now };
+    where.OR = [
+      { endDateTime: { gte: now } },
+      { endDateTime: null },
+    ];
+    where.status = { not: "ARCHIVED" };
+  } else if (status === "PAST") {
+    where.OR = [
+      { endDateTime: { lt: now } },
+      { AND: [{ endDateTime: null }, { startDateTime: { lt: now } }] },
+    ];
+    where.status = { not: "ARCHIVED" };
+  } else if (status === "ARCHIVED") {
+    where.status = "ARCHIVED";
   }
 
-  const filtered = status ? items.filter((event) => getEventState(event) === status) : items;
+  // Single query with select to fetch only needed fields
+  const items = await prisma.event.findMany({
+    where,
+    orderBy: { startDateTime: "desc" },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      summary: true,
+      description: true,
+      coverImage: true,
+      startDateTime: true,
+      endDateTime: true,
+      timezone: true,
+      hostName: true,
+      location: true,
+      vrchatWorldUrl: true,
+      category: true,
+      tags: true,
+      status: true,
+      published: true,
+      publishedAt: true,
+      archivedAt: true,
+      hostId: true,
+      host: {
+        select: {
+          id: true,
+          name: true,
+          vrchatUsername: true,
+          photoUrl: true,
+          rank: true,
+        },
+      },
+    },
+  });
 
   return (
     <AdminLayout>
@@ -85,7 +136,7 @@ export default async function AdminEventsList({
           </div>
         )}
 
-        {filtered.length === 0 ? (
+        {items.length === 0 ? (
           <div className="p-4">
             <EmptyState
               icon={<IconCalendar size={28} />}
@@ -96,7 +147,7 @@ export default async function AdminEventsList({
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((e) => {
+            {items.map((e) => {
               const state = getEventState(e);
               const isArchived = state === "ARCHIVED";
               return (

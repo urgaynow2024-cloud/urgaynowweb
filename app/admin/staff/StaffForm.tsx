@@ -118,7 +118,7 @@ export function StaffForm({
         </div>
         <div>
           <label className="field-label" htmlFor="staff-rank">Rank / role</label>
-          <input id="staff-rank" name="rank" className="input" maxLength={80} list="staff-rank-options" defaultValue={initial?.rank ?? ""} placeholder="e.g. Admin, Moderator, Event Host" onChange={markDirty} />
+          <input id="staff-rank" name="rank" className="input" maxLength={80} list="staff-rank-options" defaultValue={initial?.rank ?? ""} placeholder="e.g. Founder, Co-Founder, Admin, Moderator" onChange={markDirty} />
           <datalist id="staff-rank-options">
             {STAFF_ROLES.map((role) => <option key={role.key} value={role.label} />)}
           </datalist>

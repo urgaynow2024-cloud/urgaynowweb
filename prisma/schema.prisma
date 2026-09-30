@@ -31,6 +31,7 @@ model Staff {
   reportAuditLogs ReportAuditLog[] @relation("ReportAuditActor")
 
   @@index([rank])
+  @@index([sortOrder])
 }
 
 model Partner {
@@ -177,8 +178,8 @@ model Event {
   category      String    @default("Other")
   tags          String[]  @default([])
   rules         String    @default("") // Markdown
-status        String   @default("UPCOMING")
-  published     Boolean  @default(true)
+  status        String    @default("UPCOMING")
+  published     Boolean   @default(true)
   publishedAt   DateTime?
   archivedAt    DateTime?
   createdAt     DateTime  @default(now())
@@ -188,6 +189,11 @@ status        String   @default("UPCOMING")
   discordPostedAt DateTime?
   discordPostStatus String  @default("pending") // pending | sent | failed
   discordRoleIds  String[] @default([])
+
+  @@index([published, startDateTime])
+  @@index([status, published])
+  @@index([category])
+  @@index([tags], type: Gin)
 }
 
 model Rule {

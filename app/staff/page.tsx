@@ -8,6 +8,7 @@ import { safeQuery } from "@/lib/safeQuery";
 import { SectionHeading } from "@/components/SectionHeading";
 import { ScrollFadeIn, StaggeredList } from "@/components/ScrollAnimation";
 import { EmptyState } from "@/components/EmptyState";
+import { normalizeRoleKey, STAFF_ROLES } from "@/lib/roles";
 
 export const revalidate = 300;
 
@@ -36,6 +37,16 @@ function staffHref(query: { q?: string; rank?: string }) {
   return search ? `/staff?${search}` : "/staff";
 }
 
+// Canonical rank order for consistent display
+const RANK_ORDER = [
+  "founder",
+  "co_founder",
+  "co_owner",
+  "safeguarding",
+  "admin",
+  "moderator",
+];
+
 export default async function StaffPage({
   searchParams,
 }: {
@@ -57,13 +68,23 @@ export default async function StaffPage({
     ...(rank ? { rank } : {}),
   };
 
-  const [staff, allStaff] = await Promise.all([
+  const [staff, allStaff, discord, vrchat] = await Promise.all([
     safeQuery<StaffDirectoryEntry[]>(
       async () =>
         (await prisma.staff.findMany({
           where,
           orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-          include: { hostedEvents: { where: { published: true }, select: { id: true } } },
+          select: {
+            id: true,
+            name: true,
+            vrchatUsername: true,
+            rank: true,
+            bio: true,
+            photoUrl: true,
+            socials: true,
+            sortOrder: true,
+            hostedEvents: { where: { published: true }, select: { id: true } },
+          },
         })) as StaffDirectoryEntry[],
       [],
     ),
@@ -71,35 +92,43 @@ export default async function StaffPage({
       async () =>
         (await prisma.staff.findMany({
           orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
-          include: { hostedEvents: { where: { published: true }, select: { id: true } } },
+          select: {
+            id: true,
+            name: true,
+            vrchatUsername: true,
+            rank: true,
+            bio: true,
+            photoUrl: true,
+            socials: true,
+            sortOrder: true,
+            hostedEvents: { where: { published: true }, select: { id: true } },
+          },
         })) as StaffDirectoryEntry[],
       [],
     ),
-  ]);
-  const [discord, vrchat] = await Promise.all([
     getSetting("discordInvite"),
     getSetting("vrchatGroupUrl"),
   ]);
 
-  const ranks = Array.from(new Set(allStaff.map((s) => s.rank).filter(Boolean))).sort((a, b) => a.localeCompare(b));
+  // Use canonical rank labels for filter dropdown
+  const canonicalRanks = STAFF_ROLES.map((r) => r.label);
+  
+  // Group staff by rank for display, ordered by canonical rank hierarchy
+  const roleOrder = new Map(RANK_ORDER.map((role, index) => [role, index]));
   const groups = Array.from(
     staff.reduce((acc, person) => {
-      const current = acc.get(person.rank) ?? [];
+      const key = normalizeRoleKey(person.rank);
+      const current = acc.get(key) ?? [];
       current.push(person);
-      acc.set(person.rank, current);
+      acc.set(key, current);
       return acc;
     }, new Map<string, StaffDirectoryEntry[]>()),
-  )
-    // Order section groups by the ranking of the highest-ranked member in each
-    // group (i.e. by `sortOrder`), so the visible hierarchy matches the staff
-    // ranking exactly. This preserves the existing sortOrder source of truth
-    // and must NOT be replaced with alphabetical / role-name sorting.
-    .sort(([, aMembers], [, bMembers]) => {
-      const aFirst = aMembers[0]?.sortOrder ?? Number.MAX_SAFE_INTEGER;
-      const bFirst = bMembers[0]?.sortOrder ?? Number.MAX_SAFE_INTEGER;
-      if (aFirst !== bFirst) return aFirst - bFirst;
-      return aMembers[0]?.rank.localeCompare(bMembers[0]?.rank ?? "") ?? 0;
-    });
+  ).sort(([a], [b]) => {
+    const aOrder = roleOrder.get(a) ?? Number.MAX_SAFE_INTEGER;
+    const bOrder = roleOrder.get(b) ?? Number.MAX_SAFE_INTEGER;
+    if (aOrder !== bOrder) return aOrder - bOrder;
+    return a.localeCompare(b);
+  });
 
   return (
     <>
@@ -123,7 +152,7 @@ export default async function StaffPage({
               </svg>
               <select name="rank" defaultValue={rank} className="select pl-10 pr-9" aria-label="Filter by rank">
                 <option value="">All ranks</option>
-                {ranks.map((r) => <option key={r} value={r}>{r}</option>)}
+                {canonicalRanks.map((r) => <option key={r} value={r}>{r}</option>)}
               </select>
             </div>
             <button type="submit" className="btn-primary btn-sm sm:self-stretch">Search</button>

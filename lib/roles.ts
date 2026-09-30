@@ -59,6 +59,21 @@ export const STAFF_ROLES: RoleDefinition[] = [
     summaryCategory: "moderation",
     tone: "warning",
   },
+  // Additional staff roles (not part of the 6-rank directory hierarchy)
+  {
+    key: "event_manager",
+    label: "Event Manager",
+    tooltip: "Event Manager — creates, edits, and manages events.",
+    summaryCategory: "event",
+    tone: "brand",
+  },
+  {
+    key: "community_manager",
+    label: "Community Manager",
+    tooltip: "Community Manager — manages announcements, polls, and community content.",
+    summaryCategory: "community",
+    tone: "brand",
+  },
 ];
 
 /** Community (non-staff) badges — signal contribution without implying moderation power. */
@@ -106,6 +121,8 @@ export const LEGACY_RANK_MAP: Record<string, string> = {
   "admin": "admin",
   "moderator": "moderator",
   "founder": "founder",
+  "event manager": "event_manager",
+  "community manager": "community_manager",
 };
 
 /**

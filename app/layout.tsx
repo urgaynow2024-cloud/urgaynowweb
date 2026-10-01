@@ -62,7 +62,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <ThemeProvider>
-          <SeasonalThemeProvider>
+          <SeasonalThemeProvider initialThemeId={seasonalTheme}>
             <HalloweenIconProvider available={halloweenIconAvailable}>
             <ToastProvider>
             <HalloweenDecorations />

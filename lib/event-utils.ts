@@ -8,7 +8,7 @@ export type EventCardSource = {
   location: string;
   vrchatWorldUrl: string;
   coverImage: string;
-  tags: string[];
+  tags?: string[];
   startDateTime: Date | string;
   endDateTime: Date | string | null;
   hostName?: string | null;

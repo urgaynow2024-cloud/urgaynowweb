@@ -7,7 +7,7 @@ import { HalloweenHeroStrip } from "@/components/halloween/HalloweenDecor";
 import { AnnouncementCard } from "@/components/AnnouncementCard";
 import { EventCard } from "@/components/EventCard";
 import { StaffCard } from "@/components/StaffCard";
-import { getSetting } from "@/lib/settings";
+import { getSettings } from "@/lib/settings";
 import { safeQuery } from "@/lib/safeQuery";
 import { Skeleton, CardGridSkeleton } from "@/components/Skeleton";
 import { HeroBackground, ParticlesBackground } from "@/components/HeroBackground";
@@ -15,7 +15,6 @@ import { ScrollFadeIn, StaggeredList } from "@/components/ScrollAnimation";
 import { IconVrchat, IconDiscord, IconCalendar, IconImages, IconUsers, IconSparkles, IconArrowRight } from "@/components/admin/ui/icons";
 import { EmptyState } from "@/components/EmptyState";
 import { getEventState, toEventCard } from "@/lib/event-utils";
-import type { Poll, PollOption } from "@prisma/client";
 
 export const revalidate = 60;
 
@@ -48,16 +47,15 @@ function HeroBat({ className }: { className: string }) {
 }
 
 async function HeroContent() {
-  const [intro, tagline, discord, vrchat] = await safeQuery(
-    () =>
-      Promise.all([
-        getSetting("homeIntro"),
-        getSetting("siteTagline"),
-        getSetting("discordInvite"),
-        getSetting("vrchatGroupUrl"),
-      ]),
-    ["", "", "", ""],
+  // One query for all four settings instead of four separate reads.
+  const settings = await safeQuery(
+    () => getSettings(["homeIntro", "siteTagline", "discordInvite", "vrchatGroupUrl"]),
+    {} as Record<string, string>,
   );
+  const intro = settings.homeIntro ?? "";
+  const tagline = settings.siteTagline ?? "";
+  const discord = settings.discordInvite ?? "";
+  const vrchat = settings.vrchatGroupUrl ?? "";
   const lead = intro || tagline;
 
   return (
@@ -109,21 +107,34 @@ async function HeroContent() {
   );
 }
 
+/**
+ * Events older than this can never be LIVE or UPCOMING (see getEventState), so
+ * the homepage never needs to look at them. Bounds the query on the
+ * (published, startDateTime) index instead of loading the whole event history.
+ */
+const HOME_EVENT_LOOKBACK_MS = 30 * 24 * 60 * 60 * 1000;
+const HOME_EVENT_LIMIT = 24;
+
 async function HomeAnnouncements() {
   const announcements = await safeQuery(
     () =>
       prisma.announcement.findMany({
-        where: { state: "PUBLISHED" },
+        // publishedAt is required by AnnouncementCard, so filter in the database
+        // rather than discarding rows in JS.
+        where: { state: "PUBLISHED", publishedAt: { not: null } },
         orderBy: { publishedAt: "desc" },
         take: 3,
+        // Only what the card renders — skips the full Markdown body and all
+        // Discord delivery metadata.
+        select: { id: true, title: true, slug: true, excerpt: true, coverImage: true, publishedAt: true },
       }),
     [],
   );
 
-  return announcements.filter(a => a.publishedAt).length > 0 ? (
+  return announcements.length > 0 ? (
     <StaggeredList className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {announcements.filter(a => a.publishedAt).map((a) => (
-        <ScrollFadeIn key={a.id} delay={0}>
+      {announcements.map((a, i) => (
+        <ScrollFadeIn key={a.id} delay={i * 80}>
           <AnnouncementCard
             item={{
               id: a.id,
@@ -148,11 +159,42 @@ async function HomeAnnouncements() {
 
 async function HomeEvents() {
   const now = new Date();
+  const lookback = new Date(now.getTime() - HOME_EVENT_LOOKBACK_MS);
   const events = await safeQuery(
     () =>
       prisma.event.findMany({
-        where: { published: true },
+        // The homepage only renders LIVE and UPCOMING cards. Drop finished and
+        // archived events in SQL instead of loading every published event
+        // (including their Markdown description and rules) and filtering in JS.
+        where: {
+          published: true,
+          OR: [
+            // Started within the lookback window — covers live events and any
+            // long-running event with no end time.
+            { startDateTime: { gte: lookback } },
+            // Has not finished yet.
+            { endDateTime: { gt: now } },
+          ],
+        },
         orderBy: { startDateTime: "asc" },
+        take: HOME_EVENT_LIMIT,
+        // Only the fields the card renders. Drops the full Markdown
+        // description/rules and all Discord delivery metadata.
+        select: {
+          id: true,
+          slug: true,
+          title: true,
+          description: true,
+          location: true,
+          vrchatWorldUrl: true,
+          coverImage: true,
+          startDateTime: true,
+          endDateTime: true,
+          hostName: true,
+          category: true,
+          timezone: true,
+          archivedAt: true,
+        },
       }),
     [],
   );
@@ -221,14 +263,24 @@ async function HomeStaff() {
       prisma.staff.findMany({
         orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
         take: 6,
+        // Only the public card fields — never the rest of the row.
+        select: {
+          id: true,
+          name: true,
+          vrchatUsername: true,
+          rank: true,
+          bio: true,
+          photoUrl: true,
+          socials: true,
+        },
       }),
     [],
   );
 
   return staff.length > 0 ? (
     <StaggeredList className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {staff.map((s) => (
-        <ScrollFadeIn key={s.id} delay={0}>
+      {staff.map((s, i) => (
+        <ScrollFadeIn key={s.id} delay={i * 80}>
           <StaffCard
             staff={{
               id: s.id,
@@ -256,8 +308,14 @@ async function HomeGallery() {
   const gallery = await safeQuery(
     () =>
       prisma.galleryImage.findMany({
+        // Must match app/gallery/page.tsx: pending, rejected and unpublished
+        // submissions are moderation-pending and must never render publicly.
+        where: { status: "APPROVED", published: true },
         orderBy: { createdAt: "desc" },
         take: 4,
+        // Never expose submitter identity or moderation metadata to the public
+        // homepage.
+        select: { id: true, title: true, imageUrl: true },
       }),
     [],
   );
@@ -304,14 +362,25 @@ async function HomeGallery() {
 }
 
 async function HomePolls() {
-  type HomePoll = Poll & { options: PollOption[] };
+  type HomePollOption = { id: string; label: string };
+  type HomePoll = { id: string; title: string; description: string; type: string; options: HomePollOption[] };
   const polls = await safeQuery(
     () =>
       prisma.poll.findMany({
         where: { published: true, closed: false },
         orderBy: { createdAt: "desc" },
         take: 3,
-        include: { options: { orderBy: { sortOrder: "asc" } } },
+        // Drop Discord delivery metadata, vote limits and results visibility.
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          type: true,
+          options: {
+            orderBy: { sortOrder: "asc" },
+            select: { id: true, label: true },
+          },
+        },
       }) as Promise<HomePoll[]>,
     [] as HomePoll[],
   );
@@ -388,7 +457,9 @@ async function CommunityHighlights() {
       Promise.all([
         prisma.staff.count(),
         prisma.event.count({ where: { published: true } }),
-        prisma.galleryImage.count({ where: { status: "APPROVED" } }),
+        // Must match the filter used by the gallery preview above so the count
+        // cannot include moderation-pending images.
+        prisma.galleryImage.count({ where: { status: "APPROVED", published: true } }),
       ]),
     [0, 0, 0],
   );

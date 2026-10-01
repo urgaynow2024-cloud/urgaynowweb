@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 function calculateTimeLeft(target: Date) {
   const total = target.getTime() - Date.now();
@@ -27,15 +27,62 @@ function useReducedMotion(): boolean {
 
 export function EventCountdown({ target, label = "Starts in" }: { target: Date | string; label?: string }) {
   const [timeLeft, setTimeLeft] = useState<ReturnType<typeof calculateTimeLeft>>(null);
+  const [expired, setExpired] = useState(false);
+  const [inView, setInView] = useState(true);
+  const ref = useRef<HTMLDivElement>(null);
   const reducedMotion = useReducedMotion();
   const intervalMs = reducedMotion ? 60000 : 1000;
 
+  // A per-second re-render is wasted work while the countdown is scrolled out of
+  // view or the tab is in the background.
   useEffect(() => {
-    const update = () => setTimeLeft(calculateTimeLeft(new Date(target)));
+    const node = ref.current;
+    if (!node) return;
+    let intersecting = false;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        intersecting = entry.isIntersecting;
+        setInView(entry.isIntersecting && document.visibilityState === "visible");
+      },
+      { threshold: 0 },
+    );
+    observer.observe(node);
+    const onVisibility = () => {
+      setInView(intersecting && document.visibilityState === "visible");
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+
+  const running = inView && !expired;
+
+  useEffect(() => {
+    if (!running) return;
+
+    const update = () => {
+      const next = calculateTimeLeft(new Date(target));
+      setTimeLeft(next);
+      // The target has passed: stop the timer instead of leaving a 1Hz interval
+      // running for the rest of the page's life.
+      if (!next) setExpired(true);
+    };
     update();
-    const id = setInterval(update, intervalMs);
-    return () => clearInterval(id);
-  }, [target, intervalMs]);
+
+    // Align to the next boundary so the display does not visibly skip a tick.
+    let intervalId: ReturnType<typeof setInterval> | undefined;
+    const timeoutId = setTimeout(() => {
+      update();
+      intervalId = setInterval(update, intervalMs);
+    }, intervalMs - (Date.now() % intervalMs));
+
+    return () => {
+      clearTimeout(timeoutId);
+      if (intervalId !== undefined) clearInterval(intervalId);
+    };
+  }, [target, intervalMs, running]);
 
   if (!timeLeft) return null;
 
@@ -47,7 +94,7 @@ export function EventCountdown({ target, label = "Starts in" }: { target: Date |
   ];
 
   return (
-    <div className="flex items-center gap-1.5 text-center font-mono">
+    <div ref={ref} className="flex items-center gap-1.5 text-center font-mono">
       <span className="mr-1 text-xs uppercase tracking-wider opacity-60">{label}</span>
       {segments.map((s) => (
         <div key={s.label} className="flex flex-col items-center">

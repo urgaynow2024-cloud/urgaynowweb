@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { Fragment, isValidElement, useEffect, useRef } from "react";
 
 export function useScrollAnimation(
   options: { threshold?: number; rootMargin?: string } = {},
@@ -85,15 +85,25 @@ export function StaggeredList({
 
   return (
     <div className={className}>
-      {items.map((item, i) => (
-        <ScrollFadeIn
-          key={i}
-          delay={i * stagger}
-          className="stagger"
-        >
-          {item}
-        </ScrollFadeIn>
-      ))}
+      {items.map((item, i) => {
+        // Most call sites already wrap each child in <ScrollFadeIn delay={...}>.
+        // Wrapping those again produced two nested observers and two nested
+        // transition delays per item, which doubled the IntersectionObserver
+        // count for the visible animation without changing the result. Only
+        // add a wrapper when the child is not already animated.
+        if (isValidElement(item) && item.type === ScrollFadeIn) {
+          return <Fragment key={item.key ?? i}>{item}</Fragment>;
+        }
+        return (
+          <ScrollFadeIn
+            key={i}
+            delay={i * stagger}
+            className="stagger"
+          >
+            {item}
+          </ScrollFadeIn>
+        );
+      })}
     </div>
   );
 }

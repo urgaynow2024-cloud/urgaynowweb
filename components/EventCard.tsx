@@ -14,9 +14,31 @@ export function EventCard({ event }: { event: EventCardData }) {
   const isUpcoming = state === "UPCOMING";
 
   useEffect(() => {
-    const id = window.setInterval(() => setNow(Date.now()), 30000);
-    return () => window.clearInterval(id);
-  }, []);
+    // Finished events can never change state again, so there is no reason to
+    // keep a timer alive for them.
+    if (!isLive && !isUpcoming) return;
+
+    // Align to the next minute boundary so every card on the page ticks on the
+    // same tick instead of drifting at independent 30s offsets.
+    let intervalId: number | undefined;
+    const timeoutId = window.setTimeout(() => {
+      setNow(Date.now());
+      intervalId = window.setInterval(() => setNow(Date.now()), 30000);
+    }, 30000 - (Date.now() % 30000));
+
+    // Timers keep firing in background tabs and on a hidden page, which shows up
+    // as unexplained main-thread work. Pause while hidden.
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") setNow(Date.now());
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      if (intervalId !== undefined) window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [isLive, isUpcoming]);
 
   return (
     <article

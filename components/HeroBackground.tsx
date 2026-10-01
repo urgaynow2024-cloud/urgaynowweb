@@ -158,7 +158,16 @@ export function ParticlesBackground() {
     }
 
     let animationId: number;
-    function animate() {
+    let lastFrame = 0;
+    // Throttle the redraw. The particles drift slowly, so 30fps is visually
+    // identical to 60fps and halves the canvas work on the LCP viewport.
+    const FRAME_MS = 33;
+
+    function animate(timestamp: number) {
+      animationId = requestAnimationFrame(animate);
+      if (timestamp - lastFrame < FRAME_MS) return;
+      lastFrame = timestamp;
+
       if (!ctx || !canvas) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       for (const p of particles) {
@@ -172,29 +181,78 @@ export function ParticlesBackground() {
         ctx.fill();
       }
 
-      // Draw connections between nearby particles
+      // Draw connections between nearby particles. Distances are compared
+      // squared so the per-pair square root is only paid for the pairs that
+      // actually get drawn.
+      const LINK_MAX = 120;
+      const LINK_MAX_SQ = LINK_MAX * LINK_MAX;
+      ctx.lineWidth = 0.5;
       for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x;
+          if (dx > LINK_MAX || dx < -LINK_MAX) continue;
           const dy = particles[i].y - particles[j].y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 120) {
+          if (dy > LINK_MAX || dy < -LINK_MAX) continue;
+          const distSq = dx * dx + dy * dy;
+          if (distSq < LINK_MAX_SQ) {
+            const dist = Math.sqrt(distSq);
             ctx.beginPath();
             ctx.moveTo(particles[i].x, particles[i].y);
             ctx.lineTo(particles[j].x, particles[j].y);
-            ctx.strokeStyle = `rgba(189, 127, 206, ${0.06 * (1 - dist / 120)})`;
-            ctx.lineWidth = 0.5;
+            ctx.strokeStyle = `rgba(189, 127, 206, ${0.06 * (1 - dist / LINK_MAX)})`;
             ctx.stroke();
           }
         }
       }
-
-      animationId = requestAnimationFrame(animate);
     }
-    animate();
+
+    // Only animate while the hero is actually on screen and the tab is visible.
+    // requestAnimationFrame already pauses in background tabs, but it keeps
+    // firing for an off-screen hero and burns main-thread time while the visitor
+    // reads the rest of the page.
+    let running = true;
+    let visible = document.visibilityState === "visible";
+    let inViewport = true;
+    const host = canvas.parentElement;
+
+    const sync = () => {
+      const shouldRun = visible && inViewport;
+      if (shouldRun === running) return;
+      running = shouldRun;
+      if (running) {
+        lastFrame = 0;
+        animationId = requestAnimationFrame(animate);
+      } else {
+        cancelAnimationFrame(animationId);
+        // Leave the last frame painted instead of a partially cleared canvas.
+        if (ctx && canvas) ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    };
+
+    const onVisibility = () => {
+      visible = document.visibilityState === "visible";
+      sync();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    let viewportObserver: IntersectionObserver | undefined;
+    if (host) {
+      viewportObserver = new IntersectionObserver(
+        ([entry]) => {
+          inViewport = entry.isIntersecting;
+          sync();
+        },
+        { threshold: 0 },
+      );
+      viewportObserver.observe(host);
+    }
+
+    if (running) animationId = requestAnimationFrame(animate);
 
     return () => {
       window.removeEventListener("resize", resize);
+      document.removeEventListener("visibilitychange", onVisibility);
+      viewportObserver?.disconnect();
       cancelAnimationFrame(animationId);
     };
   }, []);

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
 type Theme = "light" | "dark";
 
@@ -57,40 +57,37 @@ type SeasonalThemeContextValue = {
 
 const SeasonalThemeContext = createContext<SeasonalThemeContextValue | null>(null);
 
-export function SeasonalThemeProvider({ children }: { children: ReactNode }) {
-  const [seasonalTheme, setSeasonalTheme] = useState<string>("default");
-  const [mounted, setMounted] = useState(false);
+export function SeasonalThemeProvider({
+  children,
+  initialThemeId = "default",
+}: {
+  children: ReactNode;
+  initialThemeId?: string;
+}) {
+  // The active seasonal theme is already resolved on the server in app/layout.tsx
+  // and painted onto <html data-site-theme> on the first frame. Seeding from that
+  // value removes the uncached `/api/theme/active` request that previously fired
+  // on every single page load, which duplicated the server-side lookup and hit
+  // the database again on each navigation.
+  const [seasonalTheme, setSeasonalTheme] = useState<string>(initialThemeId);
 
-  const fetchTheme = async () => {
+  useEffect(() => {
+    document.documentElement.setAttribute("data-site-theme", initialThemeId);
+  }, [initialThemeId]);
+
+  // Only used when something explicitly asks for a fresh lookup — never on mount.
+  const refresh = useCallback(async () => {
     try {
       const res = await fetch("/api/theme/active", { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        setSeasonalTheme(data.themeId);
-        document.documentElement.setAttribute("data-site-theme", data.themeId);
-      }
+      if (!res.ok) return;
+      const data = await res.json();
+      setSeasonalTheme(data.themeId);
+      document.documentElement.setAttribute("data-site-theme", data.themeId);
     } catch {
       setSeasonalTheme("default");
       document.documentElement.setAttribute("data-site-theme", "default");
     }
-  };
-
-  useEffect(() => {
-    setMounted(true);
-    fetchTheme();
   }, []);
-
-  const refresh = async () => {
-    await fetchTheme();
-  };
-
-  if (!mounted) {
-    return (
-      <SeasonalThemeContext.Provider value={{ seasonalTheme: "default", refresh: () => Promise.resolve() }}>
-        {children}
-      </SeasonalThemeContext.Provider>
-    );
-  }
 
   return (
     <SeasonalThemeContext.Provider value={{ seasonalTheme, refresh }}>

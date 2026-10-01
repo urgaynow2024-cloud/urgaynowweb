@@ -573,4 +573,5 @@ const REPORT_CONTENT_TYPE_FILTERS: Record<string, string> = {
   SHOP_DESIGN: "Shop design",
   COMMUNITY_SUBMISSION: "Community submission",
   ANNOUNCEMENT: "Announcement",
+  COMMUNITY_REVIEW: "Community review",
 };

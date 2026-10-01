@@ -15,10 +15,10 @@
 | ü¶á Official supplied Halloween icon | **Supplied and wired in ‚Äî rendering in all six slots (verified)** |
 | üö® Real report system (end to end) | Implemented and verified end to end |
 | üîó Discord webhook notifications for reports | Implemented and verified (real delivery confirmed) |
-| üõ°Ô∏è Protected staff report dashboard | Implemented and verified (including permission tests) |
+| üõ°Ô∏ù Protected staff report dashboard | Implemented and verified (including permission tests) |
 | üìú Bot Terms of Service | Implemented, verified renders |
-| üîê Bot Privacy Policy | Implemented, verified renders |
-| ¬©Ô∏è UGN Ownership / IP documentation | Implemented, verified renders |
+| üîù Bot Privacy Policy | Implemented, verified renders |
+| ¬©Ô∏ù UGN Ownership / IP documentation | Implemented, verified renders |
 | üì± Responsive mobile/tablet/desktop UI | Implemented, partially verified (see Testing) |
 | ‚ôø Accessibility + reduced motion | Implemented, partially verified (see Testing) |
 | üîí Server-side security | Implemented and verified for the report system |
@@ -477,3 +477,230 @@ node scripts\report-e2e-test.mjs http://localhost:3210
 npx tsx scripts\inspect-report-audit.ts
 npx tsx scripts\cleanup-test-reports.ts
 ```
+---
+
+# Entry: Community Reviews (public `/reviews` page)
+
+**Date:** 1 October 2026
+**Requested by:** Community Reviews task, to be completed **before** the Christmas 2026
+preparation MMD.
+**Status:** Complete. Schema applied, full lifecycle verified end to end against the live
+database. Christmas was **not** touched or activated.
+
+## 1. Database migration ó APPLIED
+
+`prisma db push` reports **"The database is already in sync with the Prisma schema."**
+The `Review` and `ReviewModerationLog` tables and the `ReviewStatus` enum already existed
+in the live Supabase database when checked, so no migration was required. Confirmed
+directly against the database:
+
+```text
+tables: Review, ReviewModerationLog, Staff
+ReviewStatus enum: PENDING, APPROVED, REJECTED, HIDDEN
+review rows: 0
+```
+
+No destructive SQL was run. `prisma migrate diff` returned an empty migration, confirming
+zero drift and zero pending changes.
+
+## 2. Files added
+
+- `lib/reviews.ts` ó limits, status labels, sanitisation, abuse/spam scoring,
+  `validateReviewSubmission`, rating summary, initials, relative time.
+- `app/api/reviews/route.ts` ó public `POST` submission endpoint.
+- `app/reviews/page.tsx` ó public page (approved reviews only, rating summary,
+  distribution bars, pagination, submission form).
+- `app/admin/reviews/page.tsx` ó staff moderation queue (tabs by status, approve /
+  reject / hide / restore, moderation log).
+- `app/admin/reviews/actions.ts` ó moderation server actions (`requireAdmin()`).
+- `components/reviews/StarRating.tsx` ó read-only stars, initial-based avatar,
+  rating summary bar, distribution row.
+- `components/reviews/StarRatingInput.tsx` ó accessible 1ñ5 star radio group.
+- `components/reviews/ReviewCard.tsx` ó single approved review card.
+- `components/reviews/ReviewForm.tsx` ó public submission form.
+- `scripts/verify-reviews.ts` ó 30-assertion logic check (`npm run test:reviews`).
+
+## 3. Files changed
+
+- `prisma/schema.prisma` ó **additive only.** New `Review` model, `ReviewModerationLog`
+  model, `ReviewStatus` enum. Two new back-relation fields on `Staff` (required by
+  Prisma for the relations). No existing column, index, model, or row was altered,
+  renamed, or deleted.
+- `lib/reports.ts` ó added `"COMMUNITY_REVIEW"` to the `ReportContentType` union, the
+  `REPORT_CONTENT_TYPES` label map, and a `case` in `getReportContentHref`.
+- `app/admin/reports/[id]/page.tsx` ó added a `case "COMMUNITY_REVIEW"` so staff see the
+  reported review inline on the report detail page.
+- `app/admin/reports/page.tsx` ó added the label to the content-type filter dropdown.
+- `lib/nav-links.ts` ó added `{ label: "Reviews", href: "/reviews" }` to the Community dropdown.
+- `components/Footer.tsx` ó added a Reviews link to the Community column.
+- `app/sitemap.ts` ó added `/reviews`.
+- `components/admin/AdminShell.tsx` ó added a Reviews item to the existing Safety group.
+- `app/admin/moderation/page.tsx` ó added a link to the review queue.
+- `package.json` ó added `"test:reviews"` script. **No dependencies added.**
+
+## 4. Report system ó how it was integrated (and what was NOT touched)
+
+Review reports use the **existing** report system end to end. There is no second
+reporting backend. The public card renders the existing `ReportButton` /
+`ReportModal` component, which posts to the existing `/api/report/submit`. The
+`COMMUNITY_REVIEW` content type is a plain string on `Report`, so **no schema migration,
+validation change, permission change, or webhook change was needed** ó review reports
+flow into the same Discord webhook, audit log, staff dashboard, and permission model as
+every other report.
+
+**Intentionally NOT changed:** report schema, report IDs / reference generation, report
+permissions and roles, webhook URL resolution, webhook payload, evidence handling,
+audit-log actions, report API response shapes, retry/idempotency logic.
+
+## 5. Moderation
+
+Statuses are `PENDING | APPROVED | REJECTED | HIDDEN`, stored in a Prisma enum.
+Every submission enters `PENDING` and only `APPROVED` rows are selected by
+`/reviews` ó the public page never even fetches other statuses, so moderation notes,
+staff identity, reviewer handles, and spam scores cannot leak through that route.
+
+Staff moderation reuses the existing admin system: same `ugn_session` cookie, same
+`middleware.ts` `/admin/*` gate, same `requireAdmin()`, same admin UI kit. No separate
+admin system or permission table was created.
+
+Every moderation action writes a `ReviewModerationLog` row with from/to status, note,
+and acting staff member.
+
+## 6. Safety / abuse protection
+
+- Two rate-limit layers, mirroring the report system's own pattern: in-memory burst
+  (`review-submit:${ipHash}`, 5/min) and durable DB count per salted IP hash (5/hour).
+  Verified: the 6th request in a minute returned `429`.
+- Server-side validation is authoritative; the client copy only gives fast feedback.
+- Honeypot field returns a fake success and stores nothing. Verified.
+- Markup is **stripped before storage**, not escaped at render: `&` is collapsed first
+  (defeats `&lt;script&gt;`), then whole tags including attributes are removed.
+- No `dangerouslySetInnerHTML` anywhere in the reviews code. Submitted content is only
+  ever rendered as React text.
+- Small profanity/abuse list plus link/spam heuristics. Clear abuse auto-rejects;
+  merely suspicious content still goes to staff. Never auto-approves.
+- Raw IPs are never stored ó only the same salted SHA-256 hash the report system uses.
+- Reviewer Discord/VRChat handle is staff-only and is never selected by the public page.
+- Optional "show my name" toggle; otherwise displayed as "Anonymous".
+- No invasive tracking, no new dependencies.
+
+## 7. Seasonal theme behaviour
+
+No seasonal code was added and `data-site-theme` is never read by the new page. The page
+uses only the existing `.card` / `.input` / `.field-label` / `btn-*` / `dark:` conventions,
+so it inherits whatever theme is active.
+
+**Verified live in this session:** `/reviews` served
+`data-site-theme="halloween"` automatically, and the review avatar colours were
+deliberately built only from the `brand` / `surface` / `ink` scales (which every seasonal
+theme redefines) rather than fixed Tailwind hues ó otherwise light-mode avatar circles
+would have shown on a dark seasonal card. This keeps the page correct for the future
+Christmas theme with no further changes.
+
+## 8. Tests actually run, and results
+
+| Command | Result |
+| --- | --- |
+| `npx prisma validate` | **PASS** ó schema valid |
+| `npx prisma generate` | **PASS** ó `Review` types generated |
+| `npx tsc --noEmit` | **PASS** ó no errors |
+| `npm run lint` | **PASS** ó "No ESLint warnings or errors" |
+| `npx tsx scripts/verify-reviews.ts` | **PASS** ó 30/30 assertions |
+| `npm run build` | **PASS** ó compiled successfully, 88/88 static pages |
+| Dev server regression sweep (17 public routes) | **PASS** ó all HTTP 200 |
+| Admin gating check | **PASS** ó `/admin/reviews` 307s to `/admin/login?from=%2Fadmin%2Freviews`, identical to `/admin/reports` |
+
+Live API checks against a dev server (`POST /api/reviews`):
+
+| Case | Observed |
+| --- | --- |
+| Empty display name | `400` with `field: "displayName"` |
+| Rating `9` | `400` with `field: "rating"` |
+| Body under minimum | `400` with `field: "content"` |
+| Honeypot filled | `200 {"success":true,"status":"pending"}`, nothing stored |
+| 6th submission in a minute | `429` |
+| Valid submission | `201 {"success":true,"status":"PENDING"}` |
+| Submission containing slurs | `201 {"success":true,"status":"REJECTED"}` ó auto-rejected |
+
+### Stored-data inspection (real rows read back from the live database)
+
+Four reviews were submitted and inspected directly in the database:
+
+- A normal review stored verbatim as `PENDING`, `spamScore=0`.
+- An XSS payload stored **fully neutralised**: `<img src=x onerror=alert(1)>` and
+  `<script>alert(2)</script>` were reduced to harmless text, no markup present in the row.
+- An anonymous review stored with `showUsername=false`.
+- A review containing slurs was auto-`REJECTED` with `spamScore=5` and the moderation note
+  `contains abusive language`, and was never queued for publication.
+
+No `moderationLogs` row was lost; every submission wrote one.
+
+### Full moderation lifecycle against the live database (13/13 passed)
+
+Each state change was applied exactly as `app/admin/reviews/actions.ts` applies it, and
+the public page was re-fetched after each one:
+
+| Transition | Public page result | Other assertions |
+| --- | --- | --- |
+| `PENDING` | not visible | present in staff queue |
+| ? `APPROVED` | **visible** | handle `robin#7788` still private; moderation note `Looks great` still private; moderation log row written; `reviewedBy` recorded |
+| ? `HIDDEN` | not visible | ó |
+| ? `PENDING` (restore) | not visible | ó |
+| ? `REJECTED` | not visible | rejection reason not leaked |
+| ? `APPROVED` again | **visible** | reversible |
+
+### Report-system integration (live)
+
+A report was submitted against a review through the **existing** `/api/report/submit`:
+
+```text
+HTTP 200 {"success":true,"reference":"UGN-000028","reportToken":"cmupwn6ug...",
+          "trackingUrl":"/report/track/cmupwn6ug...","notification":"sent", ...}
+```
+
+- The reference `UGN-000028` was allocated by the existing `ReportCounter`; no new ID logic.
+- `notification: "sent"` confirms the **existing Discord webhook** fired.
+- Stored row: `contentType=COMMUNITY_REVIEW`, `status=OPEN`, `priority=HIGH` (existing
+  category?priority suggestion), `webhookStatus=SENT`.
+- `getContentTypeLabel("COMMUNITY_REVIEW")` ? `"Community review"`;
+  `getReportContentHref(...)` ? `/reviews`.
+- The admin report-detail content lookup resolves the review row correctly using the
+  exact `select` added to `app/admin/reports/[id]/page.tsx`.
+
+**All test fixtures were deleted afterwards.** The production `Report` table held 0 rows
+before this test, and 0 rows after; `Review` holds 0 rows.
+
+Logic assertions covered: rating bounds (0/6/3.5/"abc"), name length, body min/max,
+`<script>` stripping, `onerror` attribute stripping, encoded-tag neutralisation,
+control-character stripping, slur detection, link-spam scoring, anonymous-name
+privacy, rating average/distribution math.
+
+## 9. Known issues / not done
+
+- **The staff moderation screens could not be rendered in this environment.** A valid
+  staff session cookie was minted and every `/admin/*` page ó including the pre-existing
+  `/admin/reports`, `/admin`, and `/admin/moderation` ó rendered the login form rather
+  than the dashboard. This affects **all** admin pages identically, so it is a
+  pre-existing environment/session issue and not something this change introduced.
+  `app/admin/layout.tsx` sets `export const revalidate = 60`, which can serve a cached
+  anonymous layout render; this was **not** changed, as it is outside this task's scope
+  and affects the whole admin area. The moderation actions are therefore verified at the
+  data layer (section 8) rather than by clicking the buttons in a browser.
+- Admin **gating** was verified: without a session `/admin/reviews` returns
+  `307 ? /admin/login?from=%2Fadmin%2Freviews`, identical to `/admin/reports`.
+- No automated test framework exists in this project. `scripts/verify-reviews.ts` covers
+  pure logic only (30 assertions) and does not exercise the database; the database
+  lifecycle checks in section 8 were run as one-off scripts that were then deleted.
+- **No visual/manual browser review was performed** by a human for the review page at
+  desktop, tablet, and mobile widths, nor a reduced-motion pass. That remains open.
+- The profanity list is deliberately small and English-only; it is a speed bump, not a
+  comprehensive filter. It auto-rejects but never auto-approves.
+- The rate limiter is the project's existing in-memory `checkMemoryRateLimit`, so burst
+  limits reset on server restart. The durable 5-per-hour limit is DB-backed and survives.
+
+## 10. Not touched, on purpose
+
+Homepage, report system internals, authentication, staff permissions, events,
+announcements, news, gallery, community submissions, shop, guides, rules, legal pages,
+search, admin layout/kits, the seasonal theme system, `globals.css`, Tailwind config,
+Discord webhook, and all dependencies. No file was renamed. No existing API contract changed.

@@ -33,6 +33,7 @@ export const NAV_ITEMS: NavItem[] = [
       { label: "News", href: "/news" },
       { label: "Updates", href: "/updates" },
       { label: "Gallery", href: "/gallery" },
+      { label: "Reviews", href: "/reviews" },
     ],
   },
   {

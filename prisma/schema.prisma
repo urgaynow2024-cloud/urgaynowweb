@@ -29,6 +29,8 @@ model Staff {
   assignedReports Report[] @relation("ReportAssignee")
   resolvedReports Report[] @relation("ReportResolver")
   reportAuditLogs ReportAuditLog[] @relation("ReportAuditActor")
+  reviewedReviews Review[] @relation("ReviewReviewer")
+  reviewModerationLogs ReviewModerationLog[] @relation("ReviewModerationLogStaff")
 
   @@index([rank])
   @@index([sortOrder])
@@ -404,6 +406,60 @@ model CommunitySubmissionModerationLog {
   staff             Staff?   @relation("ModerationLogStaff", fields: [performedBy], references: [id])
 
   @@index([submissionId])
+  @@index([performedAt])
+}
+
+// ---------------------------------------------------------------------------
+// Community reviews
+//
+// Public, staff-moderated community feedback. Reviews are plain text only and
+// are never rendered as HTML. They enter the moderation queue as PENDING and
+// are only readable on /reviews while APPROVED.
+// ---------------------------------------------------------------------------
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  HIDDEN
+}
+
+model Review {
+  id              String       @id @default(cuid())
+  status          ReviewStatus @default(PENDING)
+  rating          Int // 1-5 stars
+  content         String // plain text, never HTML
+  displayName     String       @default("")
+  discordUsername String       @default("")
+  showUsername    Boolean      @default(true)
+  moderationNote  String       @default("") // staff-only, never exposed publicly
+  submittedIpHash String       @default("")
+  spamScore       Int          @default(0)
+  reviewedAt      DateTime?
+  reviewedBy      String?
+  reviewedByStaff Staff?       @relation("ReviewReviewer", fields: [reviewedBy], references: [id])
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  moderationLogs  ReviewModerationLog[]
+
+  @@index([status, createdAt])
+  @@index([status, rating])
+  @@index([submittedIpHash, createdAt])
+}
+
+model ReviewModerationLog {
+  id          String   @id @default(cuid())
+  reviewId    String
+  action      String // APPROVED | REJECTED | HIDDEN | RESTORED
+  note        String   @default("")
+  fromStatus  String   @default("")
+  toStatus    String   @default("")
+  performedBy String?
+  performedAt DateTime @default(now())
+  review      Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  staff       Staff?   @relation("ReviewModerationLogStaff", fields: [performedBy], references: [id])
+
+  @@index([reviewId, performedAt])
   @@index([performedAt])
 }
 

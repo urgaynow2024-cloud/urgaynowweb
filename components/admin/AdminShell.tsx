@@ -26,6 +26,7 @@ import {
   IconChevronRight,
   IconShield,
   IconFlag,
+  IconStar,
   IconActivity,
   IconCheck,
   IconTag,
@@ -75,6 +76,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Safety",
     items: [
       { key: "moderation", label: "Moderation", href: "/admin/moderation", icon: <IconShield size={19} /> },
+      { key: "reviews", label: "Reviews", href: "/admin/reviews", icon: <IconStar size={19} /> },
       { key: "reports", label: "Reports", href: "/admin/reports", icon: <IconFlag size={19} /> },
       { key: "rules", label: "Rules", href: "/admin/rules", icon: <IconBook size={19} /> },
     ],

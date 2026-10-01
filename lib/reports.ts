@@ -6,7 +6,8 @@ export type ReportContentType =
   | "STAFF_PROFILE"
   | "SHOP_DESIGN"
   | "COMMUNITY_SUBMISSION"
-  | "ANNOUNCEMENT";
+  | "ANNOUNCEMENT"
+  | "COMMUNITY_REVIEW";
 
 export type ReportCategory =
   // Canonical categories (MMD 2026)
@@ -61,6 +62,7 @@ export const REPORT_CONTENT_TYPES: Record<
   SHOP_DESIGN: { label: "Shop design", description: "A community design in the shop showcase" },
   COMMUNITY_SUBMISSION: { label: "Community submission", description: "A pending community submission" },
   ANNOUNCEMENT: { label: "Announcement", description: "A news announcement" },
+  COMMUNITY_REVIEW: { label: "Community review", description: "A public community review" },
 };
 
 /**
@@ -479,8 +481,10 @@ export function getReportContentHref(contentType: string, contentId: string): st
       return `/staff/${contentId}`;
     case "SHOP_DESIGN":
       return `/shop`;
-    case "ANNOUNCEMENT":
-      return `/news`;
+case "ANNOUNCEMENT":
+      return "/news";
+    case "COMMUNITY_REVIEW":
+      return "/reviews";
     default:
       return null;
   }

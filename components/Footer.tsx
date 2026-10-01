@@ -121,6 +121,11 @@ export async function Footer() {
                 </Link>
               </li>
               <li>
+                <Link className="text-ink-600 transition-all duration-200 hover:text-brand-600 hover:translate-x-1 inline-block dark:text-ink-400 dark:hover:text-brand-300" href="/reviews">
+                  Reviews
+                </Link>
+              </li>
+              <li>
                 <Link className="text-ink-600 transition-all duration-200 hover:text-brand-600 hover:translate-x-1 inline-block dark:text-ink-400 dark:hover:text-brand-300" href="/shop">
                   Shop
                 </Link>

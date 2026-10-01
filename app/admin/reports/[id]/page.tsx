@@ -85,6 +85,18 @@ async function getReportedContent(report: Awaited<ReturnType<typeof getReportWit
           where: { id: report.contentId },
           select: { id: true, title: true, excerpt: true, coverImage: true, state: true },
         });
+      case "COMMUNITY_REVIEW":
+        return prisma.review.findUnique({
+          where: { id: report.contentId },
+          select: {
+            id: true,
+            displayName: true,
+            content: true,
+            rating: true,
+            status: true,
+            createdAt: true,
+          },
+        });
       default:
         return null;
     }

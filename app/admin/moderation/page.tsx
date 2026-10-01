@@ -182,10 +182,15 @@ export default function ModerationPage() {
   return (
     <div>
       <PageHeader
-        breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Moderation" }]}
-        title="Moderation"
-        description="Review member photo submissions and group photos."
-      />
+          breadcrumbs={[{ label: "Dashboard", href: "/admin" }, { label: "Moderation" }]}
+          title="Moderation"
+          description="Review member photo submissions, group photos, and community reviews."
+          actions={
+            <Link href="/admin/reviews" className="btn-secondary btn-sm">
+              Review queue <IconArrowRight size={14} />
+            </Link>
+          }
+        />
 
       <Suspense fallback={<ListSkeleton rows={12} />}>
         <ModerationContent />

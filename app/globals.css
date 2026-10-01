@@ -1,9 +1,49 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind utilities;
 
 :root {
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: light dark;
+
+  /* Normal UGN palette. The Tailwind brand/surface/ink scales resolve through
+     these variables, so a seasonal theme only has to redefine them. */
+  --brand-rgb: 117 7 135;
+  --brand-50-rgb: 250 245 251;
+  --brand-100-rgb: 243 232 245;
+  --brand-200-rgb: 232 208 236;
+  --brand-300-rgb: 214 171 224;
+  --brand-400-rgb: 189 127 206;
+  --brand-500-rgb: 162 86 187;
+  --brand-600-rgb: 138 58 163;
+  --brand-700-rgb: 117 7 135;
+  --brand-800-rgb: 97 31 110;
+  --brand-900-rgb: 81 26 92;
+  --brand-950-rgb: 45 10 50;
+
+  --surface-0-rgb: 255 255 255;
+  --surface-50-rgb: 248 247 250;
+  --surface-100-rgb: 240 238 244;
+  --surface-200-rgb: 228 224 234;
+  --surface-300-rgb: 205 199 214;
+  --surface-400-rgb: 168 160 181;
+  --surface-500-rgb: 138 127 155;
+  --surface-600-rgb: 110 98 128;
+  --surface-700-rgb: 82 71 99;
+  --surface-800-rgb: 54 44 70;
+  --surface-900-rgb: 26 21 40;
+  --surface-950-rgb: 15 11 22;
+
+  --ink-50-rgb: 247 248 250;
+  --ink-100-rgb: 238 240 244;
+  --ink-200-rgb: 226 229 236;
+  --ink-300-rgb: 205 210 221;
+  --ink-400-rgb: 154 162 180;
+  --ink-500-rgb: 107 115 132;
+  --ink-600-rgb: 77 84 103;
+  --ink-700-rgb: 56 61 77;
+  --ink-800-rgb: 35 38 47;
+  --ink-900-rgb: 21 23 29;
+  --ink-950-rgb: 12 13 18;
 }
 
 html {
@@ -120,7 +160,7 @@ h1, h2, h3, h4 {
   @apply px-5 py-3 text-base;
 }
 
-/* CTA buttons — premium hero scale */
+/* CTA buttons - premium hero scale */
 .btn-cta {
   @apply btn-lg btn-primary relative overflow-hidden rounded-2xl;
   padding: 0.75rem 2rem;
@@ -132,7 +172,7 @@ h1, h2, h3, h4 {
   box-shadow: 0 0 40px -5px rgba(189,127,206,0.5), 0 0 80px -10px rgba(117,7,135,0.35);
 }
 
-/* CTA secondary — outlined glow */
+/* CTA secondary - outlined glow */
 .btn-cta-secondary {
   @apply btn-lg relative overflow-hidden rounded-2xl border-2 border-brand-300/60 bg-transparent text-brand-700 font-semibold dark:border-brand-600/60 dark:text-brand-200;
   padding: 0.75rem 2rem;
@@ -523,7 +563,7 @@ h1, h2, h3, h4 {
   --theme-decorativeGlow: rgba(255, 215, 0, 0.4);
 }
 
-/* Halloween 2026 — official UGN seasonal palette */
+/* Halloween 2026 - official UGN seasonal palette */
 :root[data-site-theme="halloween"] {
   --theme-brand: #b42335;
   --theme-brandSoft: rgba(180, 35, 53, 0.12);
@@ -751,7 +791,7 @@ h1, h2, h3, h4 {
 }
 
 /* ==========================================================================
-   Legal documents — highly readable, no seasonal decoration behind the text
+   Legal documents - highly readable, no seasonal decoration behind the text
    ========================================================================== */
 
 .legal-prose {
@@ -790,26 +830,160 @@ h1, h2, h3, h4 {
 }
 
 /* ==========================================================================
-   Halloween 2026 atmosphere
-   Pure CSS/SVG decoration layer. Nothing here animates under reduced motion,
-   nothing is interactive, and nothing changes layout.
+   Halloween 2026 - full-site seasonal theme
+   --------------------------------------------------------------------------
+   The UGN layout, components and content stay exactly as they are. Only the
+   colours, atmosphere and surface decoration change.
+
+   How it works:
+   1. The Tailwind brand/surface/ink scales resolve through CSS variables
+      (see `:root` at the top of this file). Everything below redefines those
+      variables for the seasonal theme, so every component re-colours at once
+      with no component or layout changes.
+   2. `tailwind.config.ts` treats the halloween theme as a dark theme, so the
+      existing `dark:` variants (which are written for night backgrounds)
+      always resolve to the UGN Halloween night palette.
+   3. The `.hw-*` decoration layer is CSS/SVG only, sits behind all content,
+      is never interactive, and stops animating under reduced motion.
+
+   Official palette (MMD):
+     #0D0A12 near black   #15111C charcoal     #1A1026 dark purple
+     #2A123D deep purple  #6D28D9 UGN purple   #8F1D2C dark red
+     #F97316 halloween orange   #FF8A1F pumpkin orange
+     #F5F1F7 ghost white  #A8A0AD muted grey
    ========================================================================== */
 
-:root[data-site-theme="halloween"] body {
-  background-image:
-    radial-gradient(70rem 40rem at 80% -15%, rgba(255, 138, 31, 0.12) 0%, transparent 60%),
-    radial-gradient(50rem 50rem at -10% 105%, rgba(109, 40, 217, 0.10) 0%, transparent 55%),
-    linear-gradient(180deg, rgba(42, 18, 61, 0.06) 0%, transparent 40%);
-  background-attachment: fixed;
-}
-:root[data-site-theme="halloween"].dark body {
-  background-image:
-    radial-gradient(70rem 40rem at 80% -15%, rgba(255, 138, 31, 0.10) 0%, transparent 60%),
-    radial-gradient(50rem 50rem at -10% 105%, rgba(109, 40, 217, 0.16) 0%, transparent 55%),
-    linear-gradient(180deg, rgba(13, 10, 18, 0.9) 0%, rgba(13, 10, 18, 0.4) 35%, transparent 70%);
+/* --------------------------------------------------------------------------
+   1. Palette + full-site colour scales
+   -------------------------------------------------------------------------- */
+:root[data-site-theme="halloween"] {
+  /* Official palette */
+  --hw-near-black: #0d0a12;
+  --hw-charcoal: #15111c;
+  --hw-dark-purple: #1a1026;
+  --hw-deep-purple: #2a123d;
+  --hw-ugn-purple: #6d28d9;
+  --hw-dark-red: #8f1d2c;
+  --hw-halloween-red: #b42335;
+  --hw-orange: #f97316;
+  --hw-pumpkin: #ff8a1f;
+  --hw-ghost: #f5f1f7;
+  --hw-muted: #a8a0ad;
+
+  /* Atmospheric accents */
+  --hw-line: rgba(109, 40, 217, 0.32);
+  --hw-edge: rgba(143, 29, 44, 0.55);
+  --hw-glow-orange: rgba(249, 115, 22, 0.38);
+  --hw-glow-purple: rgba(109, 40, 217, 0.38);
+  --hw-web-ink: rgba(168, 160, 173, 0.45);
+  --hw-card: 21 17 28;
+  --hw-card-raised: 26 16 38;
+  --hw-border: 42 34 51;
+
+  color-scheme: dark;
+
+  /* Brand scale - UGN purple stays the dominant brand colour, with the
+     Halloween red taking the deep/CTA end and pale lilac for night text. */
+  --brand-rgb: 109 40 217;
+  --brand-50-rgb: 26 21 40;
+  --brand-100-rgb: 42 18 61;
+  --brand-200-rgb: 203 173 255;
+  --brand-300-rgb: 179 143 247;
+  --brand-400-rgb: 155 116 240;
+  --brand-500-rgb: 128 74 232;
+  --brand-600-rgb: 120 58 228;
+  --brand-700-rgb: 112 44 222;
+  --brand-800-rgb: 180 35 53;
+  --brand-900-rgb: 143 29 44;
+  --brand-950-rgb: 13 10 18;
+
+  /* Surface scale - charcoal and deep purple night */
+  --surface-0-rgb: 21 17 28;
+  --surface-50-rgb: 26 16 38;
+  --surface-100-rgb: 36 22 52;
+  --surface-200-rgb: 45 22 63;
+  --surface-300-rgb: 58 26 82;
+  --surface-400-rgb: 109 40 217;
+  --surface-500-rgb: 130 66 224;
+  --surface-600-rgb: 168 160 173;
+  --surface-700-rgb: 130 118 150;
+  --surface-800-rgb: 82 71 99;
+  --surface-900-rgb: 36 28 51;
+  --surface-950-rgb: 13 10 18;
+
+  /* Ink scale - the light end carries night text, the dark end carries
+     surfaces and borders (this is how the UGN `dark:` variants use it). */
+  --ink-50-rgb: 245 241 247;
+  --ink-100-rgb: 237 231 241;
+  --ink-200-rgb: 226 218 232;
+  --ink-300-rgb: 205 195 214;
+  --ink-400-rgb: 175 168 182;
+  --ink-500-rgb: 150 140 162;
+  --ink-600-rgb: 128 118 140;
+  --ink-700-rgb: 108 100 122;
+  --ink-800-rgb: 42 34 51;
+  --ink-900-rgb: 30 25 38;
+  --ink-950-rgb: 13 10 18;
 }
 
-/* Decoration layer — behind all content, never interactive. */
+/* --------------------------------------------------------------------------
+   2. Page atmosphere - night sky, starfield, mist
+   -------------------------------------------------------------------------- */
+:root[data-site-theme="halloween"] body {
+  background-color: #0d0a12;
+  background-image:
+    radial-gradient(60rem 34rem at 78% -8%, rgba(255, 138, 31, 0.16) 0%, transparent 62%),
+    radial-gradient(52rem 46rem at 6% 4%, rgba(109, 40, 217, 0.22) 0%, transparent 60%),
+    radial-gradient(48rem 40rem at 92% 78%, rgba(143, 29, 44, 0.16) 0%, transparent 62%),
+    radial-gradient(60rem 50rem at -10% 105%, rgba(42, 18, 61, 0.5) 0%, transparent 58%),
+    linear-gradient(180deg, #0d0a12 0%, #15111c 45%, #1a1026 100%);
+  background-attachment: fixed;
+}
+
+/* Starfield and ground mist. Fixed, behind everything, never interactive. */
+:root[data-site-theme="halloween"] body::before,
+:root[data-site-theme="halloween"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+}
+
+:root[data-site-theme="halloween"] body::before {
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, rgba(245, 241, 247, 0.7) 50%, transparent 51%),
+    radial-gradient(1px 1px at 28% 62%, rgba(245, 241, 247, 0.5) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 44% 12%, rgba(255, 214, 170, 0.75) 50%, transparent 51%),
+    radial-gradient(1px 1px at 61% 44%, rgba(245, 241, 247, 0.45) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 74% 24%, rgba(214, 199, 255, 0.7) 50%, transparent 51%),
+    radial-gradient(1px 1px at 86% 68%, rgba(245, 241, 247, 0.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 8% 82%, rgba(245, 241, 247, 0.4) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 36% 92%, rgba(255, 138, 31, 0.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 54% 74%, rgba(245, 241, 247, 0.35) 50%, transparent 51%),
+    radial-gradient(1px 1px at 94% 40%, rgba(245, 241, 247, 0.45) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 68% 88%, rgba(196, 181, 211, 0.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 22% 38%, rgba(245, 241, 247, 0.35) 50%, transparent 51%);
+  opacity: 0.5;
+  animation: hw-twinkle 7s ease-in-out infinite;
+}
+
+:root[data-site-theme="halloween"] body::after {
+  background-image:
+    radial-gradient(40rem 12rem at 20% 88%, rgba(109, 40, 217, 0.18) 0%, transparent 70%),
+    radial-gradient(46rem 12rem at 78% 96%, rgba(42, 18, 61, 0.24) 0%, transparent 70%),
+    radial-gradient(30rem 8rem at 50% 100%, rgba(255, 138, 31, 0.06) 0%, transparent 70%);
+  filter: blur(18px);
+  animation: hw-drift 40s ease-in-out infinite;
+}
+
+:root[data-site-theme="halloween"] ::selection {
+  background-color: rgba(255, 138, 31, 0.28);
+}
+
+/* --------------------------------------------------------------------------
+   3. Decoration layer - behind all content, never interactive
+   -------------------------------------------------------------------------- */
 .hw-layer {
   position: fixed;
   inset: 0;
@@ -826,9 +1000,22 @@ h1, h2, h3, h4 {
   width: 22rem;
   height: 22rem;
   border-radius: 9999px;
-  background: radial-gradient(circle at 35% 35%, rgba(245, 241, 247, 0.28) 0%, rgba(255, 138, 31, 0.16) 45%, transparent 70%);
+  background: radial-gradient(circle at 35% 35%, rgba(245, 241, 247, 0.3) 0%, rgba(255, 138, 31, 0.18) 45%, transparent 70%);
   filter: blur(2px);
   animation: hw-breathe 9s ease-in-out infinite;
+}
+
+/* A colder second moon low on the left, for depth. */
+.hw-moon-2 {
+  position: absolute;
+  bottom: 8%;
+  left: -5rem;
+  width: 14rem;
+  height: 14rem;
+  border-radius: 9999px;
+  background: radial-gradient(circle at 60% 40%, rgba(155, 116, 240, 0.16) 0%, transparent 68%);
+  filter: blur(3px);
+  animation: hw-breathe 13s ease-in-out infinite;
 }
 
 .hw-fog {
@@ -836,7 +1023,7 @@ h1, h2, h3, h4 {
   left: -20%;
   width: 140%;
   height: 18rem;
-  background: radial-gradient(ellipse at 50% 100%, rgba(109, 40, 217, 0.16) 0%, transparent 70%);
+  background: radial-gradient(ellipse at 50% 100%, rgba(109, 40, 217, 0.18) 0%, transparent 70%);
   filter: blur(28px);
 }
 .hw-fog-a {
@@ -853,7 +1040,7 @@ h1, h2, h3, h4 {
   position: absolute;
   width: 16rem;
   height: 16rem;
-  color: var(--hw-muted, #a8a0ad);
+  color: var(--hw-web-ink);
   opacity: 0.22;
 }
 .hw-web-tl {
@@ -873,6 +1060,12 @@ h1, h2, h3, h4 {
   transform-origin: bottom left;
   transform: scaleY(-1);
 }
+.hw-web-br {
+  bottom: 0;
+  right: 0;
+  transform-origin: bottom right;
+  transform: scale(-1);
+}
 
 .hw-bats {
   position: absolute;
@@ -882,12 +1075,8 @@ h1, h2, h3, h4 {
   position: absolute;
   width: 3.5rem;
   height: auto;
-  color: var(--hw-deep-purple, #2a123d);
+  color: #2a123d;
   opacity: 0.55;
-}
-.dark .hw-bat {
-  color: var(--hw-orange, #f97316);
-  opacity: 0.42;
 }
 .hw-bat-1 {
   top: 12%;
@@ -916,7 +1105,7 @@ h1, h2, h3, h4 {
   position: absolute;
   width: 1.4rem;
   height: 1.4rem;
-  color: var(--hw-pumpkin, #ff8a1f);
+  color: #ff8a1f;
   opacity: 0.35;
 }
 .hw-leaf-1 {
@@ -941,6 +1130,49 @@ h1, h2, h3, h4 {
   animation-delay: -20s;
 }
 
+/* Embers rising from the bottom of the page. */
+.hw-embers {
+  position: absolute;
+  inset: 0;
+}
+.hw-ember {
+  position: absolute;
+  bottom: -4%;
+  width: 5px;
+  height: 5px;
+  border-radius: 9999px;
+  background: #ff8a1f;
+  box-shadow: 0 0 10px 2px rgba(249, 115, 22, 0.55);
+  opacity: 0;
+  animation: hw-rise 16s linear infinite;
+}
+.hw-ember-1 { left: 12%; animation-duration: 18s; animation-delay: -2s; }
+.hw-ember-2 { left: 28%; animation-duration: 22s; animation-delay: -9s; width: 4px; height: 4px; }
+.hw-ember-3 { left: 46%; animation-duration: 20s; animation-delay: -14s; }
+.hw-ember-4 { left: 64%; animation-duration: 24s; animation-delay: -5s; width: 6px; height: 6px; }
+.hw-ember-5 { left: 78%; animation-duration: 19s; animation-delay: -11s; width: 4px; height: 4px; }
+.hw-ember-6 { left: 90%; animation-duration: 21s; animation-delay: -17s; }
+
+/* Occasional pumpkins and ghosts drifting through the night. */
+.hw-floaters {
+  position: absolute;
+  inset: 0;
+}
+.hw-floater {
+  position: absolute;
+  width: 2.2rem;
+  height: 2.2rem;
+  color: #ff8a1f;
+  opacity: 0.3;
+  animation: hw-float-sway 28s ease-in-out infinite;
+}
+.hw-floater-ghost {
+  color: #f5f1f7;
+}
+.hw-floater-1 { top: 22%; left: 4%; animation-duration: 30s; animation-delay: -3s; }
+.hw-floater-2 { top: 58%; left: 78%; width: 1.8rem; height: 1.8rem; animation-duration: 36s; animation-delay: -17s; }
+.hw-floater-3 { top: 34%; left: 66%; width: 1.5rem; height: 1.5rem; animation-duration: 42s; animation-delay: -25s; }
+
 .hw-sparkles {
   position: absolute;
   inset: 0;
@@ -950,7 +1182,7 @@ h1, h2, h3, h4 {
   width: 4px;
   height: 4px;
   border-radius: 9999px;
-  background: var(--hw-orange, #f97316);
+  background: #f97316;
   opacity: 0;
   animation: hw-twinkle 6s ease-in-out infinite;
 }
@@ -963,32 +1195,330 @@ h1, h2, h3, h4 {
 .hw-sparkle-7 { top: 82%; left: 14%; animation-delay: 2s; }
 .hw-sparkle-8 { top: 26%; left: 92%; animation-delay: 5s; }
 
-/* Seasonal banner */
-.hw-banner {
+/* --------------------------------------------------------------------------
+   4. Hero - the strongest Halloween area
+   -------------------------------------------------------------------------- */
+.hw-hero {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Purple/orange glow behind the heading. */
+.hw-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(13, 10, 18, 0.96) 0%, rgba(42, 18, 61, 0.96) 45%, rgba(143, 29, 44, 0.96) 100%);
+    radial-gradient(34rem 20rem at 32% 34%, rgba(255, 138, 31, 0.2) 0%, transparent 68%),
+    radial-gradient(40rem 26rem at 74% 18%, rgba(109, 40, 217, 0.28) 0%, transparent 66%),
+    radial-gradient(30rem 18rem at 12% 82%, rgba(143, 29, 44, 0.22) 0%, transparent 70%);
+}
+
+/* Hero night sky, layered over the untouched UGN hero background. */
+.hw-hero-sky {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.hw-hero-moon {
+  position: absolute;
+  top: -8%;
+  right: 6%;
+  width: min(38vw, 20rem);
+  height: min(38vw, 20rem);
+  border-radius: 9999px;
+  background: radial-gradient(circle at 38% 34%, rgba(245, 241, 247, 0.34) 0%, rgba(245, 241, 247, 0.12) 34%, rgba(255, 138, 31, 0.16) 62%, transparent 74%);
+  filter: blur(1px);
+  animation: hw-breathe 11s ease-in-out infinite;
+}
+
+.hw-hero-stars {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.5px 1.5px at 18% 24%, rgba(245, 241, 247, 0.85) 50%, transparent 51%),
+    radial-gradient(1px 1px at 34% 12%, rgba(245, 241, 247, 0.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 52% 32%, rgba(214, 199, 255, 0.75) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 66% 16%, rgba(255, 214, 170, 0.8) 50%, transparent 51%),
+    radial-gradient(1px 1px at 82% 38%, rgba(245, 241, 247, 0.55) 50%, transparent 51%),
+    radial-gradient(1px 1px at 8% 46%, rgba(245, 241, 247, 0.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 44% 58%, rgba(245, 241, 247, 0.4) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 72% 62%, rgba(196, 181, 211, 0.7) 50%, transparent 51%),
+    radial-gradient(1px 1px at 24% 76%, rgba(245, 241, 247, 0.35) 50%, transparent 51%),
+    radial-gradient(1px 1px at 90% 72%, rgba(255, 138, 31, 0.5) 50%, transparent 51%);
+  animation: hw-twinkle 8s ease-in-out infinite;
+}
+
+.hw-hero-fog {
+  position: absolute;
+  left: -15%;
+  bottom: -8%;
+  width: 130%;
+  height: 40%;
+  background:
+    radial-gradient(30rem 10rem at 30% 100%, rgba(109, 40, 217, 0.28) 0%, transparent 72%),
+    radial-gradient(34rem 10rem at 74% 100%, rgba(42, 18, 61, 0.34) 0%, transparent 72%);
+  filter: blur(22px);
+  animation: hw-drift 30s ease-in-out infinite;
+}
+
+/* Spiderweb corners inside the hero. */
+.hw-hero-web {
+  position: absolute;
+  width: 12rem;
+  height: 12rem;
+  color: var(--hw-web-ink);
+  opacity: 0.2;
+}
+.hw-hero-web-tl { top: 0; left: 0; }
+.hw-hero-web-tr { top: 0; right: 0; transform: scaleX(-1); }
+
+.hw-hero-icon {
+  filter: drop-shadow(0 4px 14px rgba(249, 115, 22, 0.45));
+}
+
+/* Hero heading: pumpkin gradient over the existing gradient text. */
+:root[data-site-theme="halloween"] .hw-hero .text-gradient {
+  background-image: linear-gradient(90deg, #ff8a1f 0%, #f97316 35%, #b42335 70%, #6d28d9 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+:root[data-site-theme="halloween"] .hw-hero h1 {
+  text-shadow: 0 0 42px rgba(109, 40, 217, 0.45);
+}
+
+/* --------------------------------------------------------------------------
+   5. Cards - same UGN card, Halloween surface treatment
+   -------------------------------------------------------------------------- */
+.hw-card-treat {
+  position: relative;
+  border-color: rgba(109, 40, 217, 0.34) !important;
+  box-shadow: 0 10px 30px -18px rgba(255, 138, 31, 0.5), 0 0 0 1px rgba(109, 40, 217, 0.12) !important;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease;
+}
+
+/* Hairline of pumpkin light along the top edge of a card. */
+.hw-card-treat::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 138, 31, 0.55) 45%, transparent 100%);
+  opacity: 0.7;
+}
+
+.hw-card-treat:hover {
+  border-color: rgba(255, 138, 31, 0.5) !important;
+  box-shadow: 0 18px 44px -18px rgba(255, 138, 31, 0.55), 0 0 34px -14px rgba(109, 40, 217, 0.75), 0 0 0 1px rgba(255, 138, 31, 0.25) !important;
+}
+
+/* Spiderweb corner on feature and staff cards. */
+.hw-feature-card::after,
+.hw-staff-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 7rem;
+  height: 7rem;
+  pointer-events: none;
+  opacity: 0.14;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' fill='none' stroke='%23a8a0ad' stroke-width='0.8'%3E%3Cg%3E%3Ccircle cx='120' cy='0' r='18'/%3E%3Ccircle cx='120' cy='0' r='32'/%3E%3Ccircle cx='120' cy='0' r='46'/%3E%3Ccircle cx='120' cy='0' r='60'/%3E%3Cline x1='120' y1='0' x2='72' y2='-46' transform='rotate(30 120 0)'/%3E%3Cline x1='120' y1='0' x2='72' y2='-46' transform='rotate(60 120 0)'/%3E%3Cline x1='120' y1='0' x2='72' y2='-46' transform='rotate(90 120 0)'/%3E%3Cline x1='120' y1='0' x2='72' y2='-46' transform='rotate(120 120 0)'/%3E%3Cline x1='120' y1='0' x2='72' y2='-46' transform='rotate(150 120 0)'/%3E%3Cline x1='120' y1='0' x2='72' y2='-46' transform='rotate(180 120 0)'/%3E%3C/g%3E%3C/svg%3E");
+  transition: opacity 0.4s ease;
+}
+
+.hw-feature-card:hover::after,
+.hw-staff-card:hover::after {
+  opacity: 0.3;
+}
+
+/* Feature icon tiles: pumpkin light behind the existing gradient icon. */
+.hw-feature-card .rounded-2xl {
+  box-shadow: 0 10px 30px -14px rgba(255, 138, 31, 0.7);
+}
+.hw-feature-card:hover .rounded-2xl {
+  box-shadow: 0 14px 38px -12px rgba(255, 138, 31, 0.9), 0 0 26px -8px rgba(109, 40, 217, 0.9);
+}
+
+/* Staff card hover glow. */
+.hw-staff-card {
+  position: relative;
+  border-color: rgba(109, 40, 217, 0.32) !important;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease;
+}
+.hw-staff-card:hover {
+  border-color: rgba(255, 138, 31, 0.45) !important;
+  box-shadow: 0 22px 46px -20px rgba(0, 0, 0, 0.7), 0 0 30px -14px rgba(109, 40, 217, 0.85) !important;
+}
+
+/* Event cards get a warmer, glowing edge. */
+.hw-event-card {
+  position: relative;
+  border-color: rgba(109, 40, 217, 0.3) !important;
+}
+.hw-event-card:hover {
+  border-color: rgba(255, 138, 31, 0.45) !important;
+  box-shadow: 0 18px 40px -20px rgba(255, 138, 31, 0.55) !important;
+}
+
+/* Generic UGN cards still get the night surface. */
+:root[data-site-theme="halloween"] .card,
+:root[data-site-theme="halloween"] .card-premium {
+  background-color: rgb(var(--hw-card));
+  border-color: rgba(109, 40, 217, 0.28);
+  box-shadow: 0 10px 30px -20px rgba(0, 0, 0, 0.8);
+}
+
+:root[data-site-theme="halloween"] .card-premium:hover,
+:root[data-site-theme="halloween"] .card-hover:hover {
+  border-color: rgba(255, 138, 31, 0.4);
+  box-shadow: 0 18px 40px -20px rgba(255, 138, 31, 0.5);
+}
+
+/* White surfaces (Tailwind `bg-white` literals) become charcoal night cards. */
+:root[data-site-theme="halloween"] .bg-white {
+  background-color: rgb(var(--hw-card));
+}
+
+/* --------------------------------------------------------------------------
+   6. Buttons, links, badges, inputs, modals
+   -------------------------------------------------------------------------- */
+:root[data-site-theme="halloween"] .btn-primary {
+  background-image: linear-gradient(135deg, #6d28d9 0%, #7c2fe2 45%, #b42335 100%);
+  box-shadow: 0 10px 26px -12px rgba(109, 40, 217, 0.9);
+}
+:root[data-site-theme="halloween"] .btn-primary:hover {
+  box-shadow: 0 14px 32px -12px rgba(255, 138, 31, 0.75), 0 0 24px -10px rgba(109, 40, 217, 0.9);
+}
+
+:root[data-site-theme="halloween"] .btn-cta {
+  background-image: linear-gradient(120deg, #6d28d9 0%, #8f1d2c 55%, #ff8a1f 100%);
+  box-shadow: 0 10px 28px -12px rgba(255, 138, 31, 0.6);
+}
+:root[data-site-theme="halloween"] .btn-cta:hover {
+  box-shadow: 0 16px 36px -12px rgba(255, 138, 31, 0.8), 0 0 26px -10px rgba(109, 40, 217, 0.8);
+}
+
+:root[data-site-theme="halloween"] .btn-secondary,
+:root[data-site-theme="halloween"] .btn-outline {
+  background-color: rgba(42, 18, 61, 0.55);
+  border-color: rgba(255, 138, 31, 0.35);
+  color: #f5f1f7;
+}
+:root[data-site-theme="halloween"] .btn-secondary:hover,
+:root[data-site-theme="halloween"] .btn-outline:hover {
+  border-color: rgba(255, 138, 31, 0.7);
+  background-color: rgba(58, 26, 82, 0.7);
+  box-shadow: 0 10px 26px -14px rgba(255, 138, 31, 0.6);
+}
+
+:root[data-site-theme="halloween"] .btn-ghost:hover {
+  background-color: rgba(109, 40, 217, 0.18);
+  color: #ff8a1f;
+}
+
+:root[data-site-theme="halloween"] .badge-brand {
+  background-color: rgba(109, 40, 217, 0.22);
+  border-color: rgba(255, 138, 31, 0.35);
+  color: #ffb37a;
+}
+
+/* Inputs, selects and textareas pick up the night surface through the
+   remapped ink scale; add the pumpkin focus glow. */
+:root[data-site-theme="halloween"] .input:focus,
+:root[data-site-theme="halloween"] select:focus,
+:root[data-site-theme="halloween"] textarea:focus {
+  border-color: rgba(255, 138, 31, 0.6);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.18);
+}
+
+/* Modals and dialogs. */
+:root[data-site-theme="halloween"] [role="dialog"],
+:root[data-site-theme="halloween"] .modal-panel {
+  background-color: #15111c;
+  border: 1px solid rgba(109, 40, 217, 0.4);
+  box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.95), 0 0 40px -22px rgba(255, 138, 31, 0.6);
+}
+:root[data-site-theme="halloween"] [role="dialog"] {
+  background-image: radial-gradient(24rem 12rem at 80% -10%, rgba(255, 138, 31, 0.12) 0%, transparent 70%);
+}
+
+:root[data-site-theme="halloween"] *:focus-visible {
+  --tw-ring-color: rgba(255, 138, 31, 0.7);
+  --tw-ring-offset-color: #0d0a12;
+}
+
+/* --------------------------------------------------------------------------
+   7. Section dividers, scrollbars, footer
+   -------------------------------------------------------------------------- */
+:root[data-site-theme="halloween"] main > div[class*="border-t"],
+:root[data-site-theme="halloween"] main > div[class*="border-b"],
+:root[data-site-theme="halloween"] hr {
+  border-color: rgba(109, 40, 217, 0.3);
+}
+
+:root[data-site-theme="halloween"] main > div[class*="border-t"]::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 0%, rgba(143, 29, 44, 0.5) 50%, transparent 100%);
+}
+
+:root[data-site-theme="halloween"] .scrollbar-thin {
+  scrollbar-color: rgba(109, 40, 217, 0.55) transparent;
+}
+
+/* Footer: night sky, pumpkin haze and a web in the corner. */
+.hw-footer {
+  position: relative;
+  background-color: #0d0a12;
+  background-image:
+    radial-gradient(40rem 18rem at 78% 0%, rgba(255, 138, 31, 0.14) 0%, transparent 65%),
+    radial-gradient(46rem 24rem at 10% 100%, rgba(109, 40, 217, 0.2) 0%, transparent 62%),
+    linear-gradient(180deg, #1a1026 0%, #0d0a12 100%);
+  border-top: 1px solid rgba(143, 29, 44, 0.4);
+}
+
+.hw-footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 13rem;
+  height: 13rem;
+  pointer-events: none;
+  opacity: 0.16;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' fill='none' stroke='%23a8a0ad' stroke-width='0.8'%3E%3Cg%3E%3Ccircle cx='0' cy='0' r='18'/%3E%3Ccircle cx='0' cy='0' r='32'/%3E%3Ccircle cx='0' cy='0' r='46'/%3E%3Ccircle cx='0' cy='0' r='60'/%3E%3Cline x1='0' y1='0' x2='-46' y2='72' transform='rotate(30)'/%3E%3Cline x1='0' y1='0' x2='-46' y2='72' transform='rotate(60)'/%3E%3Cline x1='0' y1='0' x2='-46' y2='72' transform='rotate(90)'/%3E%3Cline x1='0' y1='0' x2='-46' y2='72' transform='rotate(120)'/%3E%3Cline x1='0' y1='0' x2='-46' y2='72' transform='rotate(150)'/%3E%3Cline x1='0' y1='0' x2='-46' y2='72' transform='rotate(180)'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* --------------------------------------------------------------------------
+   8. Seasonal banner, strips and icon helpers
+   -------------------------------------------------------------------------- */
+.hw-banner {
+  background: linear-gradient(90deg, rgba(13, 10, 18, 0.96) 0%, rgba(42, 18, 61, 0.96) 45%, rgba(143, 29, 44, 0.96) 100%);
   border-bottom: 1px solid rgba(255, 138, 31, 0.35);
   box-shadow: 0 6px 24px -12px rgba(255, 138, 31, 0.6);
 }
 
-/* Fallback icon placeholder */
 .hw-fallback {
   display: inline-flex;
   filter: drop-shadow(0 2px 6px rgba(249, 115, 22, 0.35));
 }
 
-/* Header mark beside the UGN wordmark */
-.hw-badge {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 9999px;
-  border: 1px solid rgba(255, 138, 31, 0.35);
-  background: linear-gradient(135deg, rgba(42, 18, 61, 0.25), rgba(255, 138, 31, 0.12));
-  padding: 0.1rem 0.35rem;
-  line-height: 0;
-}
-
-/* Homepage hero strip */
 .hw-strip {
   background: linear-gradient(90deg, rgba(42, 18, 61, 0.92), rgba(143, 29, 44, 0.85));
   border: 1px solid rgba(255, 138, 31, 0.35);
@@ -996,13 +1526,15 @@ h1, h2, h3, h4 {
   box-shadow: 0 8px 30px -18px rgba(255, 138, 31, 0.9);
 }
 
-/* Decorative event-card accent */
 .hw-event-badge {
   margin-left: 0.35rem;
   opacity: 0.75;
   vertical-align: -0.2em;
 }
 
+/* --------------------------------------------------------------------------
+   9. Keyframes
+   -------------------------------------------------------------------------- */
 @keyframes hw-breathe {
   0%, 100% { opacity: 0.75; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.04); }
@@ -1029,32 +1561,64 @@ h1, h2, h3, h4 {
   90% { opacity: 0.25; }
   100% { transform: translate3d(6vw, 110vh, 0) rotate(420deg); opacity: 0; }
 }
+@keyframes hw-rise {
+  0% { transform: translate3d(0, 0, 0) scale(0.6); opacity: 0; }
+  12% { opacity: 0.55; }
+  85% { opacity: 0.25; }
+  100% { transform: translate3d(2.5rem, -92vh, 0) scale(1); opacity: 0; }
+}
+@keyframes hw-float-sway {
+  0% { transform: translate3d(0, 0, 0) rotate(-3deg); opacity: 0.18; }
+  50% { transform: translate3d(1.5rem, -1.5rem, 0) rotate(4deg); opacity: 0.32; }
+  100% { transform: translate3d(0, 0, 0) rotate(-3deg); opacity: 0.18; }
+}
 @keyframes hw-twinkle {
   0%, 100% { opacity: 0; transform: scale(0.6); }
   40% { opacity: 0.75; transform: scale(1); }
   60% { opacity: 0.2; transform: scale(0.8); }
 }
 
-/* Reduced motion: keep the atmosphere, drop every animation and drift. */
+/* --------------------------------------------------------------------------
+   10. Reduced motion - keep the atmosphere, drop every animation
+   -------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   .hw-moon,
+  .hw-moon-2,
   .hw-fog,
   .hw-bat,
   .hw-leaf,
-  .hw-sparkle {
+  .hw-sparkle,
+  .hw-ember,
+  .hw-floater,
+  .hw-hero-moon,
+  .hw-hero-stars,
+  .hw-hero-fog,
+  :root[data-site-theme="halloween"] body::before,
+  :root[data-site-theme="halloween"] body::after {
     animation: none !important;
   }
   .hw-bat { display: none; }
   .hw-sparkle { opacity: 0.35; }
   .hw-leaf { opacity: 0.2; }
   .hw-web { opacity: 0.16; }
+  .hw-ember { display: none; }
+  .hw-floater { opacity: 0.22; }
 }
 
-/* Mobile / small screens: fewer, smaller decorations so they never crowd text. */
+/* --------------------------------------------------------------------------
+   11. Small screens - fewer, smaller decorations so they never crowd text
+   -------------------------------------------------------------------------- */
 @media (max-width: 640px) {
   .hw-web { width: 9rem; height: 9rem; opacity: 0.18; }
-  .hw-web-bl { display: none; }
+  .hw-web-bl,
+  .hw-web-br { display: none; }
   .hw-bat { width: 2.5rem; }
   .hw-moon { width: 14rem; height: 14rem; }
+  .hw-moon-2 { display: none; }
   .hw-fog { height: 12rem; }
+  .hw-hero-moon { width: 60vw; height: 60vw; top: -4%; right: -8%; }
+  .hw-hero-web { width: 7rem; height: 7rem; opacity: 0.14; }
+  .hw-feature-card::after,
+  .hw-staff-card::after { display: none; }
+  .hw-floater { width: 1.5rem; height: 1.5rem; }
 }

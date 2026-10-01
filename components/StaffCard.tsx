@@ -114,7 +114,7 @@ export function StaffCard({ staff }: { staff: StaffCardData }) {
   const hasSocials = socialLinks.length > 0;
 
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-ink-200/60 bg-white shadow-card-premium transition-all duration-500 hover:-translate-y-1 hover:shadow-card-premium-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-brand-800/30 dark:bg-ink-900/80 dark:hover:border-brand-700/50 dark:focus-visible:ring-offset-surface-950">
+    <article className="hw-staff-card hw-card-treat group relative flex h-full flex-col overflow-hidden rounded-2xl border border-ink-200/60 bg-white shadow-card-premium transition-all duration-500 hover:-translate-y-1 hover:shadow-card-premium-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-brand-800/30 dark:bg-ink-900/80 dark:hover:border-brand-700/50 dark:focus-visible:ring-offset-surface-950">
       <Link
         href={`/staff/${staff.id}`}
         className="absolute inset-0 z-10 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"

@@ -8,7 +8,7 @@ export async function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="relative mt-24 overflow-hidden border-t border-ink-200/80 bg-surface-50 dark:border-ink-800/80 dark:bg-surface-950">
+    <footer className="hw-footer relative mt-24 overflow-hidden border-t border-ink-200/80 bg-surface-50 dark:border-ink-800/80 dark:bg-surface-950">
       {/* Top gradient bar */}
       <div className="bg-pride-gradient h-1 w-full" />
 

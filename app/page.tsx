@@ -442,7 +442,7 @@ function CommunitySection() {
           <StaggeredList className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
             {COMMUNITY_FEATURES.map((f) => (
               <ScrollFadeIn key={f.title} delay={0}>
-                <div className="group card-premium flex flex-col items-center p-6 text-center">
+                <div className="hw-feature-card hw-card-treat group card-premium flex flex-col items-center p-6 text-center">
                   <div className={`mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${f.color} text-white shadow-glow transition-all duration-300 group-hover:scale-110 group-hover:shadow-glow-strong`}>
                     {f.icon}
                   </div>
@@ -480,9 +480,14 @@ export default function HomePage() {
   return (
     <>
       {/* Hero */}
-      <div className="relative flex min-h-[90vh] items-center overflow-hidden border-b border-ink-200/80 dark:border-ink-800/80">
+      <div className="hw-hero relative flex min-h-[90vh] items-center overflow-hidden border-b border-ink-200/80 dark:border-ink-800/80">
         <HeroBackground />
         <ParticlesBackground />
+        <div className="hw-hero-sky" aria-hidden>
+          <div className="hw-hero-stars" />
+          <div className="hw-hero-moon" />
+          <div className="hw-hero-fog" />
+        </div>
         <Container className="relative z-10 py-24 sm:py-32 lg:py-36">
           <div className="animate-fade-in">
             <HalloweenHeroStrip />

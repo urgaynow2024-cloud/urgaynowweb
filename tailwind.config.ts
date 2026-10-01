@@ -1,7 +1,16 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: "class",
+  /*
+     * Seasonal themes are night themes. Treating `[data-site-theme="halloween"]`
+     * as a dark theme means the existing `dark:` variants - which every UGN
+     * component already writes for night backgrounds - resolve to the UGN
+     * Halloween palette in `app/globals.css`. Same markup, no component edits.
+     */
+  darkMode: [
+    "variant",
+    "&:where(.dark, .dark *, [data-site-theme='halloween'], [data-site-theme='halloween'] *)",
+  ],
   content: [
     "./app/**/*.{ts,tsx}",
     "./components/**/*.{ts,tsx}",
@@ -18,46 +27,53 @@ const config: Config = {
           blue: "#004dff",
           purple: "#750787",
         },
+        /*
+         * The UGN colour scales are driven by CSS variables that default to the
+         * normal UGN palette. Seasonal themes (Halloween 2026) override those
+         * variables in `app/globals.css` under
+         * `:root[data-site-theme="halloween"]`, which re-themes every component
+         * site-wide without touching a single component or layout.
+         */
         brand: {
-          DEFAULT: "#750787",
-          50: "#faf5fb",
-          100: "#f3e8f5",
-          200: "#e8d0ec",
-          300: "#d6abe0",
-          400: "#bd7fce",
-          500: "#a256bb",
-          600: "#8a3aa3",
-          700: "#750787",
-          800: "#611f6e",
-          900: "#511a5c",
-          950: "#2d0a32",
+          DEFAULT: "rgb(var(--brand-rgb) / <alpha-value>)",
+          50: "rgb(var(--brand-50-rgb) / <alpha-value>)",
+          100: "rgb(var(--brand-100-rgb) / <alpha-value>)",
+          200: "rgb(var(--brand-200-rgb) / <alpha-value>)",
+          300: "rgb(var(--brand-300-rgb) / <alpha-value>)",
+          400: "rgb(var(--brand-400-rgb) / <alpha-value>)",
+          500: "rgb(var(--brand-500-rgb) / <alpha-value>)",
+          600: "rgb(var(--brand-600-rgb) / <alpha-value>)",
+          700: "rgb(var(--brand-700-rgb) / <alpha-value>)",
+          800: "rgb(var(--brand-800-rgb) / <alpha-value>)",
+          900: "rgb(var(--brand-900-rgb) / <alpha-value>)",
+          950: "rgb(var(--brand-950-rgb) / <alpha-value>)",
         },
         surface: {
-          0: "#ffffff",
-          50: "#f8f7fa",
-          100: "#f0eef4",
-          200: "#e4e0ea",
-          300: "#cdc7d6",
-          400: "#a8a0b5",
-          500: "#8a7f9b",
-          600: "#6e6280",
-          700: "#524763",
-          800: "#362c46",
-          900: "#1a1528",
-          950: "#0f0b16",
+          0: "rgb(var(--surface-0-rgb) / <alpha-value>)",
+          50: "rgb(var(--surface-50-rgb) / <alpha-value>)",
+          100: "rgb(var(--surface-100-rgb) / <alpha-value>)",
+          200: "rgb(var(--surface-200-rgb) / <alpha-value>)",
+          300: "rgb(var(--surface-300-rgb) / <alpha-value>)",
+          400: "rgb(var(--surface-400-rgb) / <alpha-value>)",
+          500: "rgb(var(--surface-500-rgb) / <alpha-value>)",
+          600: "rgb(var(--surface-600-rgb) / <alpha-value>)",
+          700: "rgb(var(--surface-700-rgb) / <alpha-value>)",
+          800: "rgb(var(--surface-800-rgb) / <alpha-value>)",
+          900: "rgb(var(--surface-900-rgb) / <alpha-value>)",
+          950: "rgb(var(--surface-950-rgb) / <alpha-value>)",
         },
         ink: {
-          50: "#f7f8fa",
-          100: "#eef0f4",
-          200: "#e2e5ec",
-          300: "#cdd2dd",
-          400: "#9aa2b4",
-          500: "#6b7384",
-          600: "#4d5467",
-          700: "#383d4d",
-          800: "#23262f",
-          900: "#15171d",
-          950: "#0c0d12",
+          50: "rgb(var(--ink-50-rgb) / <alpha-value>)",
+          100: "rgb(var(--ink-100-rgb) / <alpha-value>)",
+          200: "rgb(var(--ink-200-rgb) / <alpha-value>)",
+          300: "rgb(var(--ink-300-rgb) / <alpha-value>)",
+          400: "rgb(var(--ink-400-rgb) / <alpha-value>)",
+          500: "rgb(var(--ink-500-rgb) / <alpha-value>)",
+          600: "rgb(var(--ink-600-rgb) / <alpha-value>)",
+          700: "rgb(var(--ink-700-rgb) / <alpha-value>)",
+          800: "rgb(var(--ink-800-rgb) / <alpha-value>)",
+          900: "rgb(var(--ink-900-rgb) / <alpha-value>)",
+          950: "rgb(var(--ink-950-rgb) / <alpha-value>)",
         },
         neon: {
           pink: "#ff2d92",

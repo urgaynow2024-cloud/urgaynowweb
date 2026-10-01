@@ -31,7 +31,7 @@ export function AnnouncementCard({
   return (
     <article
       onClick={handleClick}
-      className={`group relative flex flex-col overflow-hidden rounded-2xl border border-ink-200/60 bg-white shadow-card-premium transition-all duration-500 hover:-translate-y-1 hover:shadow-card-premium-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-brand-800/30 dark:bg-ink-900/80 dark:hover:border-brand-700/50 dark:focus-visible:ring-offset-surface-950 cursor-pointer ${
+      className={`hw-card-treat group relative flex flex-col overflow-hidden rounded-2xl border border-ink-200/60 bg-white shadow-card-premium transition-all duration-500 hover:-translate-y-1 hover:shadow-card-premium-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-brand-800/30 dark:bg-ink-900/80 dark:hover:border-brand-700/50 dark:focus-visible:ring-offset-surface-950 cursor-pointer ${
         featured ? "md:col-span-2 lg:col-span-1" : ""
       }`}
     >

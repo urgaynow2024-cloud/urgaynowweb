@@ -20,7 +20,7 @@ export function EventCard({ event }: { event: EventCardData }) {
 
   return (
     <article
-      className={`group relative flex overflow-hidden rounded-2xl border bg-white shadow-card-premium transition-all duration-500 hover:-translate-y-1 hover:shadow-card-premium-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:bg-ink-900/80 dark:focus-visible:ring-offset-surface-950 ${
+      className={`hw-event-card group relative flex overflow-hidden rounded-2xl border bg-white shadow-card-premium transition-all duration-500 hover:-translate-y-1 hover:shadow-card-premium-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:bg-ink-900/80 dark:focus-visible:ring-offset-surface-950 ${
         isLive
           ? "border-brand-400 shadow-glow dark:border-brand-500/70"
           : "border-ink-200/60 dark:border-brand-800/30"

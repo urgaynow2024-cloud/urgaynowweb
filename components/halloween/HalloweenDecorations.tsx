@@ -31,11 +31,13 @@ export function HalloweenDecorations() {
   return (
     <div className="hw-layer" aria-hidden="true">
       <div className="hw-moon" />
+      <div className="hw-moon-2" />
       <div className="hw-fog hw-fog-a" />
       <div className="hw-fog hw-fog-b" />
       <SpiderWeb className="hw-web hw-web-tl" />
       <SpiderWeb className="hw-web hw-web-tr" />
       <SpiderWeb className="hw-web hw-web-bl" />
+      <SpiderWeb className="hw-web hw-web-br" />
       <div className="hw-bats">
         <Bat className="hw-bat hw-bat-1" />
         <Bat className="hw-bat hw-bat-2" />
@@ -45,6 +47,16 @@ export function HalloweenDecorations() {
         <Leaf className="hw-leaf hw-leaf-1" />
         <Leaf className="hw-leaf hw-leaf-2" />
         <Leaf className="hw-leaf hw-leaf-3" />
+      </div>
+      <div className="hw-embers" aria-hidden="true">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <span key={index} className={`hw-ember hw-ember-${index + 1}`} />
+        ))}
+      </div>
+      <div className="hw-floaters" aria-hidden="true">
+        <Floater className="hw-floater hw-floater-1" kind="pumpkin" />
+        <Floater className="hw-floater hw-floater-2" kind="ghost" />
+        <Floater className="hw-floater hw-floater-3" kind="pumpkin" />
       </div>
       <div className="hw-sparkles">
         {Array.from({ length: 8 }).map((_, index) => (
@@ -90,6 +102,36 @@ function Leaf({ className }: { className?: string }) {
         opacity="0.75"
       />
       <path d="M4 22 20 2" stroke="currentColor" strokeWidth="0.8" opacity="0.5" />
+    </svg>
+  );
+}
+
+/** Occasional pumpkin or ghost drifting through the night. */
+function Floater({ className, kind }: { className?: string; kind: "pumpkin" | "ghost" }) {
+  if (kind === "ghost") {
+    return (
+      <svg
+        className={`${className ?? ""} hw-floater-ghost`}
+        viewBox="0 0 32 32"
+        focusable="false"
+      >
+        <path
+          d="M16 3c6 0 10 4.5 10 10v15l-3.5-3-3.5 3-3-3-3 3-3-3-3.5 3V13c0-5.5 4-10 10-10Z"
+          fill="currentColor"
+          opacity="0.55"
+        />
+        <circle cx="12.5" cy="13" r="1.7" fill="#2a123d" />
+        <circle cx="19.5" cy="13" r="1.7" fill="#2a123d" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className={className} viewBox="0 0 32 32" focusable="false">
+      <circle cx="16" cy="18" r="12" fill="currentColor" opacity="0.6" />
+      <path d="M16 6c-1-2 .2-3.6 1.8-4 .4 1.6-.1 3-1.8 4Z" fill="currentColor" />
+      <path d="M10 16l4 2.6-4 2.6zM22 16l-4 2.6 4 2.6z" fill="#2a123d" />
+      <path d="M11.5 24h9l-4.5 4.4z" fill="#2a123d" />
     </svg>
   );
 }

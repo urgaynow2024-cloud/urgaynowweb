@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Suspense } from "react";
 import { prisma } from "@/lib/db";
 import { Container, Section } from "@/components/Container";
+import { HalloweenHeroStrip } from "@/components/halloween/HalloweenDecor";
 import { AnnouncementCard } from "@/components/AnnouncementCard";
 import { EventCard } from "@/components/EventCard";
 import { StaffCard } from "@/components/StaffCard";
@@ -484,6 +485,7 @@ export default function HomePage() {
         <ParticlesBackground />
         <Container className="relative z-10 py-24 sm:py-32 lg:py-36">
           <div className="animate-fade-in">
+            <HalloweenHeroStrip />
             <ScrollFadeIn>
               <p className="inline-flex items-center gap-2 rounded-full border border-brand-200/50 bg-white/80 px-4 py-1.5 text-sm font-semibold text-brand-700 shadow-sm backdrop-blur-sm dark:border-brand-700/40 dark:bg-ink-900/80 dark:text-brand-200">
                 <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse-soft" />

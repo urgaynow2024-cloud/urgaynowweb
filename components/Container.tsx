@@ -51,10 +51,13 @@ export function PageHeader({
   title,
   description,
   className = "",
+  icon,
 }: {
   title: string;
   description?: string;
   className?: string;
+  /** Optional decorative node shown beside the title (e.g. the seasonal icon). */
+  icon?: ReactNode;
 }) {
   return (
     <div
@@ -63,16 +66,21 @@ export function PageHeader({
       <div className="absolute inset-0 bg-hero-mesh opacity-60 dark:opacity-40" />
       <div className="noise-overlay" />
       <Container className="relative py-16 sm:py-20">
-        <h1 className="text-balance text-4xl font-extrabold tracking-tight text-ink-900 dark:text-white sm:text-5xl lg:text-6xl">
-          <span className="bg-gradient-to-r from-brand-600 to-brand-700 bg-clip-text text-transparent dark:from-brand-200 dark:to-brand-300">
-            {title}
-          </span>
-        </h1>
-        {description && (
-          <p className="mt-4 max-w-2xl text-lg text-ink-500 dark:text-ink-300 sm:text-xl">
-            {description}
-          </p>
-        )}
+        <div className={icon ? "flex items-start gap-4" : undefined}>
+          {icon ? <span className="mt-1 shrink-0">{icon}</span> : null}
+          <div className="min-w-0">
+            <h1 className="text-balance text-4xl font-extrabold tracking-tight text-ink-900 dark:text-white sm:text-5xl lg:text-6xl">
+              <span className="bg-gradient-to-r from-brand-600 to-brand-700 bg-clip-text text-transparent dark:from-brand-200 dark:to-brand-300">
+                {title}
+              </span>
+            </h1>
+            {description && (
+              <p className="mt-4 max-w-2xl text-lg text-ink-500 dark:text-ink-300 sm:text-xl">
+                {description}
+              </p>
+            )}
+          </div>
+        </div>
       </Container>
     </div>
   );

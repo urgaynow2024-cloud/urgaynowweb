@@ -1,99 +1,110 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { getSetting } from "@/lib/settings";
+import { safeQuery } from "@/lib/safeQuery";
 import {
-  VALID_REASONS,
-  VALID_CONTENT_TYPES,
   RATE_LIMIT,
-  getReasonLabel,
+  REPORT_LIMITS,
+  getSuggestedPriority,
+  stringifyEvidence,
 } from "@/lib/reports";
+import { validateReportSubmission } from "@/lib/report-validation";
+import { checkMemoryRateLimit, fingerprint, getClientIp, hashIp } from "@/lib/request-security";
+import { nextReportReference } from "@/lib/report-reference";
+import { sendReportWebhook } from "@/lib/report-webhook";
+import { readEvidenceTokens, writeTrackingToken } from "@/lib/report-evidence-token";
 
 export const runtime = "nodejs";
 
-async function checkRateLimit(ip: string, userId: string): Promise<boolean> {
+const DUPLICATE_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/** Durable per-IP limit, backed by the stored (salted) IP hash. */
+async function isOverRateLimit(ipHash: string): Promise<boolean> {
   const windowStart = new Date(Date.now() - RATE_LIMIT.WINDOW_MS);
-  
-  const [ipCount, userCount] = await Promise.all([
-    prisma.report.count({
-      where: {
-        createdAt: { gte: windowStart },
-        reporterId: { not: userId },
-      },
-    }),
-    prisma.report.count({
-      where: {
-        createdAt: { gte: windowStart },
-        reporterId: userId,
-      },
-    }),
-  ]);
-
-  return ipCount >= RATE_LIMIT.MAX_PER_WINDOW || userCount >= RATE_LIMIT.MAX_PER_WINDOW;
-}
-
-async function notifyStaffOfNewReport(report: {
-  id: string;
-  reportToken: string;
-  contentType: string;
-  contentId: string;
-  reason: string;
-  description: string;
-}) {
-  try {
-    const webhookUrl = (await getSetting("discordReportsWebhookUrl")).trim();
-    if (!webhookUrl) return;
-
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://urgaynow.com";
-    const reportUrl = `${siteUrl}/admin/reports/${report.id}`;
-
-    await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        content: "🚨 **New report submitted**",
-        embeds: [{
-          title: `Report #${report.id.slice(0, 8)}`,
-          description: report.description.slice(0, 4000),
-          color: 0x750787,
-          fields: [
-            { name: "Reason", value: getReasonLabel(report.reason), inline: true },
-            { name: "Content", value: `${report.contentType}: ${report.contentId}`, inline: true },
-            { name: "Priority", value: "Normal", inline: true },
-          ],
-          timestamp: new Date().toISOString(),
-          url: reportUrl,
-          footer: { text: "Ur Gay Now Reports" },
-        }],
+  const count = await safeQuery(
+    () =>
+      prisma.report.count({
+        where: { reporterIpHash: ipHash, createdAt: { gte: windowStart } },
       }),
-    });
-  } catch {
-    // Don't fail the report submission if notification fails
-  }
+    0,
+  );
+  return count >= RATE_LIMIT.MAX_PER_WINDOW;
 }
+
+/** Look up the display name behind a reported piece of site content. */
+async function resolveReportedUsername(
+  contentType: string,
+  contentId: string,
+): Promise<string | null> {
+  if (!contentId) return null;
+  try {
+    if (contentType === "COMMUNITY_SUBMISSION") {
+      const submission = await prisma.communitySubmission.findUnique({
+        where: { id: contentId },
+        select: { submitterName: true },
+      });
+      return submission?.submitterName ?? null;
+    }
+    if (contentType === "GALLERY_IMAGE") {
+      const image = await prisma.galleryImage.findUnique({
+        where: { id: contentId },
+        select: { submitterName: true },
+      });
+      return image?.submitterName ?? null;
+    }
+    if (contentType === "STAFF_PROFILE") {
+      const staff = await prisma.staff.findUnique({
+        where: { id: contentId },
+        select: { name: true },
+      });
+      return staff?.name ?? null;
+    }
+  } catch {
+    /* content lookup is best-effort */
+  }
+  return null;
+}
+
+/** Attach staged uploads to the new report. Only the submitter's own uploads. */
+async function claimEvidence(reportId: string, evidenceIds: string[]): Promise<number> {
+  const tokens = await readEvidenceTokens();
+  if (evidenceIds.length === 0 || tokens.length === 0) return 0;
+
+  const result = await prisma.reportEvidence.updateMany({
+    where: {
+      id: { in: evidenceIds },
+      uploaderToken: { in: tokens },
+      reportId: null,
+    },
+    data: { reportId },
+  });
+  return result.count;
+}
+
+/**
+ * Short burst limit in front of the durable per-IP limit. This catches
+ * hammering (including automated retries that fail validation) without getting
+ * in the way of someone correcting a form a couple of times.
+ */
+const BURST_LIMIT = { WINDOW_MS: 60_000, MAX_PER_WINDOW: 10 };
 
 export async function POST(req: Request) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json(
-      { success: false, error: "You need to sign in before submitting a report." },
-      { status: 401 },
-    );
-  }
+  const ip = getClientIp(req);
+  const ipHash = hashIp(ip);
 
-  const ip =
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("x-real-ip") ||
-    "unknown";
-
-  if (await checkRateLimit(ip, session.sub)) {
+  const burst = checkMemoryRateLimit(
+    `report-submit:${ipHash}`,
+    BURST_LIMIT.MAX_PER_WINDOW,
+    BURST_LIMIT.WINDOW_MS,
+  );
+  if (!burst.allowed) {
     return NextResponse.json(
-      { success: false, error: "Too many reports. Please try again later." },
+      { success: false, error: "Too many submissions. Please wait a minute and try again." },
       { status: 429 },
     );
   }
 
-  let payload: any;
+  let payload: Record<string, unknown>;
   try {
     payload = await req.json();
   } catch {
@@ -103,113 +114,210 @@ export async function POST(req: Request) {
     );
   }
 
-  const contentType = String(payload.contentType || "").toUpperCase() as string;
-  const contentId = String(payload.contentId || "").trim();
-  const reason = String(payload.reason || "").toUpperCase();
-  const description = String(payload.description || "").trim();
-  const reporterName = String(payload.reporterName || "").trim();
-  const reporterEmail = String(payload.reporterEmail || "").trim();
-  const anonymous = Boolean(payload.anonymous);
+  const validation = validateReportSubmission(payload ?? {});
+  if (!validation.ok) {
+    if ("spam" in validation && validation.spam) {
+      // Honeypot tripped. Answer as if it succeeded so the bot learns nothing,
+      // but store nothing at all.
+      console.warn("[report/submit] honeypot tripped", { ipHash: ipHash.slice(0, 12) });
+      return NextResponse.json({
+        success: true,
+        reference: "UGN-000000",
+        reportToken: null,
+        notification: "queued",
+      });
+    }
+    const message = "error" in validation ? validation.error : "Invalid submission.";
+    const field = "field" in validation ? validation.field : undefined;
+    return NextResponse.json({ success: false, error: message, field }, { status: 400 });
+  }
 
-  if (!VALID_CONTENT_TYPES.has(contentType)) {
+  const input = validation.value;
+
+  // 1. Idempotent retry: the same submit token must never create a second report.
+  if (input.idempotencyKey) {
+    const existing = await prisma.report.findUnique({
+      where: { idempotencyKey: input.idempotencyKey },
+      select: { id: true, reportToken: true, reference: true },
+    });
+    if (existing) {
+      await writeTrackingToken(existing.reportToken);
+      return NextResponse.json({
+        success: true,
+        duplicate: true,
+        reference: existing.reference,
+        reportToken: existing.reportToken,
+        trackingUrl: `/report/track/${existing.reportToken}`,
+        notification: "already-registered",
+      });
+    }
+  }
+
+  // 2. Rate limit (durable check against stored reports).
+  if (await isOverRateLimit(ipHash)) {
     return NextResponse.json(
-      { success: false, error: "Invalid content type." },
-      { status: 400 },
+      {
+        success: false,
+        error: `You have reached the limit of ${RATE_LIMIT.MAX_PER_WINDOW} reports per 30 minutes. Please try again later.`,
+      },
+      { status: 429 },
     );
   }
 
-  if (!contentId) {
-    return NextResponse.json(
-      { success: false, error: "Missing content ID." },
-      { status: 400 },
-    );
-  }
-
-  if (!VALID_REASONS.has(reason as any)) {
-    return NextResponse.json(
-      { success: false, error: "Please choose a valid report reason." },
-      { status: 400 },
-    );
-  }
-
-  if (!description) {
-    return NextResponse.json(
-      { success: false, error: "Please provide details for your report." },
-      { status: 400 },
-    );
-  }
-
-  const existing = await prisma.report.findFirst({
+  // 3. Duplicate submission protection (same person, same target, same details).
+  const dedupeHash = fingerprint([
+    ipHash,
+    input.category,
+    input.reportedPerson || input.reportedDiscord,
+    input.contentType,
+    input.contentId,
+    input.description.slice(0, 400).toLowerCase(),
+  ]);
+  const recentDuplicate = await prisma.report.findFirst({
     where: {
-      reporterId: session.sub,
-      contentType,
-      contentId,
-      reason,
-      status: { in: ["OPEN", "IN_REVIEW"] },
+      dedupeHash,
+      createdAt: { gte: new Date(Date.now() - DUPLICATE_WINDOW_MS) },
     },
+    select: { id: true, reportToken: true, reference: true },
   });
-
-  if (existing) {
+  if (recentDuplicate) {
+    await writeTrackingToken(recentDuplicate.reportToken);
     return NextResponse.json(
-      { success: false, error: "You already have an open report for this content." },
+      {
+        success: false,
+        duplicate: true,
+        error: "You already submitted this report. We have not created a duplicate.",
+        reference: recentDuplicate.reference,
+        reportToken: recentDuplicate.reportToken,
+        trackingUrl: `/report/track/${recentDuplicate.reportToken}`,
+      },
       { status: 409 },
     );
   }
 
-  let reportedUserId: string | null = null;
-  let reportedUsername: string | null = null;
+  const session = await getSession();
+  const anonymous = input.anonymous || !input.reporterName;
+  const source = input.contentType === "NONE" ? "COMMUNITY" : "CONTENT";
 
-  try {
-    if (contentType === "COMMUNITY_SUBMISSION") {
-      const submission = await prisma.communitySubmission.findUnique({
-        where: { id: contentId },
-        select: { submitterName: true },
-      });
-      reportedUsername = submission?.submitterName ?? null;
-    } else if (contentType === "GALLERY_IMAGE") {
-      const image = await prisma.galleryImage.findUnique({
-        where: { id: contentId },
-        select: { submitterName: true },
-      });
-      reportedUsername = image?.submitterName ?? null;
-    } else if (contentType === "STAFF_PROFILE") {
-      const staff = await prisma.staff.findUnique({
-        where: { id: contentId },
-        select: { name: true },
-      });
-      reportedUsername = staff?.name ?? null;
-    }
-  } catch {
-    /* content lookup is optional */
-  }
+  const reportedUsername = await resolveReportedUsername(input.contentType, input.contentId);
 
+  let report;
   try {
-    const created = await prisma.report.create({
+    const { reference, sequence } = await nextReportReference();
+
+    report = await prisma.report.create({
       data: {
-        contentType,
-        contentId,
-        reporterId: session.sub,
-        reporterName: anonymous ? "" : (reporterName || session.name),
-        reporterEmail: anonymous ? null : (reporterEmail || null),
+        reference,
+        referenceSeq: sequence,
+        source,
+        contentType: input.contentType,
+        contentId: input.contentId,
+        reporterId: session?.sub ?? null,
+        reporterName: anonymous ? "" : input.reporterName || session?.name || "",
+        reporterEmail: anonymous ? null : input.reporterEmail,
         anonymous,
-        reportedUserId,
+        reporterIpHash: ipHash,
+        idempotencyKey: input.idempotencyKey,
+        dedupeHash,
         reportedUsername,
-        reason,
-        description,
+        reportedPerson: input.reportedPerson,
+        reportedDiscord: input.reportedDiscord,
+        incidentAt: input.incidentAt,
+        links: JSON.stringify(input.links),
+        reason: input.category,
+        description: input.description,
+        evidence: stringifyEvidence(input.links),
         status: "OPEN",
-        priority: "NORMAL",
+        priority: getSuggestedPriority(input.category),
+        webhookStatus: "PENDING",
       },
     });
 
-    await notifyStaffOfNewReport(created);
+    await claimEvidence(report.id, input.evidenceIds);
 
-    return NextResponse.json({ success: true, reportToken: created.reportToken });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "unknown error";
-    console.error("[report/submit] failure", { ip, message });
+    await prisma.reportAuditLog.create({
+      data: {
+        reportId: report.id,
+        action: "SUBMITTED",
+        actorId: session?.sub ?? null,
+        actorName: anonymous ? "Anonymous reporter" : input.reporterName || session?.name || "Reporter",
+        detail: `Submitted via the public report form (${source === "COMMUNITY" ? "community report" : "website content"}).`,
+      },
+    });
+  } catch (error) {
+    console.error("[report/submit] failed to store report", {
+      ipHash: ipHash.slice(0, 12),
+      message: error instanceof Error ? error.message : String(error),
+    });
     return NextResponse.json(
-      { success: false, error: "Your report could not be submitted. Please try again." },
+      { success: false, error: "We couldn't submit your report. Please try again." },
       { status: 500 },
     );
   }
+
+  await writeTrackingToken(report.reportToken);
+
+  // Staff notification is best-effort and happens after the report is stored.
+  const evidenceCount = await prisma.reportEvidence.count({ where: { reportId: report.id } });
+  const webhookResult = await sendReportWebhook({
+    reference: report.reference,
+    id: report.id,
+    category: report.reason,
+    status: report.status,
+    priority: report.priority,
+    source: report.source,
+    reportedPerson: report.reportedPerson,
+    reportedUsername: report.reportedUsername,
+    anonymous: report.anonymous,
+    evidenceCount,
+    linkCount: input.links.length,
+    action: "submitted",
+  });
+
+  await prisma.report
+    .update({
+      where: { id: report.id },
+      data: {
+        webhookStatus: webhookResult.status,
+        webhookError: (webhookResult.error ?? "").slice(0, 500),
+        webhookSentAt: webhookResult.status === "SENT" ? new Date() : null,
+        webhookAttempts: { increment: 1 },
+      },
+    })
+    .catch((error) => {
+      console.error("[report/submit] could not record webhook state", {
+        reportId: report.id,
+        message: error instanceof Error ? error.message : String(error),
+      });
+    });
+
+  await prisma.reportAuditLog.create({
+    data: {
+      reportId: report.id,
+      action: webhookResult.status === "SENT" ? "WEBHOOK_SENT" : "WEBHOOK_FAILED",
+      actorName: "System",
+      detail:
+        webhookResult.status === "SENT"
+          ? "Staff notification delivered to Discord."
+          : `Staff notification not delivered (${webhookResult.status}): ${(webhookResult.error ?? "unknown").slice(0, 200)}`,
+    },
+  });
+
+  return NextResponse.json({
+    success: true,
+    reference: report.reference,
+    reportToken: report.reportToken,
+    trackingUrl: `/report/track/${report.reportToken}`,
+    notification:
+      webhookResult.status === "SENT"
+        ? "sent"
+        : webhookResult.status === "SKIPPED"
+          ? "not-configured"
+          : "queued",
+    limits: {
+      maxPerWindow: RATE_LIMIT.MAX_PER_WINDOW,
+      descriptionMax: REPORT_LIMITS.DESCRIPTION_MAX,
+      evidenceMaxFiles: REPORT_LIMITS.EVIDENCE_MAX_FILES,
+    },
+  });
 }

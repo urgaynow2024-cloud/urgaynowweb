@@ -1,12 +1,18 @@
-import { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { getSession } from "@/lib/auth";
+import type { Metadata } from "next";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
+import { getSession } from "@/lib/auth";
 import { ReportDetailClient } from "@/components/admin/ReportDetailClient";
+import { getReportPermissionsForRank } from "@/lib/report-access";
+import { getReportContentHref } from "@/lib/reports";
 
-export const metadata: Metadata = { title: "Report Details", robots: { index: false, follow: false } };
+export const metadata: Metadata = {
+  title: "Report Details",
+  robots: { index: false, follow: false },
+};
 
-export const revalidate = 30;
+/** Staff-only page — never cached. */
+export const dynamic = "force-dynamic";
 
 async function getReportWithDetails(id: string) {
   return prisma.report.findUnique({
@@ -14,6 +20,9 @@ async function getReportWithDetails(id: string) {
     include: {
       assignedTo: { select: { id: true, name: true } },
       resolvedBy: { select: { id: true, name: true } },
+      evidenceFiles: {
+        select: { id: true, fileName: true, contentType: true, size: true, createdAt: true },
+      },
       auditLogs: {
         orderBy: { createdAt: "asc" },
         include: { actor: { select: { id: true, name: true } } },
@@ -23,18 +32,33 @@ async function getReportWithDetails(id: string) {
 }
 
 async function getReportedContent(report: Awaited<ReturnType<typeof getReportWithDetails>>) {
-  if (!report) return null;
+  if (!report || report.contentType === "NONE" || !report.contentId) return null;
   try {
     switch (report.contentType) {
       case "COMMUNITY_SUBMISSION":
         return prisma.communitySubmission.findUnique({
           where: { id: report.contentId },
-          select: { id: true, title: true, description: true, imageUrl: true, submitterName: true, status: true, type: true },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            imageUrl: true,
+            submitterName: true,
+            status: true,
+            type: true,
+          },
         });
       case "GALLERY_IMAGE":
         return prisma.galleryImage.findUnique({
           where: { id: report.contentId },
-          select: { id: true, title: true, description: true, imageUrl: true, submitterName: true, status: true },
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            imageUrl: true,
+            submitterName: true,
+            status: true,
+          },
         });
       case "GROUP_PHOTO":
         return prisma.groupPhoto.findUnique({
@@ -69,28 +93,6 @@ async function getReportedContent(report: Awaited<ReturnType<typeof getReportWit
   }
 }
 
-function getReportContentHref(contentType: string, contentId: string): string | null {
-  switch (contentType) {
-    case "COMMUNITY_SUBMISSION":
-    case "COMMUNITY_PHOTO":
-      return `/community/${contentId}`;
-    case "GALLERY_IMAGE":
-      return `/gallery`;
-    case "GROUP_PHOTO":
-      return `/groups/${contentId}`;
-    case "EVENT":
-      return `/events`;
-    case "STAFF_PROFILE":
-      return `/staff/${contentId}`;
-    case "SHOP_DESIGN":
-      return `/shop`;
-    case "ANNOUNCEMENT":
-      return `/news`;
-    default:
-      return null;
-  }
-}
-
 export default async function ReportDetailPage({
   params,
 }: {
@@ -98,14 +100,19 @@ export default async function ReportDetailPage({
 }) {
   const { id } = await params;
 
+  if (!/^[a-z0-9]{15,32}$/i.test(id)) {
+    notFound();
+  }
+
   const session = await getSession();
   if (!session) {
-    return <div className="admin-bg min-h-screen" />;
+    redirect("/admin/login?from=/admin/reports");
   }
 
   const staff = await prisma.staff.findUnique({ where: { id: session.sub } });
-  if (!staff) {
-    return <div className="admin-bg min-h-screen" />;
+  const permissions = getReportPermissionsForRank(staff?.rank);
+  if (!staff || !permissions.includes("reports.view")) {
+    redirect("/admin");
   }
 
   const report = await getReportWithDetails(id);
@@ -116,12 +123,18 @@ export default async function ReportDetailPage({
   const content = await getReportedContent(report);
   const contentHref = getReportContentHref(report.contentType, report.contentId);
 
+  // Opening a report is recorded so the dashboard can show triage progress.
+  await prisma.report
+    .update({ where: { id: report.id }, data: { lastViewedAt: new Date() } })
+    .catch(() => undefined);
+
   return (
     <ReportDetailClient
       report={report}
       content={content}
       contentHref={contentHref}
-      currentStaff={{ id: staff.id, name: staff.name }}
+      currentStaff={{ id: staff.id, name: staff.name, rank: staff.rank }}
+      permissions={permissions}
     />
   );
 }

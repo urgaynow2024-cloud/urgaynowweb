@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { Card, CardHeader, CardBody } from "@/components/admin/ui/Card";
 import { StatusPill } from "@/components/admin/ui/Badge";
 import { Button } from "@/components/admin/ui/Button";
-import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import {
   IconFlag,
   IconUsers,
@@ -15,33 +14,49 @@ import {
   IconShield,
   IconAlert,
   IconArrowLeft,
-  IconEdit,
-  IconTrash,
   IconEye,
   IconExternal,
   IconNote,
-  IconInbox,
   IconCheck,
+  IconTrash,
+  IconDownload,
+  IconRefreshCw,
+  IconSend,
+  IconLink,
+  IconClock,
 } from "@/components/admin/ui/icons";
+import type { ReportPermission } from "@/lib/report-access";
 import {
   REPORT_STATUSES,
   REPORT_PRIORITIES,
-  REPORT_REASONS,
-  REPORT_CONTENT_TYPES,
   getStatusTone,
   getStatusLabel,
   getPriorityTone,
   getPriorityLabel,
   getReasonLabel,
   getContentTypeLabel,
+  getAuditLabel,
+  getReportLabel,
+  getWebhookStatusLabel,
+  getWebhookStatusTone,
+  formatReportBytes,
   parseEvidence,
-  getReportContentHref,
 } from "@/lib/reports";
+
+type EvidenceFile = {
+  id: string;
+  fileName: string;
+  contentType: string;
+  size: number;
+  createdAt: Date | string;
+};
 
 interface ReportDetailClientProps {
   report: {
     id: string;
+    reference: string | null;
     reportToken: string;
+    source: string;
     contentType: string;
     contentId: string;
     reporterId: string | null;
@@ -50,30 +65,39 @@ interface ReportDetailClientProps {
     anonymous: boolean;
     reportedUserId: string | null;
     reportedUsername: string | null;
+    reportedPerson: string;
+    reportedDiscord: string;
+    incidentAt: Date | string | null;
+    links: string;
     reason: string;
     description: string;
     evidence: string;
     status: string;
     priority: string;
+    webhookStatus: string;
+    webhookError: string;
+    webhookAttempts: number;
+    webhookSentAt: Date | string | null;
     assignedToId: string | null;
     assignedTo: { id: string; name: string } | null;
     resolvedById: string | null;
     resolvedBy: { id: string; name: string } | null;
     resolution: string;
-    resolvedAt: Date | null;
-    createdAt: Date;
-    updatedAt: Date;
+    resolvedAt: Date | string | null;
+    createdAt: Date | string;
+    updatedAt: Date | string;
+    evidenceFiles: EvidenceFile[];
     auditLogs: Array<{
       id: string;
       action: string;
       actorId: string | null;
       actorName: string;
       detail: string;
-      createdAt: Date;
+      createdAt: Date | string;
       actor: { id: string; name: string } | null;
     }>;
   };
-  content: {
+  content: Record<string, unknown> & {
     id: string;
     title?: string;
     name?: string;
@@ -94,10 +118,11 @@ interface ReportDetailClientProps {
     state?: string;
   } | null;
   contentHref: string | null;
-  currentStaff: { id: string; name: string };
+  currentStaff: { id: string; name: string; rank: string };
+  permissions: ReportPermission[];
 }
 
-function relativeTime(date: Date): string {
+function relativeTime(date: Date | string): string {
   const diff = Date.now() - new Date(date).getTime();
   const m = Math.floor(diff / 60000);
   if (m < 1) return "just now";
@@ -109,7 +134,8 @@ function relativeTime(date: Date): string {
   return `${Math.floor(d / 30)}mo ago`;
 }
 
-function formatDateTime(date: Date): string {
+function formatDateTime(date: Date | string | null): string {
+  if (!date) return "—";
   return new Date(date).toLocaleString(undefined, {
     month: "short",
     day: "numeric",
@@ -119,45 +145,63 @@ function formatDateTime(date: Date): string {
   });
 }
 
+type DialogKind = "note" | "resolve" | "dismiss" | "escalate" | "action" | null;
+
 export function ReportDetailClient({
   report,
   content,
   contentHref,
   currentStaff,
+  permissions,
 }: ReportDetailClientProps) {
-  const [isActionLoading, setIsActionLoading] = useState<string | null>(null);
-  const [showNoteDialog, setShowNoteDialog] = useState(false);
-  const [noteText, setNoteText] = useState("");
-  const [showResolveDialog, setShowResolveDialog] = useState(false);
-  const [resolveText, setResolveText] = useState("");
-  const [showDismissDialog, setShowDismissDialog] = useState(false);
-  const [dismissText, setDismissText] = useState("");
-  const [showEscalateDialog, setShowEscalateDialog] = useState(false);
-  const [escalateText, setEscalateText] = useState("");
+  const [busyAction, setBusyAction] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ tone: "success" | "danger"; message: string } | null>(
+    null,
+  );
+  const [dialog, setDialog] = useState<DialogKind>(null);
+  const [dialogText, setDialogText] = useState("");
+  const [statusValue, setStatusValue] = useState(report.status);
+  const [priorityValue, setPriorityValue] = useState(report.priority);
 
-  async function handleAction(action: string, data: Record<string, unknown> = {}) {
-    setIsActionLoading(action);
-    try {
-      const res = await fetch("/api/admin/reports", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reportId: report.id, action, ...data }),
-      });
-      const result = await res.json();
-      if (!result.success) {
-        alert(result.error || "Action failed");
-      } else {
+  const can = useCallback(
+    (permission: ReportPermission) => permissions.includes(permission),
+    [permissions],
+  );
+
+  const runAction = useCallback(
+    async (action: string, data: Record<string, unknown> = {}) => {
+      setBusyAction(action);
+      setFeedback(null);
+      try {
+        const response = await fetch("/api/admin/reports", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reportId: report.id, action, ...data }),
+        });
+        const result = await response.json().catch(() => ({}));
+
+        if (!response.ok || !result.success) {
+          setFeedback({ tone: "danger", message: result.error || "The action failed." });
+          return false;
+        }
+
+        setFeedback({ tone: "success", message: "Saved." });
         window.location.reload();
+        return true;
+      } catch {
+        setFeedback({ tone: "danger", message: "The action could not be completed." });
+        return false;
+      } finally {
+        setBusyAction(null);
       }
-    } catch (err) {
-      console.error(err);
-      alert("Action failed");
-    } finally {
-      setIsActionLoading(null);
-    }
-  }
+    },
+    [report.id],
+  );
 
-  const evidence = parseEvidence(report.evidence);
+  const links = parseEvidence(report.links);
+  const legacyEvidence = parseEvidence(report.evidence);
+  const allLinks = [...links, ...legacyEvidence.filter((item) => !links.some((l) => l.url === item.url))];
+  const reference = getReportLabel(report);
 
   return (
     <div>
@@ -165,548 +209,746 @@ export function ReportDetailClient({
         breadcrumbs={[
           { label: "Dashboard", href: "/admin" },
           { label: "Reports", href: "/admin/reports" },
-          { label: `#${report.id.slice(0, 8)}` },
+          { label: reference },
         ]}
-        title="Report Details"
-        description={`Report #${report.id.slice(0, 8)} — ${getReasonLabel(report.reason)}`}
+        title="Report details"
+        description={`${reference} — ${getReasonLabel(report.reason)}`}
       />
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
-        <section className="space-y-5">
+      {feedback && (
+        <div
+          role="status"
+          className={`mb-5 rounded-xl border px-4 py-3 text-sm ${
+            feedback.tone === "success"
+              ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200"
+              : "border-red-300 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-950/40 dark:text-red-200"
+          }`}
+        >
+          {feedback.message}
+        </div>
+      )}
+
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="min-w-0 space-y-5">
           <Card>
             <CardHeader
-              title="Report Information"
-              subtitle={`Reference: ${report.reportToken}`}
+              title="Report information"
+              subtitle={`Reference ${reference}`}
               icon={<IconFlag size={18} />}
             />
             <CardBody className="space-y-4">
               <dl className="grid gap-4 sm:grid-cols-2">
-                <div>
-                  <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
-                    <IconFlag size={14} /> Reason
-                  </dt>
-                  <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">{getReasonLabel(report.reason)}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
-                    <IconShield size={14} /> Priority
-                  </dt>
-                  <dd className="mt-1 text-sm">
-                    <span className={`font-medium ${getPriorityTone(report.priority) === "danger" ? "text-red-600" : getPriorityTone(report.priority) === "warning" ? "text-amber-600" : "text-ink-600"}`}>
-                      {getPriorityLabel(report.priority)}
-                    </span>
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
-                    <IconAlert size={14} /> Status
-                  </dt>
-                  <dd className="mt-1">
-                    <StatusPill tone={getStatusTone(report.status)}>{getStatusLabel(report.status)}</StatusPill>
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
-                    <IconCalendar size={14} /> Submitted
-                  </dt>
-                  <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">{formatDateTime(report.createdAt)} ({relativeTime(report.createdAt)})</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
-                    <IconCalendar size={14} /> Last Updated
-                  </dt>
-                  <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">{formatDateTime(report.updatedAt)}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
-                    <IconFlag size={14} /> Content Type
-                  </dt>
-                  <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">{getContentTypeLabel(report.contentType)}</dd>
-                </div>
+                <Field label="Category" icon={<IconFlag size={14} />}>
+                  {getReasonLabel(report.reason)}
+                </Field>
+                <Field label="Priority" icon={<IconShield size={14} />}>
+                  <span
+                    className={
+                      getPriorityTone(report.priority) === "danger"
+                        ? "font-medium text-red-600"
+                        : getPriorityTone(report.priority) === "warning"
+                          ? "font-medium text-amber-600"
+                          : ""
+                    }
+                  >
+                    {getPriorityLabel(report.priority)}
+                  </span>
+                </Field>
+                <Field label="Status" icon={<IconAlert size={14} />}>
+                  <StatusPill tone={getStatusTone(report.status)}>
+                    {getStatusLabel(report.status)}
+                  </StatusPill>
+                </Field>
+                <Field label="Submitted" icon={<IconCalendar size={14} />}>
+                  {formatDateTime(report.createdAt)} ({relativeTime(report.createdAt)})
+                </Field>
+                <Field label="Source" icon={<IconFlag size={14} />}>
+                  {report.source === "COMMUNITY"
+                    ? "Community report (no site content)"
+                    : getContentTypeLabel(report.contentType)}
+                </Field>
+                <Field label="Incident date" icon={<IconClock size={14} />}>
+                  {report.incidentAt ? formatDateTime(report.incidentAt) : "Not provided"}
+                </Field>
               </dl>
 
-              <div className="pt-4 border-t border-ink-100 dark:border-ink-800">
-                <h3 className="text-sm font-semibold text-ink-800 dark:text-ink-100 mb-2">Description</h3>
-                <p className="text-sm text-ink-700 dark:text-ink-200 whitespace-pre-wrap">{report.description}</p>
+              <div className="border-t border-ink-100 pt-4 dark:border-ink-800">
+                <h3 className="mb-2 text-sm font-semibold text-ink-800 dark:text-ink-100">
+                  Description
+                </h3>
+                <p className="whitespace-pre-wrap text-sm text-ink-700 dark:text-ink-200">
+                  {report.description}
+                </p>
               </div>
 
-              {evidence.length > 0 && (
-                <div className="pt-4 border-t border-ink-100 dark:border-ink-800">
-                  <h3 className="text-sm font-semibold text-ink-800 dark:text-ink-100 mb-2">Evidence</h3>
-                  <div className="space-y-2">
-                    {evidence.map((e, i) => (
-                      <Link key={i} href={e.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-brand-600 hover:underline dark:text-brand-300">
-                        <IconExternal size={14} />
-                        <span className="truncate">{e.label || e.url}</span>
-                      </Link>
+              {(report.reportedPerson || report.reportedDiscord || report.reportedUsername) && (
+                <div className="border-t border-ink-100 pt-4 dark:border-ink-800">
+                  <h3 className="mb-2 text-sm font-semibold text-ink-800 dark:text-ink-100">
+                    Reported person
+                  </h3>
+                  <dl className="grid gap-4 sm:grid-cols-2">
+                    {report.reportedPerson && (
+                      <Field label="Name given" icon={<IconUsers size={14} />}>
+                        {report.reportedPerson}
+                      </Field>
+                    )}
+                    {report.reportedDiscord && (
+                      <Field label="Discord" icon={<IconUsers size={14} />}>
+                        {report.reportedDiscord}
+                      </Field>
+                    )}
+                    {report.reportedUsername && (
+                      <Field label="Linked account" icon={<IconUsers size={14} />}>
+                        {report.reportedUsername}
+                      </Field>
+                    )}
+                  </dl>
+                </div>
+              )}
+
+              {allLinks.length > 0 && (
+                <div className="border-t border-ink-100 pt-4 dark:border-ink-800">
+                  <h3 className="mb-2 text-sm font-semibold text-ink-800 dark:text-ink-100">
+                    Links supplied
+                  </h3>
+                  <ul className="space-y-2">
+                    {allLinks.map((link, index) => (
+                      <li key={`${link.url}-${index}`}>
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer nofollow"
+                          className="inline-flex max-w-full items-center gap-2 text-sm text-brand-600 hover:underline dark:text-brand-300"
+                        >
+                          <IconExternal size={14} aria-hidden />
+                          <span className="truncate">{link.label || link.url}</span>
+                        </a>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
               )}
 
-              {report.anonymous && (
-                <div className="pt-4 border-t border-ink-100 dark:border-ink-800">
-                  <div className="flex items-center gap-2 text-sm text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
-                    <IconAlert size={16} /> <span>Anonymous report — reporter identity hidden from moderators</span>
-                  </div>
+              {report.evidenceFiles.length > 0 && (
+                <div className="border-t border-ink-100 pt-4 dark:border-ink-800">
+                  <h3 className="mb-1 text-sm font-semibold text-ink-800 dark:text-ink-100">
+                    Evidence ({report.evidenceFiles.length})
+                  </h3>
+                  <p className="mb-3 text-xs text-ink-500 dark:text-ink-400">
+                    Evidence files are stored privately with no public URL. Opening one is recorded
+                    in the audit trail.
+                  </p>
+                  {!can("reports.evidence") ? (
+                    <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                      Your staff role cannot open evidence files.
+                    </p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {report.evidenceFiles.map((file) => (
+                        <li
+                          key={file.id}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-ink-200 px-3 py-2 text-sm dark:border-ink-700"
+                        >
+                          <span className="min-w-0 truncate">
+                            <IconShield size={14} className="mr-1.5 inline text-emerald-600" aria-hidden />
+                            {file.fileName}{" "}
+                            <span className="text-ink-500 dark:text-ink-400">
+                              ({formatReportBytes(file.size)}, {file.contentType})
+                            </span>
+                          </span>
+                          <a
+                            href={`/api/admin/reports/evidence/${file.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn-secondary btn-sm"
+                          >
+                            {file.contentType.startsWith("image/") ? (
+                              <IconEye size={14} aria-hidden />
+                            ) : (
+                              <IconDownload size={14} aria-hidden />
+                            )}
+                            Open
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
 
-              {!report.anonymous && (
-                <div className="pt-4 border-t border-ink-100 dark:border-ink-800">
-                  <h3 className="text-sm font-semibold text-ink-800 dark:text-ink-100 mb-2">Reporter</h3>
+              <div className="border-t border-ink-100 pt-4 dark:border-ink-800">
+                <h3 className="mb-2 text-sm font-semibold text-ink-800 dark:text-ink-100">Reporter</h3>
+                {report.anonymous ? (
+                  <p className="flex items-center gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+                    <IconAlert size={16} aria-hidden /> Anonymous report — identity hidden from
+                    moderators
+                  </p>
+                ) : (
                   <dl className="grid gap-4 sm:grid-cols-2">
-                    {report.reporterName && (
-                      <div>
-                        <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
-                          <IconUsers size={14} /> Name
-                        </dt>
-                        <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">{report.reporterName}</dd>
-                      </div>
-                    )}
-                    {report.reporterEmail && (
-                      <div>
-                        <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
-                          <IconInbox size={14} /> Email
-                        </dt>
-                        <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">{report.reporterEmail}</dd>
-                      </div>
-                    )}
-                    {report.reporterId && (
-                      <div>
-                        <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
-                          <IconShield size={14} /> User ID
-                        </dt>
-                        <dd className="mt-1 text-sm font-mono text-ink-600 dark:text-ink-400">{report.reporterId}</dd>
-                      </div>
-                    )}
+                    <Field label="Name" icon={<IconUsers size={14} />}>
+                      {report.reporterName || "—"}
+                    </Field>
+                    <Field label="Email" icon={<IconUsers size={14} />}>
+                      {report.reporterEmail || "—"}
+                    </Field>
                   </dl>
-                </div>
-              )}
-
-              {report.reportedUsername && (
-                <div className="pt-4 border-t border-ink-100 dark:border-ink-800">
-                  <h3 className="text-sm font-semibold text-ink-800 dark:text-ink-100 mb-2">Reported User</h3>
-                  <dl className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
-                        <IconUsers size={14} /> Username
-                      </dt>
-                      <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">{report.reportedUsername}</dd>
-                    </div>
-                    {report.reportedUserId && (
-                      <div>
-                        <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
-                          <IconShield size={14} /> User ID
-                        </dt>
-                        <dd className="mt-1 text-sm font-mono text-ink-600 dark:text-ink-400">{report.reportedUserId}</dd>
-                      </div>
-                    )}
-                  </dl>
-                </div>
-              )}
+                )}
+              </div>
             </CardBody>
           </Card>
 
           {content && (
             <Card>
               <CardHeader
-                title="Reported Content"
-                subtitle={contentHref ? "Click to view on site" : "Content not directly accessible"}
+                title="Reported content"
+                subtitle={contentHref ? "Open it in a new tab if you need the full page" : "Not directly accessible"}
                 icon={<IconEye size={18} />}
               />
               <CardBody className="space-y-4">
-                {content.imageUrl && (
+                {typeof content.imageUrl === "string" && content.imageUrl && (
                   <Image
                     src={content.imageUrl}
                     alt={content.title || content.name || "Reported content"}
                     width={800}
                     height={450}
-                    className="rounded-lg max-h-64 w-auto object-cover"
-                  />
-                )}
-                {content.bannerUrl && (
-                  <Image
-                    src={content.bannerUrl}
-                    alt={`${content.title || content.name} banner`}
-                    width={800}
-                    height={200}
-                    className="rounded-lg max-h-48 w-auto object-cover"
+                    className="max-h-64 w-auto rounded-lg object-cover"
                   />
                 )}
                 <dl className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <dt className="text-xs font-medium text-ink-500 dark:text-ink-400">Title</dt>
-                    <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100 font-medium">{content.title || content.name}</dd>
-                  </div>
-                  {content.description && (
-                    <div className="sm:col-span-2">
-                      <dt className="text-xs font-medium text-ink-500 dark:text-ink-400">Description</dt>
-                      <dd className="mt-1 text-sm text-ink-700 dark:text-ink-200 whitespace-pre-wrap">{content.description}</dd>
-                    </div>
+                  <Field label="Title">
+                    {content.title || content.name || content.id}
+                  </Field>
+                  {typeof content.description === "string" && content.description && (
+                    <Field label="Description" wide>
+                      {content.description}
+                    </Field>
                   )}
-                  {content.summary && (
-                    <div className="sm:col-span-2">
-                      <dt className="text-xs font-medium text-ink-500 dark:text-ink-400">Summary</dt>
-                      <dd className="mt-1 text-sm text-ink-700 dark:text-ink-200 whitespace-pre-wrap">{content.summary}</dd>
-                    </div>
+                  {typeof content.summary === "string" && content.summary && (
+                    <Field label="Summary" wide>
+                      {content.summary}
+                    </Field>
                   )}
-                  {content.submitterName && (
-                    <div>
-                      <dt className="text-xs font-medium text-ink-500 dark:text-ink-400">Submitted by</dt>
-                      <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">{content.submitterName}</dd>
-                    </div>
-                  )}
-                  {content.creator && (
-                    <div>
-                      <dt className="text-xs font-medium text-ink-500 dark:text-ink-400">Creator</dt>
-                      <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">{content.creator}</dd>
-                    </div>
-                  )}
-                  {content.type && (
-                    <div>
-                      <dt className="text-xs font-medium text-ink-500 dark:text-ink-400">Type</dt>
-                      <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">{content.type}</dd>
-                    </div>
-                  )}
-                  {content.status && (
-                    <div>
-                      <dt className="text-xs font-medium text-ink-500 dark:text-ink-400">Status</dt>
-                      <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">{content.status}</dd>
-                    </div>
-                  )}
-                  {content.rank && (
-                    <div>
-                      <dt className="text-xs font-medium text-ink-500 dark:text-ink-400">Rank</dt>
-                      <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">{content.rank}</dd>
-                    </div>
-                  )}
+                  {content.submitterName && <Field label="Submitted by">{content.submitterName}</Field>}
+                  {content.creator && <Field label="Creator">{content.creator}</Field>}
+                  {content.type && <Field label="Type">{content.type}</Field>}
+                  {content.status && <Field label="Status">{content.status}</Field>}
+                  {content.rank && <Field label="Rank">{content.rank}</Field>}
                   {content.vrchatUsername && (
-                    <div>
-                      <dt className="text-xs font-medium text-ink-500 dark:text-ink-400">VRChat Username</dt>
-                      <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">{content.vrchatUsername}</dd>
-                    </div>
+                    <Field label="VRChat username">{content.vrchatUsername}</Field>
                   )}
                   {content.startDateTime && (
-                    <div>
-                      <dt className="text-xs font-medium text-ink-500 dark:text-ink-400">Starts</dt>
-                      <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">{formatDateTime(new Date(content.startDateTime))}</dd>
-                    </div>
+                    <Field label="Starts">{formatDateTime(content.startDateTime)}</Field>
                   )}
-                  {content.state && (
-                    <div>
-                      <dt className="text-xs font-medium text-ink-500 dark:text-ink-400">State</dt>
-                      <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">{content.state}</dd>
-                    </div>
-                  )}
+                  {content.state && <Field label="State">{content.state}</Field>}
                 </dl>
-                {contentHref && (
-                  <Link href={contentHref} target="_blank" rel="noopener noreferrer" className="btn-secondary btn-sm">
-                    <IconExternal size={14} className="mr-1.5" /> View on site
-                  </Link>
+                {contentHref ? (
+                  <a
+                    href={contentHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-secondary btn-sm"
+                  >
+                    <IconExternal size={14} aria-hidden /> View on site
+                  </a>
+                ) : (
+                  <p className="text-sm text-ink-500 dark:text-ink-400">
+                    The reported content is no longer available. The report is kept for the audit
+                    history.
+                  </p>
                 )}
               </CardBody>
             </Card>
           )}
 
           <Card>
-            <CardHeader title="Audit Log" icon={<IconNote size={18} />} />
+            <CardHeader
+              title="Audit trail"
+              subtitle={`${report.auditLogs.length} recorded event${report.auditLogs.length === 1 ? "" : "s"}`}
+              icon={<IconNote size={18} />}
+            />
             <CardBody className="p-0">
               {report.auditLogs.length === 0 ? (
-                <div className="px-5 py-6 text-center text-sm text-ink-500 dark:text-ink-400">No audit entries yet</div>
+                <p className="px-5 py-6 text-center text-sm text-ink-500 dark:text-ink-400">
+                  No audit entries yet
+                </p>
               ) : (
-                <ul className="divide-y divide-ink-100 dark:divide-ink-800">
+                <ol className="divide-y divide-ink-100 dark:divide-ink-800">
                   {report.auditLogs.map((log) => (
-                    <li key={log.id} className="px-5 py-4 hover:bg-ink-50 dark:hover:bg-ink-900/40">
+                    <li key={log.id} className="px-5 py-4">
                       <div className="flex items-start gap-3">
-                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center">
+                        <span
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/30"
+                          aria-hidden
+                        >
                           <IconShield size={14} className="text-brand-600 dark:text-brand-400" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 text-sm">
-                            <span className="font-medium text-ink-800 dark:text-ink-100">{log.action.replace(/_/g, " ")}</span>
-                            <span className="text-ink-500 dark:text-ink-400">{relativeTime(log.createdAt)}</span>
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="flex flex-wrap items-center gap-x-2 text-sm">
+                            <span className="font-medium text-ink-800 dark:text-ink-100">
+                              {getAuditLabel(log.action)}
+                            </span>
+                            <span className="text-ink-500 dark:text-ink-400">
+                              {formatDateTime(log.createdAt)}
+                            </span>
                             {log.actorName && (
-                              <span className="text-ink-500 dark:text-ink-400">by {log.actorName}</span>
+                              <span className="text-ink-500 dark:text-ink-400">
+                                by {log.actorName}
+                              </span>
                             )}
-                          </div>
+                          </p>
                           {log.detail && (
-                            <p className="mt-1 text-sm text-ink-700 dark:text-ink-200">{log.detail}</p>
+                            <p className="mt-1 whitespace-pre-wrap text-sm text-ink-700 dark:text-ink-200">
+                              {log.detail}
+                            </p>
                           )}
                         </div>
                       </div>
                     </li>
                   ))}
-                </ul>
+                </ol>
               )}
             </CardBody>
           </Card>
-        </section>
+        </div>
 
         <aside className="space-y-5">
           <Card>
-            <CardHeader title="Staff Actions" icon={<IconShield size={18} />} />
+            <CardHeader title="Staff actions" icon={<IconShield size={18} />} />
             <CardBody className="space-y-3">
-              {report.status === "OPEN" && (
+              {can("reports.assign") && (
+                <div className="grid gap-2">
+                  {report.status === "OPEN" && report.assignedToId !== currentStaff.id && (
+                    <Button
+                      className="w-full"
+                      onClick={() => void runAction("assign", { assigneeId: currentStaff.id })}
+                      loading={busyAction === "assign"}
+                      leftIcon={<IconUsers size={15} />}
+                    >
+                      Assign to me
+                    </Button>
+                  )}
+                  {report.assignedToId && report.assignedToId !== currentStaff.id && (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => void runAction("assign", { assigneeId: currentStaff.id })}
+                      loading={busyAction === "assign"}
+                      leftIcon={<IconUsers size={15} />}
+                    >
+                      Take over from {report.assignedTo?.name}
+                    </Button>
+                  )}
+                  {report.assignedToId === currentStaff.id && (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => void runAction("unassign")}
+                      loading={busyAction === "unassign"}
+                      leftIcon={<IconUsers size={15} />}
+                    >
+                      Unassign
+                    </Button>
+                  )}
+                </div>
+              )}
+
+              {can("reports.notes") && (
                 <Button
+                  variant="secondary"
                   className="w-full"
-                  onClick={() => handleAction("assign", { assigneeId: currentStaff.id })}
-                  loading={isActionLoading === "assign"}
-                  leftIcon={<IconUsers size={15} />}
+                  onClick={() => {
+                    setDialogText("");
+                    setDialog("note");
+                  }}
+                  leftIcon={<IconNote size={15} />}
                 >
-                  Assign to me
+                  Add internal note
                 </Button>
               )}
 
-              {report.assignedToId && report.assignedToId !== currentStaff.id && (
-                <Button variant="outline" className="w-full" onClick={() => handleAction("assign", { assigneeId: currentStaff.id })} loading={isActionLoading === "assign"} leftIcon={<IconUsers size={15} />}>
-                  Reassign to me
-                </Button>
-              )}
-
-              {report.assignedToId === currentStaff.id && (
-                <Button variant="outline" className="w-full" onClick={() => handleAction("unassign")} loading={isActionLoading === "unassign"} leftIcon={<IconUsers size={15} />}>
-                  Unassign
+              {can("reports.resolve") && (
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => {
+                    setDialogText("");
+                    setDialog("action");
+                  }}
+                  leftIcon={<IconSend size={15} />}
+                >
+                  Record moderation action
                 </Button>
               )}
 
               <div className="grid gap-2 sm:grid-cols-2">
-                <Button
-                  variant="secondary"
-                  className="w-full"
-                  onClick={() => setShowNoteDialog(true)}
-                  leftIcon={<IconNote size={15} />}
-                >
-                  Add Note
-                </Button>
-
-                {(report.status === "OPEN" || report.status === "IN_REVIEW") && (
+                {can("reports.escalate") && report.status !== "ESCALATED" && (
                   <Button
-                    variant={report.priority === "HIGH" || report.priority === "URGENT" ? "primary" : "secondary"}
+                    variant={report.priority === "URGENT" ? "primary" : "secondary"}
                     className="w-full"
-                    onClick={() => setShowEscalateDialog(true)}
+                    onClick={() => {
+                      setDialogText("");
+                      setDialog("escalate");
+                    }}
                     leftIcon={<IconAlert size={15} />}
                   >
                     Escalate
                   </Button>
                 )}
 
-                {(report.status === "OPEN" || report.status === "IN_REVIEW") && (
+                {can("reports.resolve") && (
                   <Button
                     variant="success"
                     className="w-full"
-                    onClick={() => setShowResolveDialog(true)}
+                    onClick={() => {
+                      setDialogText("");
+                      setDialog("resolve");
+                    }}
                     leftIcon={<IconCheck size={15} />}
                   >
                     Resolve
                   </Button>
                 )}
 
-                {(report.status === "OPEN" || report.status === "IN_REVIEW") && (
+                {can("reports.dismiss") && (
                   <Button
                     variant="ghost"
                     className="w-full"
-                    onClick={() => setShowDismissDialog(true)}
+                    onClick={() => {
+                      setDialogText("");
+                      setDialog("dismiss");
+                    }}
                     leftIcon={<IconTrash size={15} />}
                   >
                     Dismiss
                   </Button>
                 )}
 
-                <select
-                  defaultValue={report.status}
-                  onChange={(e) => handleAction("status", { status: e.target.value })}
-                  disabled={isActionLoading === "status"}
-                  className="select sm:col-span-2"
-                >
-                  {Object.entries(REPORT_STATUSES).map(([k, v]) => (
-                    <option key={k} value={k} disabled={k === report.status}>
-                      {v.label}
-                    </option>
-                  ))}
-                </select>
-
-                <select
-                  defaultValue={report.priority}
-                  onChange={(e) => handleAction("priority", { priority: e.target.value })}
-                  disabled={isActionLoading === "priority"}
-                  className="select sm:col-span-2"
-                >
-                  {Object.entries(REPORT_PRIORITIES).map(([k, v]) => (
-                    <option key={k} value={k} disabled={k === report.priority}>
-                      {v.label}
-                    </option>
-                  ))}
-                </select>
+                {can("reports.review") && (
+                  <>
+                    <div className="sm:col-span-2">
+                      <label htmlFor="report-status" className="sr-only">
+                        Change status
+                      </label>
+                      <select
+                        id="report-status"
+                        value={statusValue}
+                        onChange={(event) => {
+                          const next = event.target.value;
+                          setStatusValue(next);
+                          void runAction("status", { status: next });
+                        }}
+                        disabled={busyAction === "status"}
+                        className="select"
+                      >
+                        {Object.entries(REPORT_STATUSES).map(([key, meta]) => (
+                          <option key={key} value={key} disabled={key === report.status}>
+                            {meta.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label htmlFor="report-priority" className="sr-only">
+                        Change priority
+                      </label>
+                      <select
+                        id="report-priority"
+                        value={priorityValue}
+                        onChange={(event) => {
+                          const next = event.target.value;
+                          setPriorityValue(next);
+                          void runAction("priority", { priority: next });
+                        }}
+                        disabled={busyAction === "priority"}
+                        className="select"
+                      >
+                        {Object.entries(REPORT_PRIORITIES).map(([key, meta]) => (
+                          <option key={key} value={key} disabled={key === report.priority}>
+                            {meta.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                )}
               </div>
+
+              {!can("reports.resolve") && (
+                <p className="rounded-lg border border-ink-200 px-3 py-2 text-xs text-ink-500 dark:border-ink-700 dark:text-ink-400">
+                  Your staff role can review and annotate this report but cannot resolve, dismiss,
+                  or escalate it. A lead can still take those actions.
+                </p>
+              )}
             </CardBody>
           </Card>
 
           <Card>
-            <CardHeader title="Report ID" icon={<IconFlag size={18} />} />
-            <CardBody>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-ink-500 dark:text-ink-400">ID</span>
-                  <code className="font-mono text-ink-800 dark:text-ink-200">{report.id}</code>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-ink-500 dark:text-ink-400">Token</span>
-                  <code className="font-mono text-ink-800 dark:text-ink-200">{report.reportToken}</code>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-ink-500 dark:text-ink-400">Content ID</span>
-                  <code className="font-mono text-ink-800 dark:text-ink-200">{report.contentId}</code>
-                </div>
+            <CardHeader title="Staff notification" icon={<IconLink size={18} />} />
+            <CardBody className="space-y-3 text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-ink-500 dark:text-ink-400">Delivery</span>
+                <StatusPill tone={getWebhookStatusTone(report.webhookStatus)}>
+                  {getWebhookStatusLabel(report.webhookStatus)}
+                </StatusPill>
               </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-ink-500 dark:text-ink-400">Attempts</span>
+                <span className="text-ink-800 dark:text-ink-100">{report.webhookAttempts}</span>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-ink-500 dark:text-ink-400">Last sent</span>
+                <span className="text-ink-800 dark:text-ink-100">
+                  {report.webhookSentAt ? relativeTime(report.webhookSentAt) : "Never"}
+                </span>
+              </div>
+              {report.webhookError && (
+                <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-950/40 dark:text-red-200">
+                  {report.webhookError}
+                </p>
+              )}
+              {can("reports.webhookRetry") ? (
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  onClick={() => void runAction("retryWebhook")}
+                  loading={busyAction === "retryWebhook"}
+                  disabled={report.webhookStatus === "SENT"}
+                  leftIcon={<IconRefreshCw size={15} />}
+                >
+                  Retry notification
+                </Button>
+              ) : (
+                report.webhookStatus !== "SENT" && (
+                  <p className="text-xs text-ink-500 dark:text-ink-400">
+                    Only leads can retry a failed staff notification.
+                  </p>
+                )
+              )}
+              <p className="text-xs text-ink-500 dark:text-ink-400">
+                The Discord message only contains the reference, category, target, and a link back
+                here. Descriptions and evidence stay on this page.
+              </p>
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader title="Report IDs" icon={<IconFlag size={18} />} />
+            <CardBody>
+              <dl className="space-y-2 text-sm">
+                <div className="flex items-center justify-between gap-2">
+                  <dt className="text-ink-500 dark:text-ink-400">Reference</dt>
+                  <dd className="font-mono font-semibold text-ink-800 dark:text-ink-200">
+                    {reference}
+                  </dd>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <dt className="text-ink-500 dark:text-ink-400">Internal ID</dt>
+                  <dd className="font-mono text-xs text-ink-800 dark:text-ink-200">{report.id}</dd>
+                </div>
+                {report.contentId && (
+                  <div className="flex items-center justify-between gap-2">
+                    <dt className="text-ink-500 dark:text-ink-400">Content ID</dt>
+                    <dd className="font-mono text-xs text-ink-800 dark:text-ink-200">
+                      {report.contentId}
+                    </dd>
+                  </div>
+                )}
+                <div className="flex items-center justify-between gap-2">
+                  <dt className="text-ink-500 dark:text-ink-400">Assigned</dt>
+                  <dd className="text-ink-800 dark:text-ink-100">
+                    {report.assignedTo?.name ?? "Unassigned"}
+                  </dd>
+                </div>
+                {report.resolvedBy && (
+                  <div className="flex items-center justify-between gap-2">
+                    <dt className="text-ink-500 dark:text-ink-400">Closed by</dt>
+                    <dd className="text-ink-800 dark:text-ink-100">{report.resolvedBy.name}</dd>
+                  </div>
+                )}
+                {report.resolution && (
+                  <div className="pt-2">
+                    <dt className="text-ink-500 dark:text-ink-400">Resolution</dt>
+                    <dd className="mt-1 whitespace-pre-wrap text-ink-800 dark:text-ink-100">
+                      {report.resolution}
+                    </dd>
+                  </div>
+                )}
+              </dl>
             </CardBody>
           </Card>
         </aside>
       </div>
 
-      {showNoteDialog && (
-        <NoteDialog
-          open={showNoteDialog}
-          onClose={() => setShowNoteDialog(false)}
-          onSubmit={(note) => handleAction("note", { note })}
-          loading={isActionLoading === "note"}
-        />
-      )}
-
-      {showResolveDialog && (
+      {dialog && (
         <ActionDialog
-          open={showResolveDialog}
-          onClose={() => setShowResolveDialog(false)}
-          onSubmit={(resolution) => handleAction("resolve", { resolution })}
-          loading={isActionLoading === "resolve"}
-          title="Resolve Report"
-          description="This will mark the report as resolved. Add a resolution note for the audit log."
-          placeholder="Describe what action was taken..."
-          buttonText="Resolve"
+          kind={dialog}
+          value={dialogText}
+          onChange={setDialogText}
+          busy={busyAction === dialog}
+          onClose={() => setDialog(null)}
+          onSubmit={async (text) => {
+            const ok = await runAction(dialog, dialog === "note" || dialog === "escalate" || dialog === "action"
+              ? { note: text }
+              : { resolution: text });
+            if (ok) setDialog(null);
+          }}
         />
       )}
 
-      {showDismissDialog && (
-        <ActionDialog
-          open={showDismissDialog}
-          onClose={() => setShowDismissDialog(false)}
-          onSubmit={(resolution) => handleAction("dismiss", { resolution })}
-          loading={isActionLoading === "dismiss"}
-          title="Dismiss Report"
-          description="This will dismiss the report without action. Add a reason for the audit log."
-          placeholder="Reason for dismissal..."
-          buttonText="Dismiss"
-          variant="danger"
-        />
-      )}
-
-      {showEscalateDialog && (
-        <ActionDialog
-          open={showEscalateDialog}
-          onClose={() => setShowEscalateDialog(false)}
-          onSubmit={(note) => handleAction("escalate", { note })}
-          loading={isActionLoading === "escalate"}
-          title="Escalate Report"
-          description="This will escalate the report to urgent priority and mark it as escalated."
-          placeholder="Reason for escalation..."
-          buttonText="Escalate"
-          variant="warning"
-        />
-      )}
-
-      <Link href="/admin/reports" className="inline-flex items-center gap-1.5 mt-6 text-sm font-medium text-brand-600 hover:underline dark:text-brand-300">
-        <IconArrowLeft size={16} /> Back to Reports
+      <Link
+        href="/admin/reports"
+        className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 hover:underline dark:text-brand-300"
+      >
+        <IconArrowLeft size={16} aria-hidden /> Back to reports
       </Link>
     </div>
   );
 }
 
-function NoteDialog({ open, onClose, onSubmit, loading }: { open: boolean; onClose: () => void; onSubmit: (note: string) => void; loading: boolean }) {
-  const [note, setNote] = useState("");
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!note.trim()) return;
-    onSubmit(note.trim());
-    setNote("");
-    onClose();
-  };
-
+function Field({
+  label,
+  icon,
+  children,
+  wide,
+}: {
+  label: string;
+  icon?: React.ReactNode;
+  children: React.ReactNode;
+  wide?: boolean;
+}) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div className="bg-white dark:bg-ink-900 rounded-2xl p-5 w-full max-w-md mx-4 animate-scale-in" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-semibold text-ink-900 dark:text-white mb-2">Add Internal Note</h3>
-        <p className="text-sm text-ink-500 dark:text-ink-400 mb-4">This note is only visible to staff and will be added to the audit log.</p>
-        <form onSubmit={handleSubmit}>
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            rows={4}
-            placeholder="Add a note for the moderation team..."
-            className="textarea w-full resize-y mb-4"
-            required
-          />
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-            <Button type="submit" loading={loading}>Add Note</Button>
-          </div>
-        </form>
-      </div>
+    <div className={wide ? "sm:col-span-2" : undefined}>
+      <dt className="flex items-center gap-1 text-xs font-medium text-ink-500 dark:text-ink-400">
+        {icon}
+        {label}
+      </dt>
+      <dd className="mt-1 whitespace-pre-wrap text-sm text-ink-800 dark:text-ink-100">{children}</dd>
     </div>
   );
 }
+
+const DIALOG_COPY: Record<
+  Exclude<DialogKind, null>,
+  { title: string; description: string; placeholder: string; button: string; required: boolean; danger?: boolean }
+> = {
+  note: {
+    title: "Add an internal note",
+    description: "Only staff can read this. It is added to the audit trail.",
+    placeholder: "What did you find or check?",
+    button: "Add note",
+    required: true,
+  },
+  action: {
+    title: "Record a moderation action",
+    description: "Use this to log a warning, mute, removal, or block you applied elsewhere.",
+    placeholder: "Warned the user and removed the offending message…",
+    button: "Record action",
+    required: true,
+  },
+  resolve: {
+    title: "Resolve this report",
+    description: "This closes the report. The reporter sees a summary on their tracking page.",
+    placeholder: "Warned the reported user and removed the content.",
+    button: "Resolve report",
+    required: false,
+  },
+  dismiss: {
+    title: "Dismiss this report",
+    description: "Use this when the report does not breach the community rules.",
+    placeholder: "No rule was broken — the context was shared between friends.",
+    button: "Dismiss report",
+    required: false,
+    danger: true,
+  },
+  escalate: {
+    title: "Escalate this report",
+    description: "Escalating marks the report urgent and raises its priority.",
+    placeholder: "Threatening behaviour directed at a member — needs safeguarding.",
+    button: "Escalate",
+    required: false,
+  },
+};
 
 function ActionDialog({
-  open,
+  kind,
+  value,
+  onChange,
+  busy,
   onClose,
   onSubmit,
-  loading,
-  title,
-  description,
-  placeholder,
-  buttonText,
-  variant = "primary",
 }: {
-  open: boolean;
+  kind: Exclude<DialogKind, null>;
+  value: string;
+  onChange: (value: string) => void;
+  busy: boolean;
   onClose: () => void;
-  onSubmit: (text: string) => void;
-  loading: boolean;
-  title: string;
-  description: string;
-  placeholder: string;
-  buttonText: string;
-  variant?: "primary" | "danger" | "warning";
+  onSubmit: (value: string) => void;
 }) {
-  const [text, setText] = useState("");
+  const copy = DIALOG_COPY[kind];
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(text.trim());
-    setText("");
-    onClose();
-  };
-
-  const buttonVariant = variant === "danger" ? "danger" : variant === "warning" ? "primary" : variant;
+  useEffect(() => {
+    textareaRef.current?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div className="bg-white dark:bg-ink-900 rounded-2xl p-5 w-full max-w-md mx-4 animate-scale-in" onClick={(e) => e.stopPropagation()}>
-        <h3 className="text-lg font-semibold text-ink-900 dark:text-white mb-1">{title}</h3>
-        <p className="text-sm text-ink-500 dark:text-ink-400 mb-4">{description}</p>
-        <form onSubmit={handleSubmit}>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            rows={3}
-            placeholder={placeholder}
-            className="textarea w-full resize-y mb-4"
-          />
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
-            <Button type="submit" variant={buttonVariant} loading={loading}>{buttonText}</Button>
-          </div>
-        </form>
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="action-dialog-title"
+        aria-describedby="action-dialog-description"
+        className="w-full max-w-md animate-scale-in rounded-2xl bg-white p-5 dark:bg-ink-900"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h3 id="action-dialog-title" className="mb-1 text-lg font-semibold text-ink-900 dark:text-white">
+          {copy.title}
+        </h3>
+        <p
+          id="action-dialog-description"
+          className="mb-4 text-sm text-ink-500 dark:text-ink-400"
+        >
+          {copy.description}
+        </p>
+        <label htmlFor="action-dialog-input" className="sr-only">
+          {copy.title}
+        </label>
+        <textarea
+          id="action-dialog-input"
+          ref={textareaRef}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          rows={4}
+          required={copy.required}
+          maxLength={2000}
+          placeholder={copy.placeholder}
+          className="textarea mb-4 w-full resize-y"
+        />
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={onClose}>
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant={copy.danger ? "danger" : "primary"}
+            loading={busy}
+            disabled={copy.required && value.trim().length === 0}
+            onClick={() => onSubmit(value.trim())}
+          >
+            {copy.button}
+          </Button>
+        </div>
       </div>
     </div>
   );
 }
+
+export default ReportDetailClient;

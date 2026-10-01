@@ -37,10 +37,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/partners",
     "/support",
     "/search",
+    "/report",
+    "/legal",
+    "/legal/bot/terms",
+    "/legal/bot/privacy",
+    "/legal/ownership",
   ].map((path) => ({
     url: `${SITE}${path}`,
     lastModified: now,
-    changeFrequency: "weekly",
+    changeFrequency: path.startsWith("/legal") ? ("yearly" as const) : ("weekly" as const),
     priority: path === "" ? 1 : 0.8,
   }));
 

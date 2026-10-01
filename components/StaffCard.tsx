@@ -110,67 +110,73 @@ export function StaffSocialLinks({ socials }: { socials: string }) {
 }
 
 export function StaffCard({ staff }: { staff: StaffCardData }) {
-  return (
-    <Link
-      href={`/staff/${staff.id}`}
-      className="group block"
-      aria-label={`View ${staff.name}'s profile`}
-    >
-      <article className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-ink-200/60 bg-white shadow-card-premium transition-all duration-500 hover:-translate-y-1 hover:shadow-card-premium-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-brand-800/30 dark:bg-ink-900/80 dark:hover:border-brand-700/50 dark:focus-visible:ring-offset-surface-950">
-        <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-900/40 dark:to-brand-800/30">
-          {staff.photoUrl ? (
-            <Image
-              src={staff.photoUrl}
-              alt={`${staff.name} avatar`}
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-cover transition-transform duration-500 ease-spring-bounce group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-6xl font-bold text-brand-400 dark:text-brand-700">
-              {staff.name?.[0] ?? "?"}
-            </div>
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-ink-950/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-        </div>
+  const socialLinks = staff.socials ? parseSocials(staff.socials) : [];
+  const hasSocials = socialLinks.length > 0;
 
-        <div className="flex flex-1 flex-col p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="truncate text-lg font-bold text-ink-900 dark:text-white">{staff.name}</h3>
-              <p className="truncate text-sm font-medium text-brand-600 dark:text-brand-300">
-                @{staff.vrchatUsername}
-              </p>
-              <div className="mt-2">
-                <RoleBadge role={normalizeRoleKey(staff.rank)} size="sm" />
-              </div>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {staff.hostedEventCount ? (
-                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-ink-100 px-2.5 py-1 text-xs font-semibold text-ink-600 dark:bg-ink-800 dark:text-ink-300">
-                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                    <rect x="3.5" y="5" width="17" height="16" rx="2.5" />
-                    <path d="M3.5 9.5h17M8 3v4M16 3v4" />
-                  </svg>
-                  Hosts {staff.hostedEventCount}
-                </span>
-              ) : null}
-              <ReportButton
-                contentType="STAFF_PROFILE"
-                contentId={staff.id}
-                contentTitle={staff.name}
-                size="sm"
-                variant="outline"
-                className="rounded-full border-ink-300 text-ink-700 hover:bg-ink-100 dark:border-ink-600 dark:text-ink-300 dark:hover:bg-ink-800 shrink-0"
-              />
+  return (
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-ink-200/60 bg-white shadow-card-premium transition-all duration-500 hover:-translate-y-1 hover:shadow-card-premium-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-brand-800/30 dark:bg-ink-900/80 dark:hover:border-brand-700/50 dark:focus-visible:ring-offset-surface-950">
+      <Link
+        href={`/staff/${staff.id}`}
+        className="absolute inset-0 z-10 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-500"
+        aria-label={`View ${staff.name}'s profile`}
+      />
+      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-brand-100 to-brand-200 dark:from-brand-900/40 dark:to-brand-800/30">
+        {staff.photoUrl ? (
+          <Image
+            src={staff.photoUrl}
+            alt={`${staff.name} avatar`}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-500 ease-spring-bounce group-hover:scale-105"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-6xl font-bold text-brand-400 dark:text-brand-700">
+            {staff.name?.[0] ?? "?"}
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-ink-950/20 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+      </div>
+
+      <div className={`flex flex-1 flex-col p-5 ${hasSocials ? "pb-0" : ""}`}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="truncate text-lg font-bold text-ink-900 dark:text-white">{staff.name}</h3>
+            <p className="truncate text-sm font-medium text-brand-600 dark:text-brand-300">
+              @{staff.vrchatUsername}
+            </p>
+            <div className="mt-2">
+              <RoleBadge role={normalizeRoleKey(staff.rank)} size="sm" />
             </div>
           </div>
-          {staff.bio && (
-            <p className="mt-3 text-sm text-ink-500 dark:text-ink-400 line-clamp-3">{staff.bio}</p>
-          )}
-          {staff.socials && <StaffSocialLinks socials={staff.socials} />}
+          <div className="flex items-center gap-2 shrink-0">
+            {staff.hostedEventCount ? (
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-ink-100 px-2.5 py-1 text-xs font-semibold text-ink-600 dark:bg-ink-800 dark:text-ink-300">
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                  <rect x="3.5" y="5" width="17" height="16" rx="2.5" />
+                  <path d="M3.5 9.5h17M8 3v4M16 3v4" />
+                </svg>
+                Hosts {staff.hostedEventCount}
+              </span>
+            ) : null}
+            <ReportButton
+              contentType="STAFF_PROFILE"
+              contentId={staff.id}
+              contentTitle={staff.name}
+              size="sm"
+              variant="outline"
+              className="relative z-20 rounded-full border-ink-300 text-ink-700 hover:bg-ink-100 dark:border-ink-600 dark:text-ink-300 dark:hover:bg-ink-800 shrink-0"
+            />
+          </div>
         </div>
-      </article>
-    </Link>
+        {staff.bio && (
+          <p className="mt-3 text-sm text-ink-500 dark:text-ink-400 line-clamp-3">{staff.bio}</p>
+        )}
+      </div>
+      {hasSocials && (
+        <div className="relative z-20 mt-auto px-5 pb-5">
+          <StaffSocialLinks socials={staff.socials!} />
+        </div>
+      )}
+    </article>
   );
 }

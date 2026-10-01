@@ -7,6 +7,8 @@ import Image from "next/image";
 import { NAV_ITEMS, isNavGroup, isLinkActive, type NavLink } from "@/lib/nav-links";
 import { NavDropdown } from "@/components/NavDropdown";
 import { useTheme } from "@/components/ThemeProvider";
+import { useIsHalloween } from "@/components/halloween/HalloweenDecor";
+import { HalloweenIcon } from "@/components/halloween/HalloweenIcon";
 import { IconMenu, IconX, IconSearch, IconDiscord } from "@/components/admin/ui/icons";
 
 function ThemeToggle() {
@@ -65,6 +67,7 @@ export function Header({ joinUrl }: { joinUrl?: string }) {
   const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
   const mobileRef = useRef<HTMLDivElement>(null);
+  const halloween = useIsHalloween();
 
   useEffect(() => {
     if (!open) return;
@@ -123,13 +126,17 @@ export function Header({ joinUrl }: { joinUrl?: string }) {
             className="relative h-9 w-9 overflow-hidden rounded-full transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6"
             aria-hidden
           >
-            <Image
-              src="/brand/CutieLookingBack.png"
-              alt="UGN mascot"
-              fill
-              className="object-cover"
-              priority
-            />
+            {halloween ? (
+              <HalloweenIcon size={36} priority />
+            ) : (
+              <Image
+                src="/brand/CutieLookingBack.png"
+                alt="UGN mascot"
+                fill
+                className="object-cover"
+                priority
+              />
+            )}
           </span>
           <span className="bg-gradient-to-r from-brand-700 to-brand-800 bg-clip-text text-transparent dark:from-brand-200 dark:to-brand-300">
             Ur Gay Now

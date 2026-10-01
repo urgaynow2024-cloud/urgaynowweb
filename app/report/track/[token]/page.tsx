@@ -1,7 +1,5 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Container, PageHeader } from "@/components/Container";
 import { Alert, Card, CardBody, CardHeader, StatusBadge } from "@/components/ui";
@@ -13,16 +11,14 @@ import {
   IconClock,
   IconFlag,
 } from "@/components/admin/ui/icons";
-import { EmptyState } from "@/components/EmptyState";
 import Link from "next/link";
 import {
-  REPORT_STATUSES,
-  REPORT_REASONS,
-  REPORT_PRIORITIES,
   getStatusTone,
   getStatusLabel,
   getReasonLabel,
   getPriorityLabel,
+  getReportLabel,
+  getContentTypeLabel,
 } from "@/lib/reports";
 
 export const metadata: Metadata = {
@@ -30,6 +26,9 @@ export const metadata: Metadata = {
   description: "Check the status of your submitted report",
   robots: { index: false, follow: false },
 };
+
+/** A tracking page is private to the holder of the token — never cache it. */
+export const dynamic = "force-dynamic";
 
 function formatDate(date: Date): string {
   return new Date(date).toLocaleDateString(undefined, {
@@ -50,14 +49,7 @@ function formatDateTime(date: Date): string {
 }
 
 function getStatusColor(status: string): "neutral" | "brand" | "success" | "warning" | "danger" {
-  switch (status) {
-    case "OPEN": return "brand";
-    case "IN_REVIEW": return "warning";
-    case "RESOLVED": return "success";
-    case "DISMISSED": return "neutral";
-    case "ESCALATED": return "danger";
-    default: return "neutral";
-  }
+  return getStatusTone(status);
 }
 
 export default async function TrackReportPage({
@@ -89,8 +81,6 @@ export default async function TrackReportPage({
     notFound();
   }
 
-  const isOwnReport = true;
-
   return (
     <>
       <PageHeader
@@ -101,12 +91,15 @@ export default async function TrackReportPage({
         <Card className="animate-fade-in">
           <CardHeader title="Report Status" icon={<IconShield size={18} />} />
           <CardBody className="space-y-6">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <StatusBadge tone={getStatusColor(report.status)}>
-                {getStatusLabel(report.status as any)}
+                {getStatusLabel(report.status)}
               </StatusBadge>
               <span className="text-sm text-ink-500 dark:text-ink-400">
-                Reference: <code className="font-mono text-ink-700 dark:text-ink-200">{token.slice(0, 12)}…</code>
+                Reference:{" "}
+                <code className="font-mono font-semibold text-ink-800 dark:text-ink-100">
+                  {getReportLabel(report)}
+                </code>
               </span>
             </div>
 
@@ -135,22 +128,22 @@ export default async function TrackReportPage({
                   {getReasonLabel(report.reason)}
                 </dd>
               </div>
-              <div>
-                <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
-                  <IconShield size={14} /> Priority
-                </dt>
-                <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">
-                  {getPriorityLabel(report.priority as any)}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
-                  <IconFlag size={14} /> Type
-                </dt>
-                <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">
-                  {report.contentType}
-                </dd>
-              </div>
+<div>
+                  <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
+                    <IconShield size={14} /> Priority
+                  </dt>
+                  <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">
+                    {getPriorityLabel(report.priority)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
+                    <IconFlag size={14} /> Type
+                  </dt>
+                  <dd className="mt-1 text-sm text-ink-800 dark:text-ink-100">
+                    {report.source === "COMMUNITY" ? "Community report" : getContentTypeLabel(report.contentType)}
+                  </dd>
+                </div>
               {report.reportedUsername && (
                 <div>
                   <dt className="text-xs font-medium text-ink-500 dark:text-ink-400 flex items-center gap-1">
@@ -162,6 +155,26 @@ export default async function TrackReportPage({
                 </div>
               )}
             </dl>
+
+            {(report.resolution || report.resolvedAt) && (
+              <Alert
+                tone={report.status === "RESOLVED" ? "success" : "info"}
+                title={
+                  report.status === "RESOLVED"
+                    ? "Outcome"
+                    : report.status === "DISMISSED"
+                      ? "Dismissed"
+                      : "Latest update"
+                }
+              >
+                {report.resolution || "The moderation team closed this report."}
+                {report.resolvedAt && (
+                  <span className="mt-2 block text-xs opacity-80">
+                    Updated {formatDateTime(report.resolvedAt)}.
+                  </span>
+                )}
+              </Alert>
+            )}
 
             {relatedContent && (
               <div className="pt-4 border-t border-ink-100 dark:border-ink-800">

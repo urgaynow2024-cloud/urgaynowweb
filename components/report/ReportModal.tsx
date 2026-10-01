@@ -33,6 +33,7 @@ export function ReportModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState<string | null>(null);
+  const [successReference, setSuccessReference] = useState<string>("");
 
   const resetForm = () => {
     setReason("");
@@ -40,6 +41,7 @@ export function ReportModal({
     setEvidenceUrls("");
     setError("");
     setSuccess(null);
+    setSuccessReference("");
     setIsSubmitting(false);
   };
 
@@ -60,9 +62,10 @@ export function ReportModal({
         body: JSON.stringify({
           contentType,
           contentId,
+          category: reason,
           reason,
           description,
-          evidence: evidenceUrls
+          links: evidenceUrls
             .split("\n")
             .map((u) => u.trim())
             .filter((u) => u && URL_REGEX.test(u)),
@@ -75,6 +78,7 @@ export function ReportModal({
       }
 
       setSuccess(data.reportToken);
+      setSuccessReference(data.reference ?? "");
       if (onSuccess) onSuccess(data.reportToken);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit report");
@@ -96,11 +100,20 @@ export function ReportModal({
             Our moderation team will review your report as soon as possible.
           </Alert>
           <p className="text-sm text-ink-600 dark:text-ink-400">
-            Reference:{" "}
-            <code className="font-mono text-ink-800 dark:text-ink-200">{success}</code>
+            {successReference && (
+              <>
+                Reference:{" "}
+                <code className="font-mono font-semibold text-ink-900 dark:text-ink-100">
+                  {successReference}
+                </code>
+                <span className="mt-1 block">
+                  Quote this reference if you contact staff about this report.
+                </span>
+              </>
+            )}
           </p>
           <p className="text-sm text-ink-600 dark:text-ink-400">
-            Save this reference to{" "}
+            Save your private link to{" "}
             <a
               href={`/report/track/${success}`}
               className="font-medium text-brand-600 underline dark:text-brand-300"

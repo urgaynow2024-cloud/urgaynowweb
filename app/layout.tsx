@@ -4,6 +4,10 @@ import { HeaderWrapper } from "@/components/HeaderWrapper";
 import { Footer } from "@/components/Footer";
 import { ThemeProvider, SeasonalThemeProvider, themeInitScript } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/Toast";
+import { HalloweenDecorations } from "@/components/halloween/HalloweenDecorations";
+import { SeasonalBanner } from "@/components/halloween/SeasonalBanner";
+import { HalloweenIconProvider } from "@/components/halloween/HalloweenIconProvider";
+import { hasHalloweenIcon } from "@/lib/halloween-icon-server";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -42,7 +46,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const halloweenIconAvailable = hasHalloweenIcon();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -51,16 +57,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ThemeProvider>
           <SeasonalThemeProvider>
+            <HalloweenIconProvider available={halloweenIconAvailable}>
             <ToastProvider>
+            <HalloweenDecorations />
             <a href="#main" className="skip-link">
               Skip to content
             </a>
+            <SeasonalBanner />
             <HeaderWrapper />
               <main id="main" className="min-h-[60vh]">
                 {children}
               </main>
               <Footer />
             </ToastProvider>
+            </HalloweenIconProvider>
           </SeasonalThemeProvider>
         </ThemeProvider>
         <Analytics />

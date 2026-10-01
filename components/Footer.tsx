@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { getFooterSocials } from "@/lib/nav";
+import { HalloweenFooterMark } from "@/components/halloween/HalloweenDecor";
 
 export async function Footer() {
   const socials = await getFooterSocials();
@@ -90,6 +91,16 @@ export async function Footer() {
                   Guides & FAQ
                 </Link>
               </li>
+              <li>
+                <Link className="text-ink-600 transition-all duration-200 hover:text-brand-600 hover:translate-x-1 inline-block dark:text-ink-400 dark:hover:text-brand-300" href="/report">
+                  Report a user
+                </Link>
+              </li>
+              <li>
+                <Link className="text-ink-600 transition-all duration-200 hover:text-brand-600 hover:translate-x-1 inline-block dark:text-ink-400 dark:hover:text-brand-300" href="/legal">
+                  Legal &amp; policies
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -149,8 +160,10 @@ export async function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-16 border-t border-ink-200/60 pt-8 dark:border-ink-800/60">
+          {/* Original UGN bottom bar — unchanged */}
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <p className="text-sm text-ink-500 dark:text-ink-400">
+              <HalloweenFooterMark />
               © {year} Ur Gay Now. Made with <span className="text-brand-500">💜</span> for the community.
             </p>
             <div className="flex items-center gap-4 text-sm">
@@ -164,6 +177,44 @@ export async function Footer() {
               <span className="text-ink-300 dark:text-ink-700" aria-hidden>·</span>
               <Link className="text-ink-500 transition-colors hover:text-brand-600 dark:text-ink-400 dark:hover:text-brand-300" href="/gallery">
                 Gallery
+              </Link>
+            </div>
+          </div>
+
+          {/* MMD legal footer — added alongside the original bar, nothing replaced */}
+          <div className="mt-6 flex flex-col items-center justify-between gap-4 border-t border-ink-200/60 pt-6 sm:flex-row dark:border-ink-800/60">
+            <nav aria-label="Legal" className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm">
+              <Link className="text-ink-500 transition-colors hover:text-brand-600 dark:text-ink-400 dark:hover:text-brand-300" href="/legal">
+                Legal
+              </Link>
+              <span className="text-ink-300 dark:text-ink-700" aria-hidden>·</span>
+              <Link className="text-ink-500 transition-colors hover:text-brand-600 dark:text-ink-400 dark:hover:text-brand-300" href="/rules">
+                Community Rules
+              </Link>
+              <span className="text-ink-300 dark:text-ink-700" aria-hidden>·</span>
+              <Link className="text-ink-500 transition-colors hover:text-brand-600 dark:text-ink-400 dark:hover:text-brand-300" href="/legal/bot/terms">
+                Bot Terms of Service
+              </Link>
+              <span className="text-ink-300 dark:text-ink-700" aria-hidden>·</span>
+              <Link className="text-ink-500 transition-colors hover:text-brand-600 dark:text-ink-400 dark:hover:text-brand-300" href="/legal/bot/privacy">
+                Bot Privacy Policy
+              </Link>
+              <span className="text-ink-300 dark:text-ink-700" aria-hidden>·</span>
+              <Link className="text-ink-500 transition-colors hover:text-brand-600 dark:text-ink-400 dark:hover:text-brand-300" href="/legal/ownership">
+                UGN Ownership &amp; IP
+              </Link>
+            </nav>
+            <div className="flex flex-wrap items-center justify-center gap-3 text-sm">
+              <Link href="/report" className="text-ink-500 underline-offset-2 transition-colors hover:text-brand-600 hover:underline dark:text-ink-400 dark:hover:text-brand-300">
+                Report a User
+              </Link>
+              <span className="text-ink-300 dark:text-ink-700" aria-hidden>·</span>
+              <Link href="/support" className="text-ink-500 underline-offset-2 transition-colors hover:text-brand-600 hover:underline dark:text-ink-400 dark:hover:text-brand-300">
+                Report a Problem
+              </Link>
+              <span className="text-ink-300 dark:text-ink-700" aria-hidden>·</span>
+              <Link href="/support" className="text-ink-500 underline-offset-2 transition-colors hover:text-brand-600 hover:underline dark:text-ink-400 dark:hover:text-brand-300">
+                Contact / Support
               </Link>
             </div>
           </div>

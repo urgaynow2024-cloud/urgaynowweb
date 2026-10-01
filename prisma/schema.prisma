@@ -410,19 +410,41 @@ model CommunitySubmissionModerationLog {
 model Report {
   id              String    @id @default(cuid())
   reportToken     String    @unique @default(cuid())
-  contentType     String    // COMMUNITY_PHOTO | GALLERY_IMAGE | GROUP_PHOTO | EVENT | STAFF_PROFILE | SHOP_DESIGN | COMMUNITY_SUBMISSION | ANNOUNCEMENT
-  contentId         String
+  // Human-facing reference, e.g. UGN-000123. Backfilled for older reports by migration.
+  reference       String?   @unique
+  referenceSeq    Int       @default(0)
+  // CONTENT = report about website content (existing flow) | COMMUNITY = report about a person/behaviour
+  source          String    @default("CONTENT")
+  contentType     String    // COMMUNITY_PHOTO | GALLERY_IMAGE | GROUP_PHOTO | EVENT | STAFF_PROFILE | SHOP_DESIGN | COMMUNITY_SUBMISSION | ANNOUNCEMENT | NONE
+  contentId         String    @default("")
   reporterId      String?   // authenticated session sub, if available
   reporterName    String    @default("")
   reporterEmail   String?   @default("")
   anonymous       Boolean   @default(false)
+  // Salted SHA-256 of the submitter IP. Never stores the raw address.
+  reporterIpHash  String    @default("")
+  // Client-generated submit token used to make retries idempotent (unique when present).
+  idempotencyKey  String?   @unique
+  // Fingerprint used to detect accidental/near-identical duplicate submissions.
+  dedupeHash      String    @default("")
   reportedUserId  String?
   reportedUsername String?
-  reason          String    // HARASSMENT | HATE_SPEECH | SEXUAL_CONTENT | NSFW | VIOLENCE | SCAM | SPAM | COPYRIGHT | IMPERSONATION | PERSONAL_INFO | RULE_VIOLATION | OTHER
+  // Free-text reported person (VRChat / Discord / display name) for COMMUNITY reports.
+  reportedPerson  String    @default("")
+  reportedDiscord String    @default("")
+  incidentAt      DateTime?
+  links           String    @default("[]") // JSON array of { url, label? }
+  reason          String    // see REPORT_CATEGORIES in lib/reports.ts
   description     String
-  evidence        String    @default("[]") // JSON array of { url, label? }
-  status          String    @default("OPEN") // OPEN | IN_REVIEW | RESOLVED | DISMISSED | ESCALATED
+  evidence        String    @default("[]") // JSON array of external { url, label? } references
+  status          String    @default("OPEN") // OPEN | IN_REVIEW | WAITING_INFO | ACTION_TAKEN | RESOLVED | DISMISSED | ESCALATED
   priority        String    @default("NORMAL") // LOW | NORMAL | HIGH | URGENT
+  // Discord staff notification delivery state: PENDING | SENT | FAILED | SKIPPED
+  webhookStatus   String    @default("PENDING")
+  webhookError    String    @default("")
+  webhookAttempts Int       @default(0)
+  webhookSentAt   DateTime?
+  lastViewedAt    DateTime?
   assignedToId    String?
   assignedTo      Staff?    @relation("ReportAssignee", fields: [assignedToId], references: [id])
   resolvedById    String?
@@ -432,19 +454,52 @@ model Report {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   auditLogs       ReportAuditLog[]
+  evidenceFiles   ReportEvidence[]
 
   @@index([contentType, contentId])
   @@index([status, createdAt])
   @@index([status, priority, createdAt])
   @@index([assignedToId])
   @@index([reportToken])
+  @@index([referenceSeq])
+  @@index([source, createdAt])
+  @@index([webhookStatus])
+  @@index([dedupeHash, createdAt])
+  @@index([reporterIpHash])
+}
+
+/// Atomic counter used to mint UGN-000123-style report references.
+model ReportCounter {
+  id        String   @id @default("reports")
+  value     Int      @default(0)
+  updatedAt DateTime @updatedAt
+}
+
+/// Uploaded evidence. Files are stored as bytes and are only readable through an
+/// authorized staff route — there is deliberately no public URL for evidence.
+model ReportEvidence {
+  id            String   @id @default(cuid())
+  reportId      String?
+  report        Report?  @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  /// Random per-visitor token used to claim an upload during report submission.
+  uploaderToken String   @default("")
+  fileName      String
+  contentType   String   @default("application/octet-stream")
+  size          Int      @default(0)
+  sha256        String   @default("")
+  data          Bytes
+  createdAt     DateTime @default(now())
+
+  @@index([reportId])
+  @@index([uploaderToken])
+  @@index([createdAt])
 }
 
 model ReportAuditLog {
   id            String   @id @default(cuid())
   reportId      String
   report        Report   @relation(fields: [reportId], references: [id], onDelete: Cascade)
-  action        String   // SUBMITTED | ASSIGNED | STATUS_CHANGED | PRIORITY_CHANGED | NOTE_ADDED | RESOLVED | DISMISSED | ESCALATED | CONTENT_RESTORED
+  action        String   // SUBMITTED | ASSIGNED | UNASSIGNED | STATUS_CHANGED | PRIORITY_CHANGED | NOTE_ADDED | ACTION_RECORDED | RESOLVED | DISMISSED | ESCALATED | EVIDENCE_VIEWED | WEBHOOK_RETRIED | CONTENT_RESTORED
   actorId       String?
   actor         Staff?   @relation("ReportAuditActor", fields: [actorId], references: [id])
   actorName     String   @default("")

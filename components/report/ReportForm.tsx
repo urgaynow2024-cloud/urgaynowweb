@@ -3,26 +3,13 @@
 import { useState, FormEvent, ChangeEvent } from "react";
 import Link from "next/link";
 import { Alert, Button } from "@/components/ui";
-import { DESCRIPTION_MAX_LENGTH } from "@/lib/reports";
+import { CONTENT_REPORT_CATEGORIES, REPORT_LIMITS } from "@/lib/reports";
 
 export interface ReportFormProps {
   submissionId: string;
   submissionTitle: string;
   onSuccess?: (token: string) => void;
 }
-
-const REASONS = [
-  { value: "HARASSMENT", label: "Harassment" },
-  { value: "HATE_SPEECH", label: "Hate speech" },
-  { value: "NSFW", label: "NSFW / Sexual content" },
-  { value: "SCAM", label: "Scam / Fraud" },
-  { value: "IMPERSONATION", label: "Impersonation" },
-  { value: "RULE_VIOLATION", label: "Rule violation" },
-  { value: "BUG", label: "Website bug" },
-  { value: "EVENT_ISSUE", label: "Event issue" },
-  { value: "COMMUNITY_CONTENT", label: "Community content" },
-  { value: "OTHER", label: "Other" },
-];
 
 export function ReportForm({ submissionId, submissionTitle, onSuccess }: ReportFormProps) {
   const [reason, setReason] = useState("");
@@ -95,22 +82,26 @@ export function ReportForm({ submissionId, submissionTitle, onSuccess }: ReportF
         <label htmlFor="reason" className="field-label">
           Reason <span className="text-red-500">*</span>
         </label>
-        <select
-          id="reason"
-          name="reason"
-          value={reason}
-          onChange={handleChange}
-          required
-          className="select"
-        >
-          <option value="">Select a reason</option>
-          {REASONS.map((r) => (
-            <option key={r.value} value={r.value}>
-              {r.label}
-            </option>
-          ))}
-        </select>
-      </div>
+<select
+            id="reason"
+            name="reason"
+            value={reason}
+            onChange={handleChange}
+            required
+            aria-describedby="reason-help"
+            className="select"
+          >
+            <option value="">Select a reason</option>
+            {CONTENT_REPORT_CATEGORIES.map((r) => (
+              <option key={r.value} value={r.value}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+          <p id="reason-help" className="field-help">
+            Pick the closest match. Staff can re-categorise it if needed.
+          </p>
+        </div>
 
       <div>
         <label htmlFor="details" className="field-label">
@@ -128,7 +119,7 @@ export function ReportForm({ submissionId, submissionTitle, onSuccess }: ReportF
         />
         <div className="mt-1 flex justify-between gap-4 text-xs text-ink-500 dark:text-ink-400">
           <span>Be specific — include links, timestamps, or any other relevant information.</span>
-          <span>{details.length}/{DESCRIPTION_MAX_LENGTH}</span>
+          <span>{details.length}/{REPORT_LIMITS.DESCRIPTION_MAX}</span>
         </div>
       </div>
 

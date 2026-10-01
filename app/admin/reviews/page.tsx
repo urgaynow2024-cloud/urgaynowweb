@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import {
   approveReview,
+  deleteReview,
   hideReview,
   rejectReview,
   restoreReview,
@@ -26,6 +27,7 @@ import {
   IconEye,
   IconFlag,
   IconStar,
+  IconTrash,
   IconX,
 } from "@/components/admin/ui/icons";
 
@@ -45,6 +47,43 @@ type TabKey = (typeof TABS)[number]["key"];
 
 function isTabKey(value: string | undefined): value is TabKey {
   return TABS.some((tab) => tab.key === value);
+}
+
+/**
+ * Two-step permanent delete. `<details>` gives the confirmation step without a
+ * client component and without a single-click destructive path. The panel is
+ * absolutely positioned so it does not disturb the row layout, and the whole
+ * thing is keyboard-reachable via <summary>.
+ */
+function DeleteReviewForm({ reviewId, reviewer }: { reviewId: string; reviewer: string }) {
+  return (
+    <details className="group relative">
+      <summary
+        className="btn-ghost btn-sm inline-flex cursor-pointer list-none"
+        aria-label={`Permanently delete the review by ${reviewer}`}
+      >
+        <IconTrash size={14} /> Delete
+      </summary>
+      <form
+        action={deleteReview.bind(null, reviewId)}
+        className="absolute right-0 top-full z-20 mt-1 w-64 rounded-xl border border-ink-200 bg-white p-3 shadow-card-premium-hover dark:border-ink-700 dark:bg-ink-900"
+      >
+        <p className="text-xs font-semibold text-ink-800 dark:text-ink-100">
+          Delete this review permanently?
+        </p>
+        <p className="mt-1 text-xs text-ink-500 dark:text-ink-400">
+          This removes the review and its moderation history. Use Hide instead if
+          you only want to take it down.
+        </p>
+        <div className="mt-2 flex items-center gap-2">
+          <button type="submit" className="btn-danger btn-sm">
+            <IconTrash size={14} /> Delete
+          </button>
+          <span className="text-xs text-ink-400">press Delete again to confirm</span>
+        </div>
+      </form>
+    </details>
+  );
 }
 
 async function ReviewsContent({ tab }: { tab: TabKey }) {
@@ -223,6 +262,11 @@ async function ReviewsContent({ tab }: { tab: TabKey }) {
                             </button>
                           </form>
                         )}
+
+                        {/* Two-step delete: the first click reveals a
+                            confirmation rather than destroying the record on a
+                            single misclick. */}
+                        <DeleteReviewForm reviewId={review.id} reviewer={review.displayName || "anonymous"} />
                       </div>
                     </div>
                   </li>

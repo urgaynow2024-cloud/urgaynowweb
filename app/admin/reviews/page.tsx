@@ -55,7 +55,15 @@ function isTabKey(value: string | undefined): value is TabKey {
  * absolutely positioned so it does not disturb the row layout, and the whole
  * thing is keyboard-reachable via <summary>.
  */
-function DeleteReviewForm({ reviewId, reviewer }: { reviewId: string; reviewer: string }) {
+function DeleteReviewForm({
+  reviewId,
+  reviewer,
+  status,
+}: {
+  reviewId: string;
+  reviewer: string;
+  status: TabKey;
+}) {
   return (
     <details className="group relative">
       <summary
@@ -68,6 +76,7 @@ function DeleteReviewForm({ reviewId, reviewer }: { reviewId: string; reviewer: 
         action={deleteReview.bind(null, reviewId)}
         className="absolute right-0 top-full z-20 mt-1 w-64 rounded-xl border border-ink-200 bg-white p-3 shadow-card-premium-hover dark:border-ink-700 dark:bg-ink-900"
       >
+        <input type="hidden" name="status" value={status} />
         <p className="text-xs font-semibold text-ink-800 dark:text-ink-100">
           Delete this review permanently?
         </p>
@@ -224,6 +233,7 @@ async function ReviewsContent({ tab }: { tab: TabKey }) {
                       <div className="flex shrink-0 items-center gap-2">
                         {review.status !== "APPROVED" && (
                           <form action={approveReview.bind(null, review.id)}>
+                            <input type="hidden" name="status" value={tab} />
                             <button type="submit" className="btn-success btn-sm">
                               <IconCheck size={14} /> Approve
                             </button>
@@ -232,6 +242,7 @@ async function ReviewsContent({ tab }: { tab: TabKey }) {
 
                         {review.status === "APPROVED" && (
                           <form action={hideReview.bind(null, review.id)}>
+                            <input type="hidden" name="status" value={tab} />
                             <input type="hidden" name="reason" value="Hidden by staff" />
                             <button type="submit" className="btn-secondary btn-sm">
                               <IconEye size={14} /> Hide
@@ -241,6 +252,7 @@ async function ReviewsContent({ tab }: { tab: TabKey }) {
 
                         {review.status === "HIDDEN" && (
                           <form action={restoreReview.bind(null, review.id)}>
+                            <input type="hidden" name="status" value={tab} />
                             <button type="submit" className="btn-secondary btn-sm">
                               <IconEye size={14} /> Restore
                             </button>
@@ -249,6 +261,7 @@ async function ReviewsContent({ tab }: { tab: TabKey }) {
 
                         {review.status !== "REJECTED" && (
                           <form action={rejectReview.bind(null, review.id)} className="flex items-center gap-1">
+                            <input type="hidden" name="status" value={tab} />
                             <input
                               type="text"
                               name="reason"
@@ -263,10 +276,14 @@ async function ReviewsContent({ tab }: { tab: TabKey }) {
                           </form>
                         )}
 
-                        {/* Two-step delete: the first click reveals a
+                        {/* Two-step permanent delete: the first click reveals a
                             confirmation rather than destroying the record on a
                             single misclick. */}
-                        <DeleteReviewForm reviewId={review.id} reviewer={review.displayName || "anonymous"} />
+                        <DeleteReviewForm
+                          reviewId={review.id}
+                          reviewer={review.displayName || "anonymous"}
+                          status={tab}
+                        />
                       </div>
                     </div>
                   </li>

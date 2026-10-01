@@ -1,9 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
-import { REVIEW_LIMITS, sanitizeReviewLine, type ReviewStatusKey } from "@/lib/reviews";
+import {
+  REVIEW_LIMITS,
+  isReviewStatus,
+  sanitizeReviewLine,
+  type ReviewStatusKey,
+} from "@/lib/reviews";
 
 /**
  * Staff moderation actions for community reviews.
@@ -43,6 +49,27 @@ function revalidateReviewSurfaces() {
   revalidatePath("/reviews");
   revalidatePath("/admin/reviews");
   revalidatePath("/admin/moderation");
+}
+
+/**
+ * Sends the browser back to the queue tab the action was invoked from.
+ *
+ * The redirect is what makes the list update. `revalidatePath` alone only
+ * invalidates the server-side caches; without a redirect the browser keeps the
+ * stale RSC payload in its client router cache and the row appears unchanged
+ * until a manual refresh. Every other admin action module already pairs the two
+ * — these were the only ones missing the redirect.
+ *
+ * The status is read from the form and validated against the real statuses, so
+ * a tam-withed value can only ever land on a valid tab.
+ */
+function redirectToQueue(formData: FormData): never {
+  const requested = sanitizeReviewLine(formData.get("status"), 20);
+  redirect(
+    isReviewStatus(requested)
+      ? `/admin/reviews?status=${requested}`
+      : "/admin/reviews",
+  );
 }
 
 async function applyStatus(
@@ -90,24 +117,28 @@ async function applyStatus(
   revalidateReviewSurfaces();
 }
 
-export async function approveReview(reviewId: string) {
+export async function approveReview(reviewId: string, formData: FormData) {
   await applyStatus(reviewId, "APPROVED", "APPROVED", "");
+  redirectToQueue(formData);
 }
 
 export async function rejectReview(reviewId: string, formData: FormData) {
   const reason = sanitizeReviewLine(formData.get("reason"), REVIEW_LIMITS.NOTE_MAX);
   await applyStatus(reviewId, "REJECTED", "REJECTED", reason);
+  redirectToQueue(formData);
 }
 
 /** Takes a currently approved review down without deleting the original. */
 export async function hideReview(reviewId: string, formData: FormData) {
   const reason = sanitizeReviewLine(formData.get("reason"), REVIEW_LIMITS.NOTE_MAX);
   await applyStatus(reviewId, "HIDDEN", "HIDDEN", reason);
+  redirectToQueue(formData);
 }
 
 /** Returns a hidden review to the moderation queue. */
-export async function restoreReview(reviewId: string) {
+export async function restoreReview(reviewId: string, formData: FormData) {
   await applyStatus(reviewId, "PENDING", "RESTORED", "Returned to the moderation queue");
+  redirectToQueue(formData);
 }
 
 /**
@@ -126,15 +157,19 @@ export async function deleteReview(reviewId: string, formData: FormData) {
     where: { id: reviewId },
     select: { id: true },
   });
-  if (!review) return;
 
-  await prisma.review.delete({ where: { id: reviewId } });
+  // Redirect even when the review was already gone, so the list always
+  // re-renders rather than leaving staff looking at a stale row.
+  if (review) {
+    await prisma.review.delete({ where: { id: reviewId } });
 
-  // The moderation log cascades with the review, so record the deletion against
-  // the admin dashboard's own audit trail instead.
-  console.warn(
-    `[admin/reviews] review ${reviewId} permanently deleted by ${session.sub}${reason ? ` — ${reason}` : ""}`,
-  );
+    // The moderation log cascades with the review, so record the deletion
+    // against the server log instead.
+    console.warn(
+      `[admin/reviews] review ${reviewId} permanently deleted by ${session.sub}${reason ? ` — ${reason}` : ""}`,
+    );
+  }
 
   revalidateReviewSurfaces();
+  redirectToQueue(formData);
 }

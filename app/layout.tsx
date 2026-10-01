@@ -8,6 +8,8 @@ import { HalloweenDecorations } from "@/components/halloween/HalloweenDecoration
 import { SeasonalBanner } from "@/components/halloween/SeasonalBanner";
 import { HalloweenIconProvider } from "@/components/halloween/HalloweenIconProvider";
 import { hasHalloweenIcon } from "@/lib/halloween-icon-server";
+import { getActiveThemeId } from "@/lib/theme-resolver";
+import { safeQuery } from "@/lib/safeQuery";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
@@ -48,9 +50,13 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const halloweenIconAvailable = hasHalloweenIcon();
+  // Resolved on the server so the seasonal theme is painted on the very first
+  // frame instead of flashing the normal UGN palette until the client fetch
+  // resolves. Cached for a minute by the theme resolver.
+  const seasonalTheme = await safeQuery(() => getActiveThemeId(), "default");
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-site-theme={seasonalTheme} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

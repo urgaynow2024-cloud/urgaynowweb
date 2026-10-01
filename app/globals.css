@@ -1622,3 +1622,176 @@ h1, h2, h3, h4 {
   .hw-staff-card::after { display: none; }
   .hw-floater { width: 1.5rem; height: 1.5rem; }
 }
+/* --------------------------------------------------------------------------
+   12. Deeper atmosphere - hero bats, section mood, live event, stats
+   -------------------------------------------------------------------------- */
+
+/* Distant bats crossing the hero sky. */
+.hw-hero-bat {
+  position: absolute;
+  width: 1.6rem;
+  height: auto;
+  color: #2a123d;
+  opacity: 0.45;
+}
+.hw-hero-bat-1 {
+  top: 18%;
+  left: 0;
+  animation: hw-fly 34s linear infinite;
+}
+.hw-hero-bat-2 {
+  top: 34%;
+  width: 1.1rem;
+  opacity: 0.3;
+  animation: hw-fly 52s linear infinite;
+  animation-delay: -22s;
+}
+
+/* A faint web tucked into the top corner of the hero, over the existing
+   content but behind it in stacking order. */
+:root[data-site-theme="halloween"] .hw-hero::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 18rem;
+  height: 18rem;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.14;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' fill='none' stroke='%23a8a0ad' stroke-width='0.8'%3E%3Cg%3E%3Ccircle cx='120' cy='0' r='18'/%3E%3Ccircle cx='120' cy='0' r='32'/%3E%3Ccircle cx='120' cy='0' r='46'/%3E%3Ccircle cx='120' cy='0' r='60'/%3E%3Cline x1='120' y1='0' x2='72' y2='-46' transform='rotate(30 120 0)'/%3E%3Cline x1='120' y1='0' x2='72' y2='-46' transform='rotate(60 120 0)'/%3E%3Cline x1='120' y1='0' x2='72' y2='-46' transform='rotate(90 120 0)'/%3E%3Cline x1='120' y1='0' x2='72' y2='-46' transform='rotate(120 120 0)'/%3E%3Cline x1='120' y1='0' x2='72' y2='-46' transform='rotate(150 120 0)'/%3E%3Cline x1='120' y1='0' x2='72' y2='-46' transform='rotate(180 120 0)'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* Every major homepage band picks up a little of the night: a soft glow from
+   the top edge, so sections read as one continuous haunted landscape. */
+:root[data-site-theme="halloween"] main > div {
+  position: relative;
+}
+
+:root[data-site-theme="halloween"] main > div::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 22rem;
+  pointer-events: none;
+  background:
+    radial-gradient(38rem 14rem at 18% 0%, rgba(109, 40, 217, 0.16) 0%, transparent 70%),
+    radial-gradient(30rem 12rem at 84% 0%, rgba(255, 138, 31, 0.08) 0%, transparent 72%);
+  opacity: 0.9;
+}
+
+/* Alternating bands get a very faint web in the opposite corner, so the
+   page does not repeat the same decoration over and over. */
+:root[data-site-theme="halloween"] main > div:nth-of-type(even)::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 11rem;
+  height: 11rem;
+  pointer-events: none;
+  opacity: 0.08;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' fill='none' stroke='%23a8a0ad' stroke-width='0.8'%3E%3Cg%3E%3Ccircle cx='0' cy='120' r='18'/%3E%3Ccircle cx='0' cy='120' r='32'/%3E%3Ccircle cx='0' cy='120' r='46'/%3E%3Cline x1='0' y1='120' x2='-46' y2='76' transform='rotate(30 0 120)'/%3E%3Cline x1='0' y1='120' x2='-46' y2='76' transform='rotate(60 0 120)'/%3E%3Cline x1='0' y1='120' x2='-46' y2='76' transform='rotate(90 0 120)'/%3E%3Cline x1='0' y1='120' x2='-46' y2='76' transform='rotate(120 0 120)'/%3E%3Cline x1='0' y1='120' x2='-46' y2='76' transform='rotate(150 0 120)'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* The hero keeps its own stronger treatment, so the section wash stays off it. */
+:root[data-site-theme="halloween"] .hw-hero::before {
+  content: none;
+}
+
+/* Live Now banner: the loudest seasonal accent on the page after the hero. */
+.hw-live-pill {
+  position: relative;
+  background-image:
+    linear-gradient(90deg, rgba(109, 40, 217, 0.22) 0%, rgba(42, 18, 61, 0.5) 45%, rgba(143, 29, 44, 0.28) 100%);
+  border-color: rgba(255, 138, 31, 0.4) !important;
+  box-shadow: 0 14px 40px -22px rgba(255, 138, 31, 0.75), 0 0 30px -18px rgba(109, 40, 217, 0.9);
+  animation: hw-live-breathe 5.5s ease-in-out infinite;
+}
+
+.hw-live-pill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 138, 31, 0.14) 50%, transparent 70%);
+  background-size: 220% 100%;
+  animation: hw-sheen 7s linear infinite;
+}
+
+:root[data-site-theme="halloween"] .hw-live-pill span.uppercase {
+  text-shadow: 0 0 18px rgba(255, 138, 31, 0.6);
+}
+
+/* Event cards sit inside the live section with a little extra presence. */
+:root[data-site-theme="halloween"] .hw-event-card {
+  background-image: linear-gradient(180deg, rgba(42, 18, 61, 0.35) 0%, transparent 45%);
+}
+
+/* Community highlights: the numbers feel lit from within. */
+.hw-stat-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.hw-stat-card::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -3.5rem;
+  width: 12rem;
+  height: 12rem;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 138, 31, 0.22) 0%, transparent 65%);
+  animation: hw-stat-glow 6s ease-in-out infinite;
+}
+
+:root[data-site-theme="halloween"] .hw-stat-card .text-4xl {
+  text-shadow: 0 0 26px rgba(255, 138, 31, 0.45);
+}
+
+/* Gallery tiles keep their photo first, with just a seasonal edge. */
+:root[data-site-theme="halloween"] .hw-gallery-tile {
+  box-shadow: 0 14px 34px -22px rgba(255, 138, 31, 0.6), 0 0 0 1px rgba(109, 40, 217, 0.18) !important;
+}
+
+@keyframes hw-live-breathe {
+  0%, 100% { box-shadow: 0 14px 40px -22px rgba(255, 138, 31, 0.6), 0 0 26px -18px rgba(109, 40, 217, 0.8); }
+  50% { box-shadow: 0 18px 48px -20px rgba(255, 138, 31, 0.85), 0 0 38px -16px rgba(109, 40, 217, 0.95); }
+}
+
+@keyframes hw-sheen {
+  0% { background-position: 140% 0; }
+  100% { background-position: -40% 0; }
+}
+
+@keyframes hw-stat-glow {
+  0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(0.92); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.08); }
+}
+
+/* Reduced motion for the new atmosphere. */
+@media (prefers-reduced-motion: reduce) {
+  .hw-hero-bat {
+    animation: none !important;
+    display: none;
+  }
+  .hw-live-pill,
+  .hw-live-pill::after,
+  .hw-stat-card::after {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .hw-hero-bat { display: none; }
+  .hw-hero::after { width: 10rem; height: 10rem; opacity: 0.1; }
+  :root[data-site-theme="halloween"] main > div::before { height: 14rem; }
+  :root[data-site-theme="halloween"] main > div:nth-of-type(even)::after { display: none; }
+}

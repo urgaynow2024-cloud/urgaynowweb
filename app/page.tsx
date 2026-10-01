@@ -19,6 +19,34 @@ import type { Poll, PollOption } from "@prisma/client";
 
 export const revalidate = 60;
 
+/** Spiderweb corner inside the hero. Decorative only. */
+function HeroWeb({ className }: { className: string }) {
+  return (
+    <svg className={className} viewBox="0 0 120 120" fill="none" focusable="false">
+      <g stroke="currentColor" strokeWidth="0.7" opacity="0.8">
+        {[16, 30, 44, 58, 72].map((r) => (
+          <circle key={r} cx="0" cy="0" r={r} />
+        ))}
+        {[0, 30, 60, 90, 120, 150, 180].map((deg) => (
+          <line key={deg} x1="0" y1="0" x2="0" y2="-72" transform={`rotate(${deg})`} />
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+/** Distant bat silhouette drifting across the hero sky. Decorative only. */
+function HeroBat({ className }: { className: string }) {
+  return (
+    <svg className={className} viewBox="0 0 64 32" focusable="false">
+      <path
+        d="M32 16c-4-6-12-8-18-6 2 2 2 4 0 6-3-1-6 0-8 2 4 0 6 1 8 3-3 0-5 1-7 3 5 0 8 2 10 4 3-2 5-4 7-6l-1 8h6l-1-8c2 2 4 4 7 6 2-2 5-4 10-4-2-2-4-3-7-3 2-2 4-3 8-3-2-2-5-3-8-2-2-2-2-4 0-6-6-2-14 0-18 6Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 async function HeroContent() {
   const [intro, tagline, discord, vrchat] = await safeQuery(
     () =>
@@ -146,7 +174,7 @@ async function HomeEvents() {
       {live.length > 0 && (
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-brand-500/10 via-transparent to-brand-700/10 dark:from-brand-500/5 dark:via-transparent dark:to-brand-700/5" />
-          <div className="relative flex items-center gap-3 mb-6 p-4 rounded-2xl bg-gradient-to-r from-brand-500/10 to-brand-700/10 border border-brand-200/50 dark:border-brand-800/50">
+          <div className="hw-live-pill relative flex items-center gap-3 mb-6 p-4 rounded-2xl bg-gradient-to-r from-brand-500/10 to-brand-700/10 border border-brand-200/50 dark:border-brand-800/50">
             <div className="flex items-center gap-2">
               <span className="relative flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-500 opacity-75" />
@@ -243,7 +271,7 @@ async function HomeGallery() {
           <StaggeredList className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {gallery.map((g) => (
               <ScrollFadeIn key={g.id} delay={0}>
-                <div className="group relative overflow-hidden rounded-2xl border border-ink-200/80 bg-white shadow-card-premium transition-all duration-500 hover:-translate-y-1 hover:shadow-card-premium-hover dark:border-ink-800 dark:bg-ink-900">
+                <div className="hw-gallery-tile hw-card-treat group relative overflow-hidden rounded-2xl border border-ink-200/80 bg-white shadow-card-premium transition-all duration-500 hover:-translate-y-1 hover:shadow-card-premium-hover dark:border-ink-800 dark:bg-ink-900">
                   <Image
                     src={g.imageUrl}
                     alt={g.title}
@@ -379,7 +407,7 @@ async function CommunityHighlights() {
           <StaggeredList className="grid gap-6 sm:grid-cols-3">
             {highlights.map((h, i) => (
               <ScrollFadeIn key={h.label} delay={i * 80}>
-                <div className="card-premium flex flex-col items-center p-8 text-center">
+                <div className="hw-stat-card hw-card-treat card-premium flex flex-col items-center p-8 text-center">
                   <span className="text-4xl mb-4">{h.icon}</span>
                   <span className="text-4xl font-extrabold text-brand-700 dark:text-brand-200">
                     {h.value}
@@ -487,6 +515,10 @@ export default function HomePage() {
           <div className="hw-hero-stars" />
           <div className="hw-hero-moon" />
           <div className="hw-hero-fog" />
+          <HeroWeb className="hw-hero-web hw-hero-web-tl" />
+          <HeroWeb className="hw-hero-web hw-hero-web-tr" />
+          <HeroBat className="hw-hero-bat hw-hero-bat-1" />
+          <HeroBat className="hw-hero-bat hw-hero-bat-2" />
         </div>
         <Container className="relative z-10 py-24 sm:py-32 lg:py-36">
           <div className="animate-fade-in">

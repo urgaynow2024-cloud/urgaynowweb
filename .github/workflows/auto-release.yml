@@ -34,95 +34,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Resolve release details
-        id: release
+      # Must come first: the running production app is the previous deployment
+      # until Vercel finishes this one, so nothing may call the site before this
+      # step reports success.
+      - name: Wait for Vercel production deployment
+        id: deploy
         env:
-          SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
-          RELEASE_CRON_SECRET: ${{ secrets.RELEASE_CRON_SECRET }}
-          HEAD_SHA: ${{ inputs.sha || github.sha }}
-          BEFORE_SHA: ${{ github.event.before }}
-          PUSH_BRANCH: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ github.sha }}
+          RELEASE_SHA: ${{ inputs.sha }}
         run: |
           set -euo pipefail
 
-          site="${SITE_URL:-https://urgaynow.com}"
-          sha="${HEAD_SHA}"
-          branch="${PUSH_BRANCH:-main}"
-
-          if [ -z "${RELEASE_CRON_SECRET:-}" ]; then
-            echo "::error::GitHub secret RELEASE_CRON_SECRET is not set. Add it (and the same value in the Vercel project env) to publish updates."
-            exit 1
-          fi
+          sha="${RELEASE_SHA:-$HEAD_SHA}"
 
           if ! printf '%s' "$sha" | grep -Eq '^[0-9a-f]{40}$'; then
             echo "::error::'$sha' is not a full 40-character commit SHA"
             exit 1
           fi
 
-          git fetch --quiet origin "$sha" || true
-          git checkout --quiet "$sha"
-
-          # Base of the changelog range: the last commit that already has a
-          # published update, else the commit immediately before this push.
-          release_state=$(curl -sS --max-time 30 -w '\n%{http_code}' \
-            -H "Authorization: Bearer ${RELEASE_CRON_SECRET}" \
-            "${site}/api/releases")
-          state_code=$(tail -n1 <<<"$release_state")
-
-          if [ "$state_code" != "200" ]; then
-            echo "::error::GET ${site}/api/releases returned $state_code — check that RELEASE_CRON_SECRET matches the Vercel project env value RELEASE_CRON_SECRET."
-            exit 1
-          fi
-
-          from=$(head -n -1 <<<"$release_state" | jq -r '.previousCommit // empty')
-
-          if [ -z "$from" ]; then
-            from="${BEFORE_SHA}"
-          fi
-          if ! printf '%s' "$from" | grep -Eq '^[0-9a-f]{40}$' || ! git cat-file -e "${from}^{commit}" 2>/dev/null; then
-            from=$(git rev-list --max-parents=0 "$sha")
-          fi
-
-          # Record separators (0x1e/0x1f) keep multi-line commit bodies intact.
-          raw=$(git log --no-merges --format='%H%x1f%s%x1f%b%x1f%an%x1f%aI%x1e' "$from..$sha")
-          commits=$(printf '%s' "$raw" | jq -R -s '
-            split("\u001e") | map(select(length > 0) | sub("^[\\s\\n]+"; "") | sub("[\\s\\n]+$"; ""))
-            | map(split("\u001f")) | map(select(length >= 5))
-            | map({ sha: .[0], subject: .[1], body: .[2], author: .[3], date: .[4] })
-            | .[0:200]
-          ')
-
-          count=$(jq 'length' <<<"$commits")
-
-          {
-            echo "sha=$sha"
-            echo "from=$from"
-            echo "count=$count"
-            echo "site=$site"
-            echo "branch=$branch"
-            echo "commits<<COMMITS_EOF"
-            echo "$commits"
-            echo "COMMITS_EOF"
-          } >> "$GITHUB_OUTPUT"
-
-          echo "Release range: $from..$sha ($count commit(s))"
-
-      - name: Wait for Vercel production deployment
-        id: deploy
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HEAD_SHA: ${{ steps.release.outputs.sha }}
-          COMMIT_COUNT: ${{ steps.release.outputs.count }}
-        run: |
-          set -euo pipefail
-
-          if [ "$COMMIT_COUNT" = "0" ]; then
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "No new commits since the last published update."
-            exit 0
-          fi
-
-          sha="$HEAD_SHA"
           deadline=$(( $(date +%s) + 900 ))
 
           while :; do
@@ -164,9 +94,97 @@ jobs:
             esac
           done
 
+      - name: Resolve release details
+        id: release
+        if: steps.deploy.outputs.ready == 'true'
+        env:
+          SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          RELEASE_CRON_SECRET: ${{ secrets.RELEASE_CRON_SECRET }}
+          HEAD_SHA: ${{ github.sha }}
+          RELEASE_SHA: ${{ inputs.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+          PUSH_BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          site="${SITE_URL:-https://urgaynow.com}"
+          sha="${RELEASE_SHA:-$HEAD_SHA}"
+          branch="${PUSH_BRANCH:-main}"
+
+          if [ -z "${RELEASE_CRON_SECRET:-}" ]; then
+            echo "::error::GitHub secret RELEASE_CRON_SECRET is not set. Add it (and the same value in the Vercel project env) to publish updates."
+            exit 1
+          fi
+
+          git fetch --quiet origin "$sha" || true
+          git checkout --quiet "$sha"
+
+          # The deployment is ready, but the production alias can take a moment
+          # to route to it. Retry transient responses; never retry 401/403.
+          state_code=""
+          body=""
+          for attempt in $(seq 1 10); do
+            response=$(curl -sS --max-time 30 -w '\n%{http_code}' \
+              -H "Authorization: Bearer ${RELEASE_CRON_SECRET}" \
+              "${site}/api/releases" || echo -e "\n000")
+            state_code=$(tail -n1 <<<"$response")
+            body=$(head -n -1 <<<"$response")
+
+            if [ "$state_code" = "200" ]; then
+              break
+            fi
+            if [ "$state_code" = "401" ] || [ "$state_code" = "403" ]; then
+              echo "::error::GET ${site}/api/releases returned $state_code — RELEASE_CRON_SECRET does not match the Vercel project env value RELEASE_CRON_SECRET."
+              exit 1
+            fi
+            echo "GET ${site}/api/releases returned $state_code (attempt $attempt/10) — waiting for the production alias."
+            sleep 10
+          done
+
+          if [ "$state_code" != "200" ]; then
+            echo "::error::GET ${site}/api/releases never returned 200 (last: $state_code). No update created."
+            exit 1
+          fi
+
+          # Base of the changelog range: the last commit that already has a
+          # published update, else the commit immediately before this push.
+          from=$(jq -r '.previousCommit // empty' <<<"$body")
+
+          if [ -z "$from" ]; then
+            from="${BEFORE_SHA}"
+          fi
+          if ! printf '%s' "$from" | grep -Eq '^[0-9a-f]{40}$' || ! git cat-file -e "${from}^{commit}" 2>/dev/null; then
+            from=$(git rev-list --max-parents=0 "$sha")
+          fi
+
+          # Record separators (0x1e/0x1f) keep multi-line commit bodies intact.
+          raw=$(git log --no-merges --format='%H%x1f%s%x1f%b%x1f%an%x1f%aI%x1e' "$from..$sha")
+          commits=$(printf '%s' "$raw" | jq -R -s '
+            split("\u001e") | map(select(length > 0) | sub("^[\\s\\n]+"; "") | sub("[\\s\\n]+$"; ""))
+            | map(split("\u001f")) | map(select(length >= 5))
+            | map({ sha: .[0], subject: .[1], body: .[2], author: .[3], date: .[4] })
+            | .[0:200]
+          ')
+
+          count=$(jq 'length' <<<"$commits")
+
+          {
+            echo "sha=$sha"
+            echo "from=$from"
+            echo "count=$count"
+            echo "has_commits=$([ "$count" -gt 0 ] && echo true || echo false)"
+            echo "site=$site"
+            echo "branch=$branch"
+            echo "commits<<COMMITS_EOF"
+            echo "$commits"
+            echo "COMMITS_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Release range: $from..$sha ($count commit(s))"
+
       - name: Publish the update
         id: publish
-        if: steps.deploy.outputs.ready == 'true'
+        if: steps.release.outputs.has_commits == 'true'
         env:
           SITE_URL: ${{ steps.release.outputs.site }}
           RELEASE_CRON_SECRET: ${{ secrets.RELEASE_CRON_SECRET }}
@@ -231,6 +249,7 @@ jobs:
           URL: ${{ steps.publish.outputs.url }}
           ALREADY: ${{ steps.publish.outputs.already }}
           SHA: ${{ steps.release.outputs.sha }}
+          COUNT: ${{ steps.release.outputs.count }}
           DEPLOY_ID: ${{ steps.deploy.outputs.deployment_id }}
           DEPLOY_STATE: ${{ steps.deploy.outputs.state }}
         run: |
@@ -239,7 +258,7 @@ jobs:
             echo ""
             echo "| Field | Value |"
             echo "| --- | --- |"
-            echo "| Commit | \`$SHA\` |"
+            echo "| Commit | \`$SHA\` ($COUNT commit(s) since the last release) |"
             echo "| Deployment | \`$DEPLOY_ID\` ($DEPLOY_STATE) |"
             if [ -n "${VERSION:-}" ]; then
               echo "| Version | $VERSION |"
@@ -250,13 +269,13 @@ jobs:
                 echo "| Result | Published |"
               fi
             else
-              echo "| Result | No update created (deployment not successful in production) |"
+              echo "| Result | No update created |"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Report failure
         if: failure()
         env:
-          SHA: ${{ steps.release.outputs.sha }}
+          SHA: ${{ github.sha }}
         run: |
-          echo "::error::Auto release failed for commit $SHA. The website was not updated; retry the workflow once the cause is fixed."
+          echo "::error::Auto release failed for commit $SHA. The website was not updated; re-run the workflow once the cause is fixed."

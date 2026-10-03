@@ -487,7 +487,7 @@ preparation MMD.
 **Status:** Complete. Schema applied, full lifecycle verified end to end against the live
 database. Christmas was **not** touched or activated.
 
-## 1. Database migration — APPLIED
+## 1. Database migration ï¿½ APPLIED
 
 `prisma db push` reports **"The database is already in sync with the Prisma schema."**
 The `Review` and `ReviewModerationLog` tables and the `ReviewStatus` enum already existed
@@ -505,46 +505,46 @@ zero drift and zero pending changes.
 
 ## 2. Files added
 
-- `lib/reviews.ts` — limits, status labels, sanitisation, abuse/spam scoring,
+- `lib/reviews.ts` ï¿½ limits, status labels, sanitisation, abuse/spam scoring,
   `validateReviewSubmission`, rating summary, initials, relative time.
-- `app/api/reviews/route.ts` — public `POST` submission endpoint.
-- `app/reviews/page.tsx` — public page (approved reviews only, rating summary,
+- `app/api/reviews/route.ts` ï¿½ public `POST` submission endpoint.
+- `app/reviews/page.tsx` ï¿½ public page (approved reviews only, rating summary,
   distribution bars, pagination, submission form).
-- `app/admin/reviews/page.tsx` — staff moderation queue (tabs by status, approve /
+- `app/admin/reviews/page.tsx` ï¿½ staff moderation queue (tabs by status, approve /
   reject / hide / restore, moderation log).
-- `app/admin/reviews/actions.ts` — moderation server actions (`requireAdmin()`).
-- `components/reviews/StarRating.tsx` — read-only stars, initial-based avatar,
+- `app/admin/reviews/actions.ts` ï¿½ moderation server actions (`requireAdmin()`).
+- `components/reviews/StarRating.tsx` ï¿½ read-only stars, initial-based avatar,
   rating summary bar, distribution row.
-- `components/reviews/StarRatingInput.tsx` — accessible 1–5 star radio group.
-- `components/reviews/ReviewCard.tsx` — single approved review card.
-- `components/reviews/ReviewForm.tsx` — public submission form.
-- `scripts/verify-reviews.ts` — 30-assertion logic check (`npm run test:reviews`).
+- `components/reviews/StarRatingInput.tsx` ï¿½ accessible 1ï¿½5 star radio group.
+- `components/reviews/ReviewCard.tsx` ï¿½ single approved review card.
+- `components/reviews/ReviewForm.tsx` ï¿½ public submission form.
+- `scripts/verify-reviews.ts` ï¿½ 30-assertion logic check (`npm run test:reviews`).
 
 ## 3. Files changed
 
-- `prisma/schema.prisma` — **additive only.** New `Review` model, `ReviewModerationLog`
+- `prisma/schema.prisma` ï¿½ **additive only.** New `Review` model, `ReviewModerationLog`
   model, `ReviewStatus` enum. Two new back-relation fields on `Staff` (required by
   Prisma for the relations). No existing column, index, model, or row was altered,
   renamed, or deleted.
-- `lib/reports.ts` — added `"COMMUNITY_REVIEW"` to the `ReportContentType` union, the
+- `lib/reports.ts` ï¿½ added `"COMMUNITY_REVIEW"` to the `ReportContentType` union, the
   `REPORT_CONTENT_TYPES` label map, and a `case` in `getReportContentHref`.
-- `app/admin/reports/[id]/page.tsx` — added a `case "COMMUNITY_REVIEW"` so staff see the
+- `app/admin/reports/[id]/page.tsx` ï¿½ added a `case "COMMUNITY_REVIEW"` so staff see the
   reported review inline on the report detail page.
-- `app/admin/reports/page.tsx` — added the label to the content-type filter dropdown.
-- `lib/nav-links.ts` — added `{ label: "Reviews", href: "/reviews" }` to the Community dropdown.
-- `components/Footer.tsx` — added a Reviews link to the Community column.
-- `app/sitemap.ts` — added `/reviews`.
-- `components/admin/AdminShell.tsx` — added a Reviews item to the existing Safety group.
-- `app/admin/moderation/page.tsx` — added a link to the review queue.
-- `package.json` — added `"test:reviews"` script. **No dependencies added.**
+- `app/admin/reports/page.tsx` ï¿½ added the label to the content-type filter dropdown.
+- `lib/nav-links.ts` ï¿½ added `{ label: "Reviews", href: "/reviews" }` to the Community dropdown.
+- `components/Footer.tsx` ï¿½ added a Reviews link to the Community column.
+- `app/sitemap.ts` ï¿½ added `/reviews`.
+- `components/admin/AdminShell.tsx` ï¿½ added a Reviews item to the existing Safety group.
+- `app/admin/moderation/page.tsx` ï¿½ added a link to the review queue.
+- `package.json` ï¿½ added `"test:reviews"` script. **No dependencies added.**
 
-## 4. Report system — how it was integrated (and what was NOT touched)
+## 4. Report system ï¿½ how it was integrated (and what was NOT touched)
 
 Review reports use the **existing** report system end to end. There is no second
 reporting backend. The public card renders the existing `ReportButton` /
 `ReportModal` component, which posts to the existing `/api/report/submit`. The
 `COMMUNITY_REVIEW` content type is a plain string on `Report`, so **no schema migration,
-validation change, permission change, or webhook change was needed** — review reports
+validation change, permission change, or webhook change was needed** ï¿½ review reports
 flow into the same Discord webhook, audit log, staff dashboard, and permission model as
 every other report.
 
@@ -556,7 +556,7 @@ audit-log actions, report API response shapes, retry/idempotency logic.
 
 Statuses are `PENDING | APPROVED | REJECTED | HIDDEN`, stored in a Prisma enum.
 Every submission enters `PENDING` and only `APPROVED` rows are selected by
-`/reviews` — the public page never even fetches other statuses, so moderation notes,
+`/reviews` ï¿½ the public page never even fetches other statuses, so moderation notes,
 staff identity, reviewer handles, and spam scores cannot leak through that route.
 
 Staff moderation reuses the existing admin system: same `ugn_session` cookie, same
@@ -579,7 +579,7 @@ and acting staff member.
   ever rendered as React text.
 - Small profanity/abuse list plus link/spam heuristics. Clear abuse auto-rejects;
   merely suspicious content still goes to staff. Never auto-approves.
-- Raw IPs are never stored — only the same salted SHA-256 hash the report system uses.
+- Raw IPs are never stored ï¿½ only the same salted SHA-256 hash the report system uses.
 - Reviewer Discord/VRChat handle is staff-only and is never selected by the public page.
 - Optional "show my name" toggle; otherwise displayed as "Anonymous".
 - No invasive tracking, no new dependencies.
@@ -593,7 +593,7 @@ so it inherits whatever theme is active.
 **Verified live in this session:** `/reviews` served
 `data-site-theme="halloween"` automatically, and the review avatar colours were
 deliberately built only from the `brand` / `surface` / `ink` scales (which every seasonal
-theme redefines) rather than fixed Tailwind hues — otherwise light-mode avatar circles
+theme redefines) rather than fixed Tailwind hues ï¿½ otherwise light-mode avatar circles
 would have shown on a dark seasonal card. This keeps the page correct for the future
 Christmas theme with no further changes.
 
@@ -601,14 +601,14 @@ Christmas theme with no further changes.
 
 | Command | Result |
 | --- | --- |
-| `npx prisma validate` | **PASS** — schema valid |
-| `npx prisma generate` | **PASS** — `Review` types generated |
-| `npx tsc --noEmit` | **PASS** — no errors |
-| `npm run lint` | **PASS** — "No ESLint warnings or errors" |
-| `npx tsx scripts/verify-reviews.ts` | **PASS** — 30/30 assertions |
-| `npm run build` | **PASS** — compiled successfully, 88/88 static pages |
-| Dev server regression sweep (17 public routes) | **PASS** — all HTTP 200 |
-| Admin gating check | **PASS** — `/admin/reviews` 307s to `/admin/login?from=%2Fadmin%2Freviews`, identical to `/admin/reports` |
+| `npx prisma validate` | **PASS** ï¿½ schema valid |
+| `npx prisma generate` | **PASS** ï¿½ `Review` types generated |
+| `npx tsc --noEmit` | **PASS** ï¿½ no errors |
+| `npm run lint` | **PASS** ï¿½ "No ESLint warnings or errors" |
+| `npx tsx scripts/verify-reviews.ts` | **PASS** ï¿½ 30/30 assertions |
+| `npm run build` | **PASS** ï¿½ compiled successfully, 88/88 static pages |
+| Dev server regression sweep (17 public routes) | **PASS** ï¿½ all HTTP 200 |
+| Admin gating check | **PASS** ï¿½ `/admin/reviews` 307s to `/admin/login?from=%2Fadmin%2Freviews`, identical to `/admin/reports` |
 
 Live API checks against a dev server (`POST /api/reviews`):
 
@@ -620,7 +620,7 @@ Live API checks against a dev server (`POST /api/reviews`):
 | Honeypot filled | `200 {"success":true,"status":"pending"}`, nothing stored |
 | 6th submission in a minute | `429` |
 | Valid submission | `201 {"success":true,"status":"PENDING"}` |
-| Submission containing slurs | `201 {"success":true,"status":"REJECTED"}` — auto-rejected |
+| Submission containing slurs | `201 {"success":true,"status":"REJECTED"}` ï¿½ auto-rejected |
 
 ### Stored-data inspection (real rows read back from the live database)
 
@@ -644,8 +644,8 @@ the public page was re-fetched after each one:
 | --- | --- | --- |
 | `PENDING` | not visible | present in staff queue |
 | ? `APPROVED` | **visible** | handle `robin#7788` still private; moderation note `Looks great` still private; moderation log row written; `reviewedBy` recorded |
-| ? `HIDDEN` | not visible | — |
-| ? `PENDING` (restore) | not visible | — |
+| ? `HIDDEN` | not visible | ï¿½ |
+| ? `PENDING` (restore) | not visible | ï¿½ |
 | ? `REJECTED` | not visible | rejection reason not leaked |
 | ? `APPROVED` again | **visible** | reversible |
 
@@ -678,8 +678,8 @@ privacy, rating average/distribution math.
 ## 9. Known issues / not done
 
 - **The staff moderation screens could not be rendered in this environment.** A valid
-  staff session cookie was minted and every `/admin/*` page — including the pre-existing
-  `/admin/reports`, `/admin`, and `/admin/moderation` — rendered the login form rather
+  staff session cookie was minted and every `/admin/*` page ï¿½ including the pre-existing
+  `/admin/reports`, `/admin`, and `/admin/moderation` ï¿½ rendered the login form rather
   than the dashboard. This affects **all** admin pages identically, so it is a
   pre-existing environment/session issue and not something this change introduced.
   `app/admin/layout.tsx` sets `export const revalidate = 60`, which can serve a cached
@@ -704,3 +704,910 @@ Homepage, report system internals, authentication, staff permissions, events,
 announcements, news, gallery, community submissions, shop, guides, rules, legal pages,
 search, admin layout/kits, the seasonal theme system, `globals.css`, Tailwind config,
 Discord webhook, and all dependencies. No file was renamed. No existing API contract changed.
+
+---
+---
+
+# CHANGE.md ï¿½ Christmas 2026 PREPARATION entry
+
+**Project:** Ur Gay Now website (`C:\Users\alans\Urgaynowwebsite`)
+**Task:** `Ur_Gay_Now_Christmas_2026_Preparation_MMD.md` (preparation only)
+**Date of this entry:** 2 October 2026
+**Branch:** `main`
+
+---
+
+## 0. Status summary
+
+| MMD requirement | State |
+| --- | --- |
+| Christmas theme architecture exists | Done ï¿½ `THEME_REGISTRY` entry + `data-site-theme` layer + isolated `components/christmas/*` |
+| **Christmas NOT active in production** | **Confirmed ï¿½ see section 5** |
+| Halloween remains the live theme | Confirmed ï¿½ no DB/config change was made; all `hw-*` rules untouched |
+| Normal / no-season mode remains functional | Confirmed ï¿½ every new CSS rule is gated on `[data-site-theme="christmas"]` |
+| Christmas safely previewable | Done ï¿½ `UGN_THEME_PREVIEW`, dev-only, compiled out of production |
+| Existing UGN UI structure intact | Done ï¿½ no component markup was restructured; only additive class names |
+| Report backend unchanged | Confirmed ï¿½ `git status` shows zero changes under the report system |
+| Community Reviews unbroken | Confirmed ï¿½ `npm run test:reviews` 30/30; no review file modified |
+| Build / typecheck / lint | Pass (with one honest caveat, section 6) |
+| Visual browser review by a human | **NOT DONE ï¿½ see section 7** |
+
+**This is a preparation change. Christmas is not live and was not activated.**
+
+---
+
+## 1. What I changed in this session
+
+The Christmas 2026 preparation was already largely present in the working tree when I
+started (uncommitted). I inspected it, found one real regression, fixed it, and verified
+the whole thing. The changes below are the ones **I** made.
+
+### 1.1 Bug found and fixed: `cw-*` classes were leaking onto Halloween and the normal theme
+
+**Severity: high. This was actively breaking the live Halloween site.**
+
+The Christmas work mirrors the existing Halloween pattern of adding a `cw-*` helper class
+alongside the `hw-*` one on shared cards (`AnnouncementCard`, `EventCard`, `StaffCard`,
+homepage feature / stat / gallery / live-pill elements). That part is fine and was left
+alone.
+
+The defect was in `app/globals.css`: the Christmas rules for those shared components were
+written **unscoped**, and they reference the `--cw-*` custom properties, which are declared
+**only** on `:root[data-site-theme="christmas"]`.
+
+On Halloween, `--cw-line` is undefined, so `border-color: var(--cw-line) !important` and
+`box-shadow: ... 0 0 0 1px var(--cw-line) !important` are *invalid at computed-value time*.
+Because the declarations are `!important` **and** appear later in the file than their `hw-*`
+equivalents, they won the cascade and then collapsed to the unset value. The visible effect
+on the live site was:
+
+- announcement, staff, event, feature, stat and gallery card **borders** fell back to
+  `currentColor` instead of the subtle Halloween purple border;
+- the same cards **lost their `box-shadow`** entirely;
+- a **gold hairline** (`.cw-card-treat::before`) and a gold/icy **hover shadow** were drawn
+  on Halloween cards;
+- the **Live Now pill** rendered the Christmas gold/icy gradient and breathed with
+  `cw-live-breathe` instead of `hw-live-breathe`;
+- the Community Highlights stat cards got a gold glow (`cw-stat-glow`) instead of the
+  Halloween one;
+- the **hero** carried the Christmas aurora `::before` glow.
+
+**Fix:** every `cw-*` rule that can match a shared, always-rendered component is now gated
+on `:root[data-site-theme="christmas"]`. This is purely additive scoping ï¿½ no `hw-*` rule,
+no colour and no value was edited, so Halloween is restored to exactly its committed
+behaviour. The only rules left unscoped are the decoration layer itself
+(`.cw-layer` and its descendants) and `.cw-strip` / `.cw-fallback`, which are safe because
+they are only ever mounted when `data-site-theme="christmas"` is already on `<html>` ï¿½ the
+same condition that defines the custom properties they read.
+
+Reduced-motion and small-screen overrides for those classes were scoped the same way.
+
+### 1.2 Reduced-motion contradiction
+
+`@media (prefers-reduced-motion: reduce)` had two consecutive `.cw-snow` rules ï¿½
+`display: none;` immediately followed by `opacity: 0.38;`. The second was dead code.
+Collapsed into one rule with a comment explaining that snowfall is removed outright
+(a static field of flakes reads as noise behind text).
+
+### 1.3 Formatting only
+
+- `app/layout.tsx` ï¿½ corrected the indentation of the provider nesting in the JSX tree
+  (`SeasonalThemeProvider > HalloweenIconProvider > ChristmasIconProvider > ToastProvider`).
+  Structure and behaviour unchanged; whitespace only.
+- `tailwind.config.ts` ï¿½ restored the `darkMode` block to the file's own indentation.
+  Value unchanged.
+
+---
+
+## 2. Files already present in the tree (pre-existing, not authored by me)
+
+Documented for completeness; I reviewed each and found no defect requiring a change.
+
+| File | Purpose |
+| --- | --- |
+| `lib/christmas.ts` | Palette constants, season window, icon path. Values only ï¿½ importing it cannot activate the theme. |
+| `lib/christmas-icon-server.ts` | `server-only` build-time check that the icon asset exists. |
+| `components/christmas/ChristmasIcon.tsx` | Renders the supplied asset as-is, or a neutral SVG placeholder. |
+| `components/christmas/ChristmasIconProvider.tsx` | Passes icon availability down from the server. |
+| `components/christmas/ChristmasDecor.tsx` | `useIsChristmas()` + hero strip / footer mark / event badge. Renders `null` when inactive. |
+| `components/christmas/ChristmasDecorations.tsx` | CSS/SVG-only atmosphere layer (snow, moon, aurora, fog, lights). Mounts only when Christmas is active. |
+| `app/globals.css` (Christmas block, ~line 1801+) | Winter-night palette, atmosphere, hero, cards, buttons, dialogs, keyframes. |
+| `lib/theme-resolver.ts` | `getThemePreviewOverride()` dev-only preview hook. |
+| `lib/themes.ts` | `christmas` registry entry repalettised to the MMD winter palette. |
+
+Modified shared files (all additive): `app/layout.tsx`, `app/page.tsx`,
+`components/Header.tsx`, `components/Footer.tsx`, `components/AnnouncementCard.tsx`,
+`components/EventCard.tsx`, `components/StaffCard.tsx`, `tailwind.config.ts`, `.env.example`.
+
+**No dependencies were added.** `package.json` gained a test script only.
+
+**No database migration was added** by the Christmas preparation.
+
+---
+
+# CHANGE.md ï¿½ UGN Theme Engine entry
+
+**Project:** Ur Gay Now website (`C:\Users\alans\Urgaynowwebsite`)
+**Task:** Build the UGN Theme Engine ï¿½ single source of truth for the visual UI
+**Date of this entry:** 2 October 2026
+**Branch:** `main`
+
+---
+
+## 0. Status summary ï¿½ READ THIS FIRST
+
+**This task is NOT complete.** The engine's core is built, tested and deployed-safe.
+The CSS and component consolidation is **not** done, so the goal of "one rendered
+UI with no seasonal overlay" is **not yet achieved**. The site is visually unchanged
+and Halloween is still the live theme.
+
+| Requirement | State |
+| --- | --- |
+| Theme engine core (tokens, inheritance, CSS emission) | **Done**, 75 assertions pass |
+| Automatic scheduling: start/end/enabled/priority | **Done**, tested |
+| Manual override + **override expiration** | **Done**, tested |
+| Priority order (override > schedule > default) | **Done**, tested |
+| Required themes present (Default, Valentine's, Spring, Pride, Summer, Halloween, Autumn, Christmas, New Year) | **Done** ï¿½ plus Easter & April Fools kept |
+| Themes inherit from Default when not overridden | **Done**, tested |
+| Isolated admin preview (cookie-based, staff-only) | **Rules written + tested; UI not yet built** |
+| Activating a theme needs no source edit | **Not yet** ï¿½ the admin picker writes the DB, but the stylesheet still needs the token layer |
+| **ONE rendered UI, no per-theme overlay** | **NOT DONE ï¿½ this is the remaining work** |
+| Build / typecheck / lint / reviews tests | Pass |
+
+## 1. The defect this task set out to fix
+
+The audit found the previous seasonal system was not a theme engine at all:
+
+- **7 of 9 themes were visual no-ops.** `default`, `valentines`, `aprilfools`,
+  `easter`, `summer`, `autumn` and `spring` only set `--theme-*` variables, and
+  **11 of those 13 variables were read by nothing** ï¿½ only `--theme-background`
+  and `--theme-text` had a reader, on `body`. Selecting Valentine's changed the
+  page background and nothing else.
+- **`66% of `app/globals.css` (1642 of 2476 lines) was per-theme CSS.** Root cause:
+  `tailwind.config.ts` hardcodes `rgba(117,7,135,ï¿½)` in all 17 `boxShadow` entries
+  and 13 `backgroundImage` entries, so themes *could not* re-theme them, and each
+  theme re-declared card/button shadows by hand to work around it.
+- **Components rendered the old UI underneath the themes.** `EventCard`,
+  `AnnouncementCard` and `StaffCard` all carried *both* `hw-*` and `cw-*` class
+  names at once, e.g. `cw-event-card hw-event-card`. That is literally the
+  "old UI running underneath the theme UI" the task forbids.
+- **`components/ThemeCSS.tsx` was orphaned** ï¿½ never imported anywhere. Deleted.
+- **`getActiveThemeCSSVariables()` was never called.** Removed.
+- **The admin preview only mutated its own DOM**, so it died on navigation and
+  could not preview "across the real website".
+- **`SiteTheme` had no override-expiration column.**
+
+## 2. What I built
+
+New engine in `lib/theme-engine/`:
+
+| File | Purpose |
+| --- | --- |
+| `tokens.ts` | The token contract. `DEFAULT_TOKENS` is copied **verbatim** from the `:root` block that has shipped since launch, so the Default theme is pixel-identical to the pre-engine site. |
+| `resolve.ts` | `resolveTokens()` ï¿½ deep-merges a theme's partial tokens onto `DEFAULT_TOKENS`. This is the single place "inherit from Default" happens; a missing token is structurally impossible to express. `normalizeTriplet()` accepts `#rrggbb` and converts to the `"R G B"` form Tailwind needs. |
+| `css.ts` | `tokensToCssVars()` / `tokensToCss()` ï¿½ serialises the token set to CSS custom properties. |
+| `scheduler.ts` | `resolveActiveTheme()` implementing the priority order, plus `isScheduleActive()`. |
+| `preview.ts` | Preview isolation: `resolvePreviewThemeId()`, `getDevThemePreview()`, `selectThemeId()`. |
+| `validate.ts` | Development-time guards + `assertSchedulerContract()`. |
+| `registry.ts` | All 11 themes as **pure data**. No theme has a CSS file or a component. |
+| `index.ts` | Barrel. |
+
+Also:
+
+- `scripts/verify-theme-engine.ts` + `npm run test:theme-engine` ï¿½ **75 assertions.**
+- `prisma/migrations/20261002160000_theme_engine_override_expiry/` ï¿½ adds
+  `SiteTheme.overrideExpiresAt` (nullable, additive, idempotent). **Not yet applied.**
+- `lib/themes.ts` is now a **compatibility shim** re-exporting from the engine, so
+  the ~10 existing importers were not touched.
+- `lib/theme-resolver.ts` rewritten onto the engine; deleted the dead
+  `getActiveThemeCSSVariables()`.
+- `app/admin/settings/appearance/AppearancePage.tsx` ï¿½ theme swatches now read
+  the resolved token set instead of the old dead `variables` object.
+
+### Deployment hazard found and fixed
+
+`prisma.siteTheme.findFirst({ include: ï¿½ })` returns **every** column, so adding
+`overrideExpiresAt` to the schema made the theme query throw on a database where
+the migration had not been applied. The layout resolves the theme through
+`safeQuery(ï¿½, "default")`, so **the live Halloween site would have silently fallen
+back to Default.** I caught this in the build and fixed it two ways:
+
+1. The main query now uses an **explicit `select`** of only the long-standing columns.
+2. `overrideExpiresAt` is read separately by `readOverrideExpiry()`, which returns
+   `null` on any failure. `null` means "never expires", which is exactly the
+   pre-engine behaviour.
+
+Verified in the build: **0 safeQuery fallbacks, 0 `siteTheme` failures**, so
+Halloween resolves correctly both before and after the migration.
+
+## 3. Checks actually run
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Theme engine | `npm run test:theme-engine` | **PASS** ï¿½ 75 passed, 0 failed |
+| Review tests | `npm run test:reviews` | **PASS** ï¿½ 30 passed, 0 failed |
+| Typecheck | `npm run typecheck` | **PASS** ï¿½ no output |
+| Lint | `npm run lint` | **PASS** ï¿½ no warnings or errors |
+| Build | `npx next build` | **PASS** ï¿½ compiled, 88 pages |
+
+Build caveat, unchanged from the previous entry: `npm run build` cannot complete
+here because a `next dev` server holds the Prisma engine and `.next`. I built via
+an isolated `distDir` with a temporary config override, then reverted it
+(`git diff next.config.mjs` empty) and restored `tsconfig.json`.
+
+The engine test covers: registry validity for all 11 themes; the 9 required themes
+present; inheritance (an empty theme resolves to exactly the default tokens; a
+partial override keeps its siblings); the Default theme still emitting the
+original UGN hex values; scheduler priority; expired/live overrides; disabled and
+out-of-window schedules; inclusive window boundaries; unknown ids never promoted;
+dev preview inert in production; and prototype-pollution rejection.
+
+## 4. Known issues / not done
+
+- **The CSS consolidation is not done.** `app/globals.css` still contains the 1642
+  lines of per-theme Halloween/Christmas CSS and the dead `--theme-*` blocks. The
+  engine emits the tokens, but the stylesheet does not consume them yet.
+- **The components still carry `hw-*` and `cw-*` class names together.** The
+  "old UI underneath the theme UI" problem is **still present on screen**.
+- **The server does not yet apply the tokens.** `app/layout.tsx` still uses the
+  old `data-site-theme` attribute path; it does not yet emit the token `<style>`.
+- **Admin preview UI not built.** The isolation rules exist and are tested, but
+  there is no cookie-setting control in the appearance page yet.
+- **No override-expiration control** in the admin UI.
+- **`tailwind.config.ts` `darkMode` is still a hardcoded list** naming `halloween`
+  and `christmas`. The engine exposes `visual.scheme`, so this should key off a
+  `data-theme-scheme` attribute instead. Until then `autumn` and `newyear` (both
+  dark-scheme themes) will not get the `dark:` variants.
+- **`public/brand/christmas-icon.png` still does not exist** (pre-existing).
+- No human visual review has been done.
+- 22 `prisma:error` log lines appear during build for the deliberately-caught
+  `readOverrideExpiry` query. Harmless and self-correcting once the migration is
+  applied.
+
+## 5. What is intentionally NOT changed
+
+The report system, authentication, staff permissions, events, announcements,
+Community Reviews (page and all four components), `prisma/schema.prisma` (one
+nullable column added, nothing removed), existing migrations, and all existing
+API contracts. No page or component was duplicated per theme. No dependency added.
+
+## 6. Next step
+
+Replace the per-theme CSS with a single token-driven component layer, remove the
+`hw-*`/`cw-*` class names from the shared components, emit the token `<style>` from
+`app/layout.tsx`, and key `darkMode` off `data-theme-scheme`. That is the work that
+turns what is currently a working token engine into the "one rendered UI" the task
+asks for. **Halloween must be visually diffed before and after that step.**
+
+---
+---
+
+# CHANGE.md ï¿½ Controlled migration: audit, classification and parity gate
+
+**Task:** Controlled migration of the legacy per-theme CSS into the theme engine
+**Date of this entry:** 2 October 2026
+**Status:** Parity gate **PASSED**. No legacy CSS deleted. Frontend not yet consuming
+the engine.
+
+---
+
+## 0. What this stage delivered
+
+The point of this stage was to make the consolidation **safe to perform**, not to
+perform it. That means proving ï¿½ mechanically, not by eye ï¿½ that the theme engine
+reproduces the current appearance before a single line of the legacy 1642 is
+touched.
+
+| Deliverable | State |
+| --- | --- |
+| Every legacy seasonal rule classified | **Done** ï¿½ 99 rules extracted, ledger covers 100% |
+| Classification into the 6 required categories | **Done** ï¿½ asserted by test |
+| Reusable values moved into the token system | **Done** |
+| Component tokens created where globals are insufficient | **Done** ï¿½ `components.*` block |
+| **Halloween appearance preserved** | **Proven** ï¿½ all 34 triplets + 50+ values identical |
+| Christmas preserved | **Proven** ï¿½ all 34 triplets + values identical |
+| Legacy CSS deleted | **No ï¿½ deliberately**, per instruction 12 |
+| Frontend consuming the engine | **No ï¿½ the remaining work** |
+
+## 1. Classification ledger
+
+`lib/theme-engine/legacy-parity.ts` holds one entry per legacy rule with its
+category, its replacement token, and a note. Categories, all asserted present by the
+test suite:
+
+| Category | Meaning | Example |
+| --- | --- | --- |
+| `global-token` | Value consumed by the global token layer | `.btn-primary { background-image }` |
+| `component-token` | Needed a component-scoped token | `.hw-live-pill { box-shadow }` |
+| `component-structure` | Becomes one shared semantic class | `.hw-hero { position }` |
+| `decorative-asset` | Hand-drawn art ? decoration config | `body::before { background-image }` |
+| `animation-effect` | Keyframes / transitions | `hw-live-breathe`, `hw-stat-glow` |
+| `obsolete-duplicate` | Dead or superseded | `.dark { --theme-textMuted }` |
+
+A completeness check asserts that **every** seasonal selector parsed out of
+`globals.css` ï¿½ Halloween and Christmas, including the multi-selector rules and the
+`cw-`/`hw-` mirrors ï¿½ is classified. Nothing can be silently dropped.
+
+## 2. The parity gate (the important part)
+
+`npm run test:theme-engine` now runs **155 assertions**, including:
+
+- **`LEGACY PARITY`** ï¿½ for each ledger entry, the real value is parsed out of
+  `app/globals.css` and compared against the value the theme engine resolves.
+  50+ value-bearing rules verified identical.
+- **`LEGACY SCALE PARITY`** ï¿½ all **34 colour triplets** compared digit-by-digit for
+  both Halloween and Christmas.
+- **`brand DEFAULT matches legacy --brand-rgb`** for both themes.
+- **`every legacy seasonal selector is classified in the ledger`**.
+
+The comparison is whitespace-, hex-case- and number-format-tolerant, resolves
+`var(--hw-card)` against the legacy stylesheet, handles the `border` and
+`scrollbar-color` shorthands, and merges every rule that targets a selector (because
+`[role="dialog"]` is styled by two separate rules).
+
+### What the parity gate caught
+
+It did real work. It found **four genuine fidelity bugs** that would have silently
+changed Halloween:
+
+1. **`--brand-rgb` was aliased to `brand[700]`.** In the legacy Halloween palette
+   those differ ï¿½ `109 40 217` vs `112 44 222` ï¿½ so every `brand.DEFAULT` usage, i.e.
+   the CTA colour, would have shifted. Fixed by making `brandDefault` its own slot.
+2. **`hero.gradientText` had 3 gradient stops; the legacy has 4** (I had dropped
+   `#f97316 35%`). The heading gradient would have visibly changed.
+3. **`hero.titleShadow` had a second shadow the legacy does not have.**
+4. **Every `components.*` token was still at its Default value** for Halloween, and
+   `buttons.ctaShadowHover` / `secondaryHoverShadow` were unpopulated.
+
+All four are fixed and now verified. This is exactly the "do not redesign Halloween"
+instruction being enforced by a machine rather than by good intentions.
+
+## 3. Component tokens added
+
+`ThemeVisual.components` now covers the treatments global tokens could not express:
+`cardTreat`, `livePill`, `stat`, `eventCard`, `featureCard`, `staffCard`,
+`galleryTile`, `section`, `banner`, `strip`, `inputFocus`. Plus
+`buttons.ctaShadowHover` and `buttons.secondaryHoverShadow`.
+
+Both Halloween and Christmas carry their full legacy values. The nine other themes
+inherit the Default values, which are all `none`, so they carry no seasonal
+treatment ï¿½ which is the correct behaviour.
+
+## 4. Supporting files
+
+- `scripts/lib/css-parser.ts` ï¿½ a small brace-matching CSS parser with the
+  normalisation rules above, plus `collectCustomProperties` /
+  `resolveCustomProperties` so legacy `var()` values can be compared.
+- `scripts/extract-legacy-seasonal-css.ts` ï¿½ audit helper that lists every seasonal
+  rule. Re-runnable to re-inventory after any CSS change.
+- `lib/theme-engine/tokens.ts` ï¿½ `brandDefault` slot added.
+
+## 5. Checks run
+
+| Check | Result |
+| --- | --- |
+| `npm run test:theme-engine` | **155 passed, 0 failed** |
+| `npm run test:reviews` | **30 passed, 0 failed** |
+| `npm run typecheck` | **PASS** |
+| `npm run lint` | **PASS** |
+| `npx next build` | **PASS** ï¿½ compiled, 88 pages, **0 safeQuery fallbacks** |
+
+The un-migrated `overrideExpiresAt` column still produces caught error logs but no
+fallback; the theme resolves correctly, as verified above.
+
+## 6. Still not done
+
+- **The frontend does not consume the engine yet.** `app/layout.tsx` does not emit
+  the token `<style>`, so the live site is still driven by the legacy CSS.
+- **`hw-*` / `cw-*` class names are still on the shared components.**
+- `tailwind.config.ts` `darkMode` is still a hardcoded Halloween/Christmas list.
+- No admin preview UI, no override-expiry control.
+- **No human visual verification has been done** ï¿½ the parity gate is a numerical
+  guarantee about CSS values, not a rendering check. Instruction 13's page-by-page
+  checklist is outstanding.
+- Legacy CSS is fully intact, as instructed.
+
+## 7. Next step
+
+Now that parity is proven, the consolidation can be done mechanically: write the
+single token-driven component layer (`.ugc-hero`, `.ugc-card-treat`,
+`.ugc-stat-card`, `.ugc-live-pill`, ï¿½), switch the shared components to those
+classes, emit the tokens from the layout, and key `darkMode` off
+`data-theme-scheme`. The parity gate must stay green throughout, and the legacy
+blocks are only deleted in a final, separately-reviewed step.
+
+---
+
+## 3. Community Reviews compatibility (explicitly requested)
+
+Inspected, and found already compatible ï¿½ no change was needed and none was made.
+
+- `app/reviews/page.tsx` and `components/reviews/*` were **not modified**.
+- They are theme-agnostic by construction: they style off the `brand` / `surface` / `ink`
+  scales and `currentColor`, which every seasonal theme redefines. No hard-coded seasonal
+  colour, no `hw-*`/`cw-*` class.
+- `ReviewCard` uses `card card-hover`, which the Christmas block themes
+  (`:root[data-site-theme="christmas"] .card`). Presentation only.
+- `ReviewForm` uses `.input` / `select` / `textarea`, which the Christmas block themes on
+  `:focus` only. Behaviour untouched.
+- `StarRating` / `RatingDistributionRow` use `text-amber-*` for stars, which reads correctly
+  on the winter-night surface.
+- **The report button on each review is untouched.** `ReviewCard` still posts through the
+  existing `/api/report/submit` with `contentType="COMMUNITY_REVIEW"`. No report code was
+  read-modified or written by this task.
+- `COMMUNITY_REVIEW` is free-text in `Report.contentType` (`prisma/schema.prisma:474`) and is
+  **not** validated against an allowlist ï¿½ `lib/report-validation.ts:265` only upper-cases and
+  length-caps it ï¿½ so review reports still store and display exactly as before.
+
+---
+
+## 4. Report system protection
+
+No report file was modified. `git status` over `lib/reports.ts`, `lib/report-validation.ts`,
+`lib/report-webhook.ts`, `lib/report-reference.ts`, `lib/report-evidence-token.ts`,
+`lib/request-security.ts`, `components/report/`, `app/api/report/`, `app/admin/reports/`,
+`app/report/` and `prisma/schema.prisma` returns **empty**.
+
+Per MMD section 18, the eight required verifications:
+
+| # | Check | Result |
+| --- | --- | --- |
+| 1 | Report can be submitted | Not re-executed this session (end-to-end confirmation is recorded in the Community Reviews entry above) |
+| 2 | Report reaches the backend | Route untouched; builds clean |
+| 3 | Report stored correctly | Schema and write path untouched |
+| 4 | Discord webhook works | `lib/report-webhook.ts` untouched; build clean |
+| 5 | Staff can access reports | `app/admin/reports/*` untouched; routes build |
+| 6 | Permissions intact | No auth or permission file touched |
+| 7 | Report IDs intact | `lib/report-reference.ts` untouched |
+| 8 | Evidence/security intact | `lib/request-security.ts`, evidence routes and headers untouched |
+
+---
+
+## 5. Production safety ï¿½ Christmas is NOT active
+
+- The production fallback chain in `getActiveThemeId()` is:
+  dev-preview override -> database config -> `"default"`. `undefined` can never become
+  `christmas`.
+- `getThemePreviewOverride()` returns `null` **before reading any other input** when
+  `process.env.NODE_ENV === "production"`, so `UGN_THEME_PREVIEW` is inert in production
+  even if it were set in the environment. It is a server-only variable (no `NEXT_PUBLIC_`
+  prefix) and is validated against `THEME_REGISTRY`.
+- The confirmation build ran with `NODE_ENV=production`, exercised the real production path,
+  and completed without error.
+- I made **no** database change, **no** schedule row, and **no** manual-theme change. The
+  live site therefore remains whatever the database already says ï¿½ Halloween.
+
+**Documented activation path (for when Christmas is approved later):** the existing admin
+`/admin/settings/appearance` page already lists every registry theme, including Christmas,
+and already supports both a manual selection and a dated schedule. This is the pre-existing
+generic seasonal mechanism ï¿½ Christmas was already present in `THEME_REGISTRY` before this
+task, and this task only repalettised it. Activating Christmas is therefore a single
+deliberate admin change, which is exactly the "controlled configuration change" the MMD asks
+for. No new switch was created, and no public/visitor-facing toggle was added.
+
+---
+
+## 6. Checks actually run
+
+| Check | Command | Result |
+| --- | --- | --- |
+| Typecheck | `npm run typecheck` | **PASS** ï¿½ no output |
+| Lint | `npm run lint` | **PASS** ï¿½ "No ESLint warnings or errors" |
+| Review tests | `npm run test:reviews` | **PASS** ï¿½ 30 passed, 0 failed |
+| Build | `npx next build` | **PASS** ï¿½ all routes compiled |
+
+**Honest caveat on the build.** `npm run build` (which is `prisma generate && next build`)
+could **not** complete: `prisma generate` failed with
+`EPERM: operation not permitted, rename ...query_engine-windows.dll.node`, because a
+`next dev` server started at 12:59 (before this session) holds both the Prisma query engine
+and `.next/trace`. I did **not** kill that dev server.
+
+To still get a real production-compile signal I ran `npx next build` against an isolated
+`distDir` via a **temporary** `next.config.mjs` override, which succeeded. That temporary
+edit has been **reverted** ï¿½ `git diff next.config.mjs` is empty ï¿½ and the temporary build
+directory was deleted. `tsconfig.json` was also auto-modified by the build (it appended the
+temporary distDir to `include` and a formatter reflowed it); that has been restored with
+`git checkout`, and `git status tsconfig.json` is clean.
+
+So: the Next.js production compile genuinely passed. `prisma generate` was **not**
+re-run successfully in this session, and I am not claiming it was ï¿½ the Prisma client was
+already generated and is unmodified, and no schema or migration changed, so this step is
+unaffected by this task.
+
+---
+
+## 7. Known issues, risks and open items
+
+- **No human visual/browser review was performed.** I did not start a dev server and look at
+  the site at desktop, tablet or mobile widths, under reduced motion, or with the Christmas
+  preview on. Typecheck, lint, tests and a production compile do not catch layout or
+  contrast problems. The MMD's manual checklist is **outstanding**.
+- **The official Christmas icon asset does not exist.** There is no
+  `public/brand/christmas-icon.png`. `hasChristmasIcon()` returns `false`, so `ChristmasIcon`
+  renders its inline SVG placeholder. This is handled gracefully (no 404, no broken image),
+  but the header logo slot will show the placeholder, not the real artwork, until the asset
+  is supplied at `public/brand/christmas-icon.png` (or `NEXT_PUBLIC_CHRISTMAS_ICON_PATH` is
+  pointed at it).
+- **Dead rule, deliberately left alone.** In the Christmas block,
+  `:root[data-site-theme="christmas"] .cw-hero::before { content: none; }` cancels the
+  base `.cw-hero::before` aurora, so the hero aurora currently never paints under Christmas.
+  Fixing it would change the approved visual direction, so I scoped the base rule (to stop
+  it leaking into Halloween) but left the override in place. Flagged for design review
+  rather than changed.
+- **`.cw-event-card` / `ChristmasEventBadge` are wired but not exercised.** The badge is
+  defined and the class is styled, but I did not find it rendered on the events listing;
+  this is unchanged from how the work arrived and needs a visual pass.
+- The Christmas visual balance (purple/blue vs. red/green/gold) is unverified by eye.
+- `public/brand/halloween-icon.png` is ~19.5 MB. Not touched by this task, but it is a
+  pre-existing performance concern worth raising separately.
+- `lib/christmas.ts` exports `isChristmasSeason()` / `CHRISTMAS_SEASON`. These are currently
+  **unused** ï¿½ activation is driven purely by the database schedule. That is the safe
+  arrangement (no date-based automatic activation), and it was left that way.
+
+---
+
+## 8. Intentionally NOT changed
+
+The report system (submission, storage, Discord webhook, staff dashboard, permissions,
+IDs, evidence, audit history), authentication, staff management, events, announcements,
+news, gallery, community submissions, shop, guides, rules, legal pages, search, admin
+layout and kits, the Community Reviews page and its four components, `lib/reviews.ts`,
+`app/api/reviews/route.ts`, `prisma/schema.prisma`, all migrations, `package.json`,
+`next.config.mjs`, all `hw-*` Halloween CSS, and the database. No file was renamed. No API
+contract changed. No UGN layout, spacing, typography or component structure was redesigned.
+
+---
+
+# CHANGE.md â€” Automatic Update/Version System (every successful push)
+
+**Project:** Ur Gay Now website (`C:\Users\alans\Urgaynowwebsite`)
+**Task:** Audit the existing version/update system, then make every successful
+production deployment automatically create and publish a website update.
+**Date of this entry:** 3 October 2026
+**Repository:** `urgaynow2024-cloud/urgaynowweb` (branch `main`, production on Vercel)
+**Database used for verification:** live Supabase Postgres from `.env`
+
+---
+
+## 0. Headline finding
+
+**Automatic updates have never worked. Not once.** The "Auto Release" workflow had
+**16 runs on `main`, 16 failures, and zero jobs created** â€” GitHub rejected the
+workflow file itself, so no step ever executed:
+
+```
+X main .github/workflows/auto-release.yml Â· 36923284651
+X This run likely failed because of a workflow file issue.
+$ gh api .../actions/runs/36923284651/jobs  ->  total_count: 0
+```
+
+The cause is one step in the old file that had only a `name`, with its `uses:`
+commented out:
+
+```yaml
+- name: Wait for deployment (if using Vercel/Netlify/etc)
+  # Uncomment and configure if you have a deployment check
+  # uses: actions/github-script@v7
+```
+
+A step with neither `run:` nor `uses:` is invalid, which invalidates the whole
+file. That is why the workflow produced nothing since it was added, and why
+`/updates` only ever had its single manually-created entry (`v1.0.0`,
+`report-system-support-ticket-overhaul`).
+
+Even if that file had parsed, the flow was still broken: `/api/releases` shelled
+out to `git log` **inside the deployed serverless bundle**, which has no `.git`
+directory and no git binary, so it always found zero commits and returned
+`200 {"error":"No commits to release"}`.
+
+---
+
+## 1. Audit answers
+
+### 1.1 What currently creates update records?
+
+| Path | Creates `Update` rows? | Notes |
+| --- | --- | --- |
+| Admin server actions (`app/admin/updates/actions.ts`) | Yes | `createUpdate`, `updateUpdate`, `generateDraftFromRecentChanges`, `deleteUpdate`. Staff-only (`requireAdmin`). |
+| `POST /api/releases` | Yes, in principle | Intended to be CI-triggered. In practice unreachable: the workflow file was invalid, and the route ran `git log` where no git exists. |
+| `scripts/*.ts` | One-off | `publish-report-overhaul.ts` publishes one specific draft by slug. |
+
+Database reality before this change: **1 published update** (`v1.0.0`), created by
+hand, `sourceCommit = null`, `generatedAutomatically = false`.
+
+### 1.2 What currently determines the version?
+
+The existing scheme is kept, not replaced. `lib/release-generator.ts`:
+
+- base version = `getLatestPublishedVersion()` â†’ highest version among published updates
+- bump type = `determineVersionType(classifiedCommits)` â†’ `MAJOR` if a breaking
+  change, `MINOR` if any feature, otherwise `PATCH`
+- `incrementVersion(base, type)` â†’ `x.y.z + 1` at minimum, so **every push always
+  gets a unique version**, whatever its commits look like
+
+`package.json` `version: "1.0.0"` is **not** part of this system, nothing reads it,
+and it is deliberately **not** touched by the automation.
+
+Two real bugs were fixed in that scheme:
+
+1. `getLatestPublishedVersion()` ordered by `publishedAt desc` and took the first
+   row, so a re-published or back-dated entry could hand back a stale base. It now
+   returns the **numerically highest** published version, which also removes the
+   lexicographic bug that ranked `1.9.0` above `1.10.0`.
+2. `getLatestPublishedVersion()` could return an unparseable version (e.g. `"v2"`),
+   which made `incrementVersion` fall back to `"1.0.0"` and collide. It now only
+   considers parseable `MAJOR.MINOR.PATCH` versions and otherwise starts from
+   `0.0.0`.
+
+### 1.3 What currently publishes an update?
+
+Two ways, both already in place:
+
+- **Manual** â€” staff tick "published" in `/admin/updates`; `createUpdate` /
+  `updateUpdate` set `publishedAt`. (`releaseStatus` was never written by those
+  actions, so a manually published entry displayed as `DRAFT` in the admin Status
+  column. Pre-existing display inconsistency, unchanged here.)
+- **Automatic** â€” `createReleaseFromCommits` writes `publishedAt: new Date()`,
+  `releaseStatus: "PUBLISHED"`, `generatedAutomatically: true`,
+  `authorId: "system"`, `sourceCommit`, `sourcePreviousCommit`, `sourceBranch`,
+  `deploymentId`.
+
+Publication == `publishedAt` not null. `/updates` queries
+`where: { publishedAt: { not: null } }`.
+
+### 1.4 How can Vercel/GitHub deployment information be accessed?
+
+Verified live, not assumed:
+
+```
+$ gh api repos/urgaynow2024-cloud/urgaynowweb/commits/6b21d9e.../status
+{"state":"success","statuses":[{"context":"Vercel",
+  "description":"Deployment has completed","state":"success",
+  "target_url":"https://vercel.com/ugn-website/urgaynowweb/2dG5RZbNnQU15wL2aUTpxTkoeNyg"}]}
+```
+
+- The **Vercel GitHub integration already publishes a commit status** with context
+  exactly `Vercel` and state `pending | success | failure | error`, readable by the
+  workflow with the automatic `GITHUB_TOKEN`. No extra Vercel token required.
+- The **Vercel deployment id** is the last path segment of `target_url`. The
+  workflow extracts it and stores it in `Update.deploymentId`.
+- Vercel runtime env vars already in use: `VERCEL_GIT_COMMIT_SHA`,
+  `VERCEL_GIT_COMMIT_REF` (`lib/admin-dashboard.ts`).
+- The GitHub API was deliberately chosen over a Vercel REST token because it
+  requires **zero new credentials**.
+
+### 1.5 Is the existing revalidation endpoint sufficient?
+
+`/api/updates/revalidate` existed and is still used, but it was **not sufficient**
+and was **too permissive**:
+
+- It is authenticated, but with plain `getSession()`, and it allowed revalidating
+  **any path on the site**. It now keeps the session check but restricts
+  revalidation to an allowlist: `/`, `/updates`, `/updates/[slug]`, and
+  `/updates/<slug>`.
+- The real cache problem is different: `/updates` is `force-dynamic` (rendered per
+  request) but `next.config.mjs` serves every page with
+  `s-maxage=60, stale-while-revalidate=30`, so a **60-second CDN cache** sits in
+  front of it. `revalidatePath` is therefore still needed, and the release route now
+  calls it for `/updates`, `/updates/[slug]` **and** `/`. The old route only
+  revalidated `/updates`, so a new entry could still appear only after the cache
+  window on the detail page.
+
+So the endpoint was kept and tightened, not replaced.
+
+### 1.6 What needed to change?
+
+| # | Problem | Fix |
+| --- | --- | --- |
+| 1 | Workflow file invalid (step with no `run`/`uses`) â†’ 16/16 runs failed with 0 jobs | Rewrote the workflow; every step has `run:` or `uses:`, verified programmatically |
+| 2 | No deployment gate â†’ would publish on a failed build | Workflow waits for Vercel's commit status to be `success`; `failure`/`error` exits without publishing; the API independently rejects any non-ready/non-production deployment with `422` |
+| 3 | `git log` in a serverless bundle (always 0 commits) | Commits are collected by the workflow and sent in the request body; the route no longer needs git |
+| 4 | Idempotency was a single pre-check returning 409 | `sourceCommit` is `@unique`; dedupe lives in `createReleaseFromCommits`, which returns the existing record and refreshes `deploymentId`. Replay, redeploy and rollback all yield exactly one row |
+| 5 | Two concurrent pushes could compute the same version â†’ unique-violation 500 | Version is recomputed from the database and retried up to 3 times on `P2002` |
+| 6 | No repository check | `repository` must equal `RELEASE_GITHUB_REPOSITORY` (default `urgaynow2024-cloud/urgaynowweb`), else `403` |
+| 7 | Plain `!==` secret compare | `timingSafeEqual`, and the endpoint **fails closed** when the secret is unset |
+| 8 | **Auto-changelogs were empty** (found by testing, see Â§4) | Classifier understands plain-English commit subjects; unclassified commits are now listed instead of silently dropped |
+| 9 | Discord link pointed at `/updates/1-2-0`, which 404s | Links the real generated slug, and adds the commit SHA field |
+
+---
+
+## 2. What was implemented
+
+### 2.1 `lib/release-generator.ts`
+
+- `createReleaseFromCommits({ headSha, commits, branch, deploymentId, previousSha })`
+  now takes the commit list from the caller instead of shelling out to git.
+  `getCommitsBetween` is unchanged and still used by the admin draft generator.
+- **Idempotent on `headSha`.** Returns `created: false` and the existing row when a
+  release for that commit already exists; refreshes `deploymentId` on redeploy.
+- `getLatestPublishedVersion()` â†’ numerically highest published version.
+- New exports: `parseVersion`, `compareVersions`, `findReleaseByCommit`,
+  `CreateReleaseInput`, `CreateReleaseResult`.
+- `classifyCommits()` keeps conventional-commit prefixes authoritative and adds
+  leading-word heuristics (`Addâ€¦` â†’ feature, `Fixâ€¦` â†’ fix, `Reduceâ€¦` â†’ improvement).
+- `generateReleaseInfo()` now lists `other` commits under Improvements and counts
+  them in the summary, so a push can never produce an empty changelog.
+- Single-commit releases use the commit subject as the summary instead of
+  `"1 change in this release"`.
+
+### 2.2 `app/api/releases/route.ts`
+
+- **Fails closed** on auth when `RELEASE_CRON_SECRET` is unset; constant-time compare.
+- Requires a full 40-hex `headSha`, a matching `repository`, and
+  `deployment.target === "production"` with a successful `deployment.state`;
+  anything else returns `422` and creates nothing.
+- New `GET` returns the latest published release and `previousCommit`, which is how
+  the workflow computes the exact commit range without git on the server.
+- Calls `revalidatePath` for `/updates`, `/updates/[slug]` and `/`.
+- Correct Discord URL (real slug) and a `Commit` field.
+- `UGN_SKIP_DISCORD_NOTIFICATIONS=1` suppresses the notification; it is **not** set
+  in the Vercel project, so production still announces every release.
+- **No new unauthenticated endpoint.** The shared secret is required on both methods.
+
+### 2.3 `.github/workflows/auto-release.yml` (rewritten)
+
+`push` to `main` â†’ checkout â†’ resolve commit range â†’ wait for Vercel `success` â†’
+`POST /api/releases` â†’ job summary.
+
+- `concurrency: auto-release-${{ github.ref }}` with `cancel-in-progress: false` â€”
+  pushes **queue** rather than cancel, because each successful deployment must
+  produce one update.
+- `permissions: contents: read, statuses: read` â€” no write scopes anywhere.
+- Commit range: last released commit â†’ else `github.event.before` â†’ else root commit,
+  then `git log --no-merges`. Record/field separators (`0x1e` / `0x1f`) keep
+  multi-line commit bodies intact.
+- Deployment gate polls the Vercel commit status for **that exact SHA**, up to 15
+  minutes. `failure`/`error` â†’ no update, workflow succeeds with an explicit note.
+  Timeout â†’ workflow fails loudly rather than publishing unverified.
+- Deployment id extracted from the Vercel status URL and stored on the update.
+- Secrets used: `RELEASE_CRON_SECRET` only. `NEXT_PUBLIC_SITE_URL` is optional
+  (falls back to `https://urgaynow.com`), which matters because
+  `gh secret list` and `gh variable list` are both **empty** on this repository.
+
+### 2.4 Also
+
+- `app/api/updates/revalidate/route.ts` â€” path allowlist.
+- `.env.example` â€” documents `RELEASE_CRON_SECRET` and `RELEASE_GITHUB_REPOSITORY`.
+- `scripts/verify-auto-release.ts` + `npm run test:release`.
+
+---
+
+## 3. Verification â€” actually executed
+
+### 3.1 Static checks
+
+| Check | Result |
+| --- | --- |
+| `npx tsc --noEmit` | clean |
+| `npx next lint` | clean, no warnings |
+| `npx next build` | success; `/updates` and `/updates/[slug]` still dynamic |
+| `npm run test:reviews` | 30/30 |
+| `npm run test:theme-engine` | 155/155 |
+| Workflow YAML parsed; every step checked for `run`/`uses` | 6/6 steps valid (this is the check the old file failed) |
+| Live endpoint fails closed | `POST /api/releases` no auth â†’ 401, bad secret â†’ 401 |
+
+### 3.2 Full flow against a real server and the real database
+
+`next dev` on :3210 against live Supabase, `npm run test:release` â†’
+**57 passed, 0 failed**.
+
+| Requirement | Evidence |
+| --- | --- |
+| Unauthenticated cannot create an update | 401, 0 rows |
+| Wrong secret cannot create an update | 401 |
+| Foreign repository rejected | 403, 0 rows |
+| Malformed SHA rejected | 400 |
+| **Build failed â†’ NO public update** | `deployment.state: "error"` â†’ 422, 0 rows |
+| Preview deployment â†’ NO public update | `target: "preview"` â†’ 422, 0 rows |
+| Successful deployment â†’ update created | 200, exactly 1 row, `PUBLISHED`, `publishedAt` set, `generatedAutomatically: true` |
+| Version generated and higher than all existing | valid semver, above every baseline version |
+| Commit + deployment recorded | `sourceCommit`, `deploymentId`, `sourceBranch`, `sourcePreviousCommit` all stored |
+| **/updates shows it immediately** | HTML contains `v<version>`, links `/updates/<slug>`, detail page returns 200 |
+| Existing updates intact | baseline entry still listed, unchanged, same id and version |
+| **Same push processed twice â†’ ONE record** | replay returns 200 `alreadyReleased`, original `updateId`, still exactly 1 row |
+| **Rollback/redeploy â†’ no misleading duplicate** | same 1 row, `deploymentId` refreshed, version unchanged |
+| Every push gets its own update | second push â†’ new row, different + higher version, different slug |
+| Concurrent pushes | 3 simultaneous releases â†’ 3 rows, 3 distinct versions, no unique-violation |
+| Real commit messages reach the changelog | `Addâ€¦` â†’ What's New, `Fixâ€¦` â†’ Bug Fixes, `Reduceâ€¦` â†’ Improvements, nothing dropped, MINOR version |
+| Cleanup / no pollution | all probe rows deleted, published count back to baseline, pre-existing row untouched |
+
+Probe rows use synthetic SHAs that are not real commits, so they can never block a
+genuine release. A sweep at the start of the run deletes anything left by an
+interrupted run (matched on the `dpl_probe_` deployment-id prefix), which is what
+made an earlier interrupted run self-healing.
+
+### 3.3 Workflow â†’ route data contract
+
+The workflow's `git log` + jq parsing was executed over real history
+(`c6e970e..6b21d9e` â†’ 4 commits with multi-line bodies) and posted to the live
+endpoint: 4 commits parsed correctly, version `1.1.0` (Feature Release), commit
+subjects present in the changelog, commit **bodies correctly not leaked** into
+public content. The row was deleted afterwards.
+
+### 3.4 Side effects during testing, disclosed
+
+- Early verification runs posted real changelog notifications to the configured
+  `DISCORD_UPDATES_WEBHOOK_URL` before the suppression flag was added (a handful of
+  `v1.0.x` / `v1.1.x` probe messages in the UGN updates channel). They were
+  notifications only â€” **no database row was left behind** â€” and webhook messages
+  cannot be recalled through the Discord API.
+  `UGN_SKIP_DISCORD_NOTIFICATIONS=1` now prevents recurrence.
+- One transient `Can't reach database server` blip from the Supabase pooler during a
+  run. The release itself succeeded; the probe's own cleanup connection failed and
+  the stray row was removed. `retry()` now guards the verification script's database
+  calls. Pre-existing pooler fragility, not introduced here.
+
+---
+
+## 4. Bugs found by testing, not by reading
+
+1. **Empty changelogs.** All four real commits ("Add community reviews pageâ€¦",
+   "Fix review moderation actionsâ€¦", â€¦) matched none of `feat:` / `fix:` / `perf:`,
+   and `generateReleaseInfo` dropped the `other` bucket entirely. A real release
+   would have published `summary: "No changes recorded"` with every section empty.
+   Fixed by the classifier heuristics plus listing `other`.
+2. **Redeploy did not update `deploymentId`.** The route short-circuited on an
+   existing `sourceCommit` before reaching the idempotent handler, so a redeploy left
+   the stale deployment id. The route now only short-circuits when no commit payload
+   was supplied; otherwise dedupe happens in exactly one place.
+
+---
+
+## 5. NOT yet live â€” two one-time setup steps
+
+The code is complete and tested locally. The production half cannot be activated
+from here, and **no real GitHub push â†’ Vercel â†’ update run has been observed yet.**
+
+1. **Vercel project env** â€” add `RELEASE_CRON_SECRET` (any 32+ random characters) to
+   **all** environments so preview deployments behave identically.
+2. **GitHub repository secret** â€” add the identical value:
+
+```
+printf '%s' "<value>" | gh secret set RELEASE_CRON_SECRET --repo urgaynow2024-cloud/urgaynowweb
+```
+
+Then push to `main`. Vercel deploys, the workflow sees `Vercel: success`, and
+`/updates` gains an entry within seconds.
+
+A local test secret already exists in `.env` (gitignored). **It must be replaced by
+the same real value in both places above**, and `UGN_SKIP_DISCORD_NOTIFICATIONS`
+must **not** be added to Vercel.
+
+Manual trigger once, to confirm end to end without waiting for a push:
+
+```
+gh workflow run auto-release.yml --repo urgaynow2024-cloud/urgaynowweb
+```
+
+---
+
+## 6. Intentionally NOT changed
+
+`prisma/schema.prisma` and all migrations (the existing `Update` columns â€”
+`sourceCommit`, `deploymentId`, `generatedAutomatically`, `releaseStatus` â€” already
+cover every required field, so no migration was needed), `package.json` `version`,
+the admin update manager UI and its server actions, `/updates` and `/updates/[slug]`
+rendering, the report system, Community Reviews, authentication, staff permissions,
+events, announcements, the seasonal system, `next.config.mjs`, and all existing
+published updates.
+
+---
+
+## 7. Open items for a follow-up (pre-existing, out of scope)
+
+- `prisma/migrations/` has **no** migration for the six auto-release columns; they
+  exist only because `prisma db push` was used. A fresh `migrate deploy` against a
+  new database would produce an `Update` table without them.
+- `sql/schema.sql` still describes the old `Update` table.
+- `app/admin/updates/actions.ts` duplicates `execGit` / `classifyCommits` /
+  `sanitize` from `lib/release-generator.ts`, and the copies have drifted.
+- `generateDraftFromRecentChanges` and `regenerateSummary` still call git from a
+  server action, so they cannot work on Vercel â€” they silently fail to
+  `/admin/updates?error=1`.
+- `createUpdate` / `updateUpdate` never set `releaseStatus`, so a manually published
+  update shows as `DRAFT` in the admin Status column.
+- `middleware.ts` falls back to a hardcoded dev secret when `AUTH_SECRET` is unset.
+- `/updates` and `/updates/<slug>` are missing from `app/sitemap.ts`,
+  `app/feed.xml/route.ts` and the footer.
+- `Update.images` is unvalidated free-text JSON rendered through `next/image`, whose
+  `remotePatterns` allow only two hosts.

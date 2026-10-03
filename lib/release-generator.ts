@@ -1,5 +1,7 @@
 import { execSync } from "child_process";
+import { Prisma } from "@prisma/client";
 import { prisma } from "./db";
+import { suggestCategory } from "./update-utils";
 
 export interface CommitInfo {
   sha: string;
@@ -49,6 +51,18 @@ export function getCommitsBetween(fromSha: string, toSha: string): CommitInfo[] 
   });
 }
 
+/**
+ * Conventional-commit prefixes stay authoritative. Most UGN commits are written
+ * as plain English ("Fix review moderation actions..."), so a small set of
+ * leading-word heuristics keeps the changelog and the version type meaningful
+ * instead of classifying everything as an unlabelled change.
+ */
+const FEATURE_LEAD = /^(feat|feature|add|added|adds|adding|introduce|introduces|implement|implements|create|creates|launch|launches|enable|enables|build)\b/i;
+const FIX_LEAD = /^(fix|fixes|fixed|resolve|resolves|resolved|repair|repairs|correct|corrects|address|addresses|hotfix|revert)\b/i;
+const IMPROVEMENT_LEAD = /^(perf|performance|optimi[sz]e|optimi[sz]es|optimi[sz]ed|refactor|refactors|clean|cleanse|cleanup|simplify|simplifies|reduce|reduces|improve|improves|improvement|tweak|tweaks|polish|refresh|redesign|update|updates|migrate|migrates|rename|renames)\b/i;
+const DOCS_LEAD = /^(docs?|documentation)\b/i;
+const CHORE_LEAD = /^(chore|build|ci|test|tests|style|release|version|bump|lint|format)\b/i;
+
 export function classifyCommits(commits: CommitInfo[]): ClassifiedCommits {
   const result: ClassifiedCommits = {
     breaking: [],
@@ -61,25 +75,45 @@ export function classifyCommits(commits: CommitInfo[]): ClassifiedCommits {
   };
 
   for (const commit of commits) {
-    const subject = commit.subject.toLowerCase();
-    const fullMessage = `${commit.subject}\n${commit.body}`.toLowerCase();
+    const subject = commit.subject;
+    const lower = subject.toLowerCase();
+    const fullMessage = `${subject}\n${commit.body}`.toLowerCase();
 
-    const isBreaking = subject.includes("breaking change") || subject.startsWith("!") || fullMessage.includes("breaking change:");
+    const isBreaking = lower.includes("breaking change") || subject.startsWith("!") || fullMessage.includes("breaking change:");
 
     if (isBreaking) {
       result.breaking.push(commit);
       continue;
     }
 
-    if (subject.startsWith("feat:")) {
+    const conventional = /^(feat|fix|perf|refactor|docs|chore|build|ci|test|style|perf)!?:\s*/.exec(lower);
+    const lead = conventional ? conventional[0] : "";
+
+    if (lead.startsWith("feat")) {
       result.features.push(commit);
-    } else if (subject.startsWith("fix:")) {
+    } else if (lead.startsWith("fix")) {
       result.fixes.push(commit);
-    } else if (subject.startsWith("perf:") || subject.startsWith("refactor:")) {
+    } else if (lead.startsWith("perf") || lead.startsWith("refactor")) {
       result.improvements.push(commit);
-    } else if (subject.startsWith("docs:")) {
+    } else if (lead.startsWith("docs")) {
       result.docs.push(commit);
-    } else if (subject.startsWith("chore:") || subject.startsWith("build:") || subject.startsWith("ci:") || subject.startsWith("test:") || subject.startsWith("style:")) {
+    } else if (
+      lead.startsWith("chore") ||
+      lead.startsWith("build") ||
+      lead.startsWith("ci") ||
+      lead.startsWith("test") ||
+      lead.startsWith("style")
+    ) {
+      result.chore.push(commit);
+    } else if (FEATURE_LEAD.test(subject)) {
+      result.features.push(commit);
+    } else if (FIX_LEAD.test(subject)) {
+      result.fixes.push(commit);
+    } else if (IMPROVEMENT_LEAD.test(subject)) {
+      result.improvements.push(commit);
+    } else if (DOCS_LEAD.test(subject)) {
+      result.docs.push(commit);
+    } else if (CHORE_LEAD.test(subject)) {
       result.chore.push(commit);
     } else {
       result.other.push(commit);
@@ -95,14 +129,49 @@ export function determineVersionType(classified: ClassifiedCommits): "MAJOR" | "
   return "PATCH";
 }
 
+/** Parse a semantic version, tolerating a leading "v". Returns null if not MAJOR.MINOR.PATCH. */
+export function parseVersion(version: string): [number, number, number] | null {
+  const match = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(version.trim());
+  if (!match) return null;
+  return [Number(match[1]), Number(match[2]), Number(match[3])];
+}
+
+/**
+ * Numeric version comparison. The changelog column is a plain string, so any
+ * lexicographic sort puts "1.9.0" above "1.10.0" and silently corrupts the
+ * sequence. Unparseable versions always sort below parseable ones.
+ */
+export function compareVersions(a: string, b: string): number {
+  const left = parseVersion(a);
+  const right = parseVersion(b);
+  if (!left && !right) return a.localeCompare(b);
+  if (!left) return -1;
+  if (!right) return 1;
+  for (let i = 0; i < 3; i += 1) {
+    if (left[i] !== right[i]) return left[i] - right[i];
+  }
+  return 0;
+}
+
+/**
+ * The version the next automatic release increments from: the highest semantic
+ * version among *published* updates. Publication order is deliberately ignored
+ * because staff can back-date or re-publish an entry at any time, which would
+ * otherwise hand back a stale base version and create duplicates.
+ */
 export async function getLatestPublishedVersion(): Promise<string> {
-  const latest = await prisma.update.findFirst({
+  const published = await prisma.update.findMany({
     where: { publishedAt: { not: null } },
-    orderBy: { publishedAt: "desc" },
     select: { version: true },
   });
 
-  return latest?.version ?? "0.0.0";
+  const parseable = published
+    .map((u) => u.version)
+    .filter((version): version is string => Boolean(version) && parseVersion(version) !== null);
+
+  if (parseable.length === 0) return "0.0.0";
+
+  return parseable.sort(compareVersions)[parseable.length - 1];
 }
 
 export function incrementVersion(version: string, type: "MAJOR" | "MINOR" | "PATCH"): string {
@@ -140,7 +209,14 @@ export function generateReleaseInfo(
   };
 
   const whatsNew = formatCommitList(classified.features);
-  const improvements = formatCommitList([...classified.improvements, ...classified.docs, ...classified.chore]);
+  // `other` is the catch-all for commits that match no pattern. It is listed
+  // rather than dropped, so a push can never produce an empty changelog.
+  const improvements = formatCommitList([
+    ...classified.improvements,
+    ...classified.docs,
+    ...classified.chore,
+    ...classified.other,
+  ]);
   const bugFixes = formatCommitList(classified.fixes);
   const securityNotes = formatCommitList(classified.breaking);
 
@@ -150,12 +226,16 @@ export function generateReleaseInfo(
     ...classified.improvements,
     ...classified.docs,
     ...classified.chore,
+    ...classified.other,
     ...classified.breaking,
   ];
 
-  const summary = allChanges.length > 0
-    ? `${allChanges.length} change${allChanges.length !== 1 ? "s" : ""} in this release`
-    : "No changes recorded";
+  const summary =
+    allChanges.length === 0
+      ? "No changes recorded"
+      : allChanges.length === 1 && allChanges[0].subject
+        ? allChanges[0].subject
+        : `${allChanges.length} changes in this release`;
 
   const title = `v${version} — ${typeLabels[type]}`;
 
@@ -184,50 +264,156 @@ export async function getPreviousReleaseCommit(): Promise<string | null> {
   return latest?.sourceCommit ?? null;
 }
 
-export async function createReleaseFromCommits(
+export interface CreateReleaseInput {
+  /** Full 40-character git SHA of the deployed commit. Unique idempotency key. */
+  headSha: string;
+  /**
+   * The commits that make up this deployment. Supplied by the caller (the
+   * release workflow already has the repository checked out) because a deployed
+   * serverless function has no `.git` directory and cannot run `git log`.
+   */
+  commits: CommitInfo[];
+  branch?: string | null;
+  deploymentId?: string | null;
+  previousSha?: string | null;
+}
+
+export interface CreateReleaseResult {
+  updateId: string;
+  slug: string;
+  version: string;
+  releaseInfo: ReleaseInfo;
+  /** False when an update for this commit already existed (replay / redeploy). */
+  created: boolean;
+}
+
+function toSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002"
+  );
+}
+
+/** The release already recorded for a commit, if any. */
+export async function findReleaseByCommit(
   headSha: string,
-  previousSha: string | null,
-  branch: string,
-  deploymentId?: string
-): Promise<{ updateId: string; releaseInfo: ReleaseInfo } | null> {
-  const fromSha = previousSha ?? execGit("rev-list --max-parents=0 HEAD");
-  const commits = getCommitsBetween(fromSha, headSha);
+): Promise<Awaited<ReturnType<typeof prisma.update.findUnique>>> {
+  return prisma.update.findUnique({ where: { sourceCommit: headSha } });
+}
+
+/**
+ * Creates the published update for a successful production deployment.
+ *
+ * Idempotent on `headSha`, which carries a @unique constraint: replaying the
+ * same webhook/workflow for the same deployment returns the existing record
+ * instead of writing a second one. `created` reports which happened.
+ *
+ * Concurrent pushes can both read the same latest version, so a unique
+ * violation on the version-derived slug is retried against a freshly read base
+ * version rather than surfacing as an error.
+ */
+export async function createReleaseFromCommits(
+  input: CreateReleaseInput,
+): Promise<CreateReleaseResult | null> {
+  const {
+    headSha,
+    commits,
+    branch = "main",
+    deploymentId = null,
+    previousSha = null,
+  } = input;
 
   if (commits.length === 0) return null;
 
   const classified = classifyCommits(commits);
   const versionType = determineVersionType(classified);
-  const latestVersion = await getLatestPublishedVersion();
-  const newVersion = incrementVersion(latestVersion, versionType);
 
-  const releaseInfo = generateReleaseInfo(classified, newVersion, versionType);
+  const existing = await findReleaseByCommit(headSha);
+  if (existing) {
+    // Keep the newest deployment id so a rollback/redeploy does not look like a
+    // new release, but never create a duplicate record.
+    if (deploymentId && deploymentId !== existing.deploymentId) {
+      await prisma.update.update({
+        where: { id: existing.id },
+        data: { deploymentId },
+      });
+    }
+    return {
+      updateId: existing.id,
+      slug: existing.slug,
+      version: existing.version,
+      releaseInfo: {
+        version: existing.version,
+        type: existing.type,
+        title: existing.title,
+        summary: existing.summary,
+        whatsNew: existing.whatsNew,
+        improvements: existing.improvements,
+        bugFixes: existing.bugFixes,
+        securityNotes: existing.securityNotes,
+      },
+      created: false,
+    };
+  }
 
-  const slugBase = releaseInfo.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-  const slug = `${slugBase}-${newVersion.replace(/\./g, "-")}`;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const baseVersion = await getLatestPublishedVersion();
+    const version = incrementVersion(baseVersion, versionType);
+    const releaseInfo = generateReleaseInfo(classified, version, versionType);
+    const slug = `${toSlug(releaseInfo.title)}-${version.replace(/\./g, "-")}`;
 
-  const update = await prisma.update.create({
-    data: {
-      slug,
-      version: releaseInfo.version,
-      type: releaseInfo.type,
-      category: releaseInfo.type === "MAJOR" ? "NEW" : releaseInfo.type === "MINOR" ? "IMPROVEMENT" : "FIX",
-      title: releaseInfo.title,
-      summary: releaseInfo.summary,
-      whatsNew: releaseInfo.whatsNew,
-      improvements: releaseInfo.improvements,
-      bugFixes: releaseInfo.bugFixes,
-      securityNotes: releaseInfo.securityNotes,
-      authorId: "system",
-      featured: false,
-      publishedAt: new Date(),
-      sourceCommit: headSha,
-      sourcePreviousCommit: previousSha,
-      sourceBranch: branch,
-      deploymentId,
-      generatedAutomatically: true,
-      releaseStatus: "PUBLISHED",
-    },
-  });
+    try {
+      const update = await prisma.update.create({
+        data: {
+          slug,
+          version: releaseInfo.version,
+          type: releaseInfo.type,
+          category: suggestCategory(versionType),
+          title: releaseInfo.title,
+          summary: releaseInfo.summary,
+          whatsNew: releaseInfo.whatsNew,
+          improvements: releaseInfo.improvements,
+          bugFixes: releaseInfo.bugFixes,
+          securityNotes: releaseInfo.securityNotes,
+          authorId: "system",
+          featured: false,
+          publishedAt: new Date(),
+          sourceCommit: headSha,
+          sourcePreviousCommit: previousSha,
+          sourceBranch: branch,
+          deploymentId,
+          generatedAutomatically: true,
+          releaseStatus: "PUBLISHED",
+        },
+      });
 
-  return { updateId: update.id, releaseInfo };
+      return { updateId: update.id, slug, version: releaseInfo.version, releaseInfo, created: true };
+    } catch (error) {
+      if (!isUniqueViolation(error)) throw error;
+
+      // Lost a race: either this exact commit was just released, or a
+      // concurrent release took the version we computed.
+      const raced = await findReleaseByCommit(headSha);
+      if (raced) {
+        return {
+          updateId: raced.id,
+          slug: raced.slug,
+          version: raced.version,
+          releaseInfo,
+          created: false,
+        };
+      }
+    }
+  }
+
+  throw new Error(
+    `Could not allocate a version for commit ${headSha} after 3 attempts.`,
+  );
 }

@@ -1,5 +1,7 @@
 name: Auto Release
 
+# Every push to main that Vercel deploys successfully becomes a published
+# website update on /updates. A failed build never publishes anything.
 on:
   push:
     branches: [main]
@@ -9,71 +11,252 @@ on:
         description: "Commit SHA to release (optional, defaults to latest on main)"
         required: false
 
+# Read-only token: enough to check out the repository and read the commit status
+# that the Vercel GitHub integration publishes for each deployment.
+permissions:
+  contents: read
+  statuses: read
+
+# Releases are serialised per branch. Pushes queue instead of cancelling, because
+# each successful production deployment must produce exactly one update.
+concurrency:
+  group: auto-release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
+    name: Publish UGN update
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Determine commit SHA
-        id: sha
-        run: |
-          if [ -n "${{ github.event.inputs.sha }}" ]; then
-            echo "sha=${{ github.event.inputs.sha }}" >> $GITHUB_OUTPUT
-          else
-            echo "sha=${{ github.sha }}" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Wait for deployment (if using Vercel/Netlify/etc)
-        # Uncomment and configure if you have a deployment check
-        # uses: actions/github-script@v7
-        # with:
-        #   script: |
-        #     // Wait for deployment to complete
-        #     // Example for Vercel:
-        #     // const deployment = await github.rest.repos.getDeploymentStatus({...})
-        #   env:
-        #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create release
+      - name: Resolve release details
         id: release
         env:
+          SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
           RELEASE_CRON_SECRET: ${{ secrets.RELEASE_CRON_SECRET }}
-          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
-          DISCORD_UPDATES_WEBHOOK_URL: ${{ secrets.DISCORD_UPDATES_WEBHOOK_URL }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          HEAD_SHA: ${{ inputs.sha || github.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+          PUSH_BRANCH: ${{ github.ref_name }}
         run: |
-          response=$(curl -s -w "\n%{http_code}" -X POST "${{ secrets.NEXT_PUBLIC_SITE_URL }}/api/releases" \
-            -H "Authorization: Bearer ${RELEASE_CRON_SECRET}" \
-            -H "Content-Type: application/json" \
-            -d "{\"headSha\": \"${{ steps.sha.outputs.sha }}\", \"branch\": \"main\"}")
-          
-          http_code=$(echo "$response" | tail -n1)
-          body=$(echo "$response" | head -n-1)
-          
-          echo "Response: $body"
-          
-          if [ "$http_code" -eq 200 ] || [ "$http_code" -eq 201 ]; then
-            echo "Release created successfully"
-            update_id=$(echo "$body" | jq -r '.updateId')
-            echo "update_id=$update_id" >> $GITHUB_OUTPUT
-          elif [ "$http_code" -eq 409 ]; then
-            echo "Release already exists for this commit"
-            update_id=$(echo "$body" | jq -r '.updateId')
-            echo "update_id=$update_id" >> $GITHUB_OUTPUT
-          else
-            echo "Release creation failed with status $http_code"
+          set -euo pipefail
+
+          site="${SITE_URL:-https://urgaynow.com}"
+          sha="${HEAD_SHA}"
+          branch="${PUSH_BRANCH:-main}"
+
+          if [ -z "${RELEASE_CRON_SECRET:-}" ]; then
+            echo "::error::GitHub secret RELEASE_CRON_SECRET is not set. Add it (and the same value in the Vercel project env) to publish updates."
             exit 1
           fi
 
-      - name: Notify on failure
-        if: failure()
+          if ! printf '%s' "$sha" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::'$sha' is not a full 40-character commit SHA"
+            exit 1
+          fi
+
+          git fetch --quiet origin "$sha" || true
+          git checkout --quiet "$sha"
+
+          # Base of the changelog range: the last commit that already has a
+          # published update, else the commit immediately before this push.
+          release_state=$(curl -sS --max-time 30 -w '\n%{http_code}' \
+            -H "Authorization: Bearer ${RELEASE_CRON_SECRET}" \
+            "${site}/api/releases")
+          state_code=$(tail -n1 <<<"$release_state")
+
+          if [ "$state_code" != "200" ]; then
+            echo "::error::GET ${site}/api/releases returned $state_code — check that RELEASE_CRON_SECRET matches the Vercel project env value RELEASE_CRON_SECRET."
+            exit 1
+          fi
+
+          from=$(head -n -1 <<<"$release_state" | jq -r '.previousCommit // empty')
+
+          if [ -z "$from" ]; then
+            from="${BEFORE_SHA}"
+          fi
+          if ! printf '%s' "$from" | grep -Eq '^[0-9a-f]{40}$' || ! git cat-file -e "${from}^{commit}" 2>/dev/null; then
+            from=$(git rev-list --max-parents=0 "$sha")
+          fi
+
+          # Record separators (0x1e/0x1f) keep multi-line commit bodies intact.
+          raw=$(git log --no-merges --format='%H%x1f%s%x1f%b%x1f%an%x1f%aI%x1e' "$from..$sha")
+          commits=$(printf '%s' "$raw" | jq -R -s '
+            split("\u001e") | map(select(length > 0) | sub("^[\\s\\n]+"; "") | sub("[\\s\\n]+$"; ""))
+            | map(split("\u001f")) | map(select(length >= 5))
+            | map({ sha: .[0], subject: .[1], body: .[2], author: .[3], date: .[4] })
+            | .[0:200]
+          ')
+
+          count=$(jq 'length' <<<"$commits")
+
+          {
+            echo "sha=$sha"
+            echo "from=$from"
+            echo "count=$count"
+            echo "site=$site"
+            echo "branch=$branch"
+            echo "commits<<COMMITS_EOF"
+            echo "$commits"
+            echo "COMMITS_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Release range: $from..$sha ($count commit(s))"
+
+      - name: Wait for Vercel production deployment
+        id: deploy
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ steps.release.outputs.sha }}
+          COMMIT_COUNT: ${{ steps.release.outputs.count }}
         run: |
-          echo "Auto-release workflow failed for commit ${{ steps.sha.outputs.sha }}"
-          # Could add Slack/Discord notification here
+          set -euo pipefail
+
+          if [ "$COMMIT_COUNT" = "0" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "No new commits since the last published update."
+            exit 0
+          fi
+
+          sha="$HEAD_SHA"
+          deadline=$(( $(date +%s) + 900 ))
+
+          while :; do
+            status_json=$(gh api "repos/${{ github.repository }}/commits/$sha/status")
+            state=$(jq -r '[.statuses[] | select((.context | ascii_downcase) == "vercel") | .state] | .[0] // "none"' <<<"$status_json")
+            target_url=$(jq -r '[.statuses[] | select((.context | ascii_downcase) == "vercel") | .target_url] | .[0] // ""' <<<"$status_json")
+
+            case "$state" in
+              success)
+                # Vercel's status URL ends in the deployment id, which is the
+                # deployment-level unique identifier recorded on the update.
+                deployment_id="${target_url##*/}"
+                {
+                  echo "ready=true"
+                  echo "state=$state"
+                  echo "deployment_id=$deployment_id"
+                  echo "target_url=$target_url"
+                } >> "$GITHUB_OUTPUT"
+                echo "Vercel deployment succeeded: $target_url"
+                exit 0
+                ;;
+              failure|error)
+                {
+                  echo "ready=false"
+                  echo "state=$state"
+                  echo "target_url=$target_url"
+                } >> "$GITHUB_OUTPUT"
+                echo "Vercel build failed — no public update created (correct behaviour)."
+                exit 0
+                ;;
+              *)
+                if [ "$(date +%s)" -ge "$deadline" ]; then
+                  echo "::error::Timed out waiting for a Vercel deployment of $sha (last state: $state). No update created."
+                  exit 1
+                fi
+                echo "Vercel deployment state: $state — waiting..."
+                sleep 15
+                ;;
+            esac
+          done
+
+      - name: Publish the update
+        id: publish
+        if: steps.deploy.outputs.ready == 'true'
+        env:
+          SITE_URL: ${{ steps.release.outputs.site }}
+          RELEASE_CRON_SECRET: ${{ secrets.RELEASE_CRON_SECRET }}
+          HEAD_SHA: ${{ steps.release.outputs.sha }}
+          PREVIOUS_SHA: ${{ steps.release.outputs.from }}
+          BRANCH: ${{ steps.release.outputs.branch }}
+          DEPLOYMENT_ID: ${{ steps.deploy.outputs.deployment_id }}
+          COMMITS: ${{ steps.release.outputs.commits }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          payload=$(jq -n \
+            --arg headSha "$HEAD_SHA" \
+            --arg branch "$BRANCH" \
+            --arg previousSha "$PREVIOUS_SHA" \
+            --arg deploymentId "$DEPLOYMENT_ID" \
+            --arg repository "$REPOSITORY" \
+            --argjson commits "$COMMITS" \
+            '{ headSha: $headSha, branch: $branch, previousSha: $previousSha,
+               deploymentId: $deploymentId, repository: $repository,
+               deployment: { target: "production", state: "ready" },
+               commits: $commits }')
+
+          response=$(curl -sS -w '\n%{http_code}' --max-time 60 \
+            -X POST "${SITE_URL}/api/releases" \
+            -H "Authorization: Bearer ${RELEASE_CRON_SECRET}" \
+            -H "Content-Type: application/json" \
+            --data-binary "$payload")
+
+          http_code=$(tail -n1 <<<"$response")
+          body=$(head -n -1 <<<"$response")
+          echo "Response ($http_code): $body"
+
+          case "$http_code" in
+            200)
+              {
+                echo "version=$(jq -r '.version // "unknown"' <<<"$body")"
+                echo "url=$(jq -r '.url // ""' <<<"$body")"
+                echo "created=$(jq -r '.updateCreated // false' <<<"$body")"
+                echo "already=$(jq -r '.alreadyReleased // false' <<<"$body")"
+              } >> "$GITHUB_OUTPUT"
+              ;;
+            409)
+              {
+                echo "version=$(jq -r '.version // "unknown"' <<<"$body")"
+                echo "url=$(jq -r '.url // ""' <<<"$body")"
+                echo "created=false"
+                echo "already=true"
+              } >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "::error::Release creation failed with status $http_code: $body"
+              exit 1
+              ;;
+          esac
+
+      - name: Summary
+        if: always()
+        env:
+          VERSION: ${{ steps.publish.outputs.version }}
+          URL: ${{ steps.publish.outputs.url }}
+          ALREADY: ${{ steps.publish.outputs.already }}
+          SHA: ${{ steps.release.outputs.sha }}
+          DEPLOY_ID: ${{ steps.deploy.outputs.deployment_id }}
+          DEPLOY_STATE: ${{ steps.deploy.outputs.state }}
+        run: |
+          {
+            echo "### Automatic UGN update"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| Commit | \`$SHA\` |"
+            echo "| Deployment | \`$DEPLOY_ID\` ($DEPLOY_STATE) |"
+            if [ -n "${VERSION:-}" ]; then
+              echo "| Version | $VERSION |"
+              echo "| Public update | $URL |"
+              if [ "${ALREADY:-}" = "true" ]; then
+                echo "| Result | Already published for this commit — no duplicate created |"
+              else
+                echo "| Result | Published |"
+              fi
+            else
+              echo "| Result | No update created (deployment not successful in production) |"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report failure
+        if: failure()
+        env:
+          SHA: ${{ steps.release.outputs.sha }}
+        run: |
+          echo "::error::Auto release failed for commit $SHA. The website was not updated; retry the workflow once the cause is fixed."

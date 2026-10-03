@@ -10,6 +10,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test:reviews": "tsx scripts/verify-reviews.ts",
+    "test:release": "tsx scripts/verify-auto-release.ts",
+    "test:theme-engine": "tsx scripts/verify-theme-engine.ts",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
     "db:reset": "prisma db push --force-reset && tsx prisma/seed.ts",

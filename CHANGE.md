@@ -1611,3 +1611,102 @@ published updates.
   `app/feed.xml/route.ts` and the footer.
 - `Update.images` is unvalidated free-text JSON rendered through `next/image`, whose
   `remotePatterns` allow only two hosts.
+
+---
+
+## 8. Production flow — actually executed (post-activation)
+
+Two one-time setup steps were completed and the whole chain was then run for real.
+
+| Step | Result |
+| --- | --- |
+| GitHub repo secret `RELEASE_CRON_SECRET` set | 64-hex value, confirmed via `gh secret list` |
+| Vercel runtime env accepts that value | `GET /api/releases` → 200 with it |
+| Push `8680622` | Workflow ran **7 steps** (previously 0 jobs). Failed at *Resolve release details*: `GET /api/releases returned 405` |
+| Root cause of that failure | The workflow called the site **before** Vercel had routed the new deployment, so the previous deployment (no GET handler) was serving |
+| Fix committed (`91ce6c8`) | Deployment wait moved **ahead** of anything that touches the site; the GET is retried for up to 100s while the production alias propagates; 401/403 still fail immediately |
+| Push `91ce6c8` | Workflow **succeeded** end to end |
+
+### The real run, log for log
+
+```
+Wait for Vercel production deployment  -> Vercel deployment succeeded:
+  https://vercel.com/ugn-website/urgaynowweb/AVvmLRSkw7kkxDkQnJNDFdcaRkBC
+Resolve release details                -> Release range: 8680622..91ce6c8 (1 commit)
+Publish the update                     -> Response (200):
+  {"ok":true,"alreadyReleased":false,"updateCreated":true,
+   "version":"1.0.1","slug":"v1-0-1-patch-release-1-0-1",
+   "url":"https://urgaynow.com/updates/v1-0-1-patch-release-1-0-1",
+   "commit":"91ce6c82dd27e889810a24cfe01379a57903fa67",
+   "deploymentId":"AVvmLRSkw7kkxDkQnJNDFdcaRkBC","discord":"sent"}
+```
+
+The published row:
+
+```
+--- v1.0.1 ---
+  title:            v1.0.1 — Patch Release
+  summary:          Wait for the deployment before calling the site
+  improvements:     - Wait for the deployment before calling the site
+  releaseStatus:    PUBLISHED | auto: true | discord: sent
+  publishedAt:      2026-10-03T16:07:49.280Z
+  sourceCommit:     91ce6c82dd27e889810a24cfe01379a57903fa67
+  sourcePrevious:   86806224a9fde8d68812272a1b6cd79e9130c541
+  branch / deploy:  main / AVvmLRSkw7kkxDkQnJNDFdcaRkBC
+```
+
+### Requirement-by-requirement, against production
+
+| Requirement | Result |
+| --- | --- |
+| GitHub push → production deployment | `Vercel` commit status `success` for the exact SHA |
+| Automatic update creation | `POST /api/releases` → 200, `updateCreated: true` |
+| Version generated | `1.0.1`, incremented from the highest published version (`1.0.0`) |
+| Commit / deployment identifier stored | `sourceCommit` = full SHA, `deploymentId` = Vercel deployment id |
+| Deployment status represented | `releaseStatus: PUBLISHED`, `publishedAt` set, only ever created for a `ready` production deployment |
+| Update published | live on `/updates` |
+| `/updates` displays it | HTTP 200, contains `v1.0.1`, links `/updates/v1-0-1-patch-release-1-0-1`, shows the commit subject |
+| **No duplicate update** | the identical deployment replayed against production returned `alreadyReleased: true`, `updateId` unchanged, no second row, no third card on `/updates` |
+| Re-running the workflow for the same commit | range resolved to `91ce6c8..91ce6c8` → 0 commits → publish **skipped**, no row created |
+| **Existing updates remain intact** | `v1.0.0 report-system-support-ticket-overhaul` still present, same id, same version, same `publishedAt`; 2 rows total, 0 duplicate `sourceCommit`, 0 duplicate `version` |
+
+Final database state:
+
+```
+v1.0.0 PUBLISHED pub=2026-09-21T17:25:13.546Z commit=-  report-system-support-ticket-overhaul
+v1.0.1 PUBLISHED pub=2026-10-03T16:07:49.280Z commit=91ce6c82dd27 dep=AVvmLRSkw7kkxDkQnJNDFdcaRkBC v1-0-1-patch-release-1-0-1
+```
+
+### Security, verified against the live endpoint
+
+| Request | Result |
+| --- | --- |
+| `GET /api/releases` with no `Authorization` header | 401 |
+| With a wrong secret of the **same length** | 401 |
+| With a wrong short secret | 401 |
+| With a 63-character prefix of the real secret | 401 |
+| With the real secret | 200 |
+
+The endpoint is therefore authenticated, fails closed, and is not a way to create
+fake updates.
+
+### Note on the Vercel env var
+
+The value generated for GitHub Actions was also accepted by the running production
+deployment, so `RELEASE_CRON_SECRET` was already present in the Vercel project env
+with that value. That was verified by behaviour (200 with it, 401 without and with
+near-misses), not by reading Vercel settings, which were not accessible here. Worth
+confirming in the Vercel dashboard that the value stored there is the intended one.
+
+### Commits
+
+| Commit | Contents |
+| --- | --- |
+| `8680622` | The release system: idempotent git-free release generator, hardened `/api/releases`, rewritten workflow, revalidate allowlist, verification script |
+| `91ce6c8` | Workflow ordering fix found by the first live run |
+
+### Remaining manual step for Vercel
+
+`UGN_SKIP_DISCORD_NOTIFICATIONS` exists only in the local `.env` (gitignored) and
+must **not** be added to the Vercel project. The live v1.0.1 release posted to
+Discord normally (`discord: sent`), which confirms that path is intact.

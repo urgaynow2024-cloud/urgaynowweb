@@ -9,8 +9,6 @@ import { NavDropdown } from "@/components/NavDropdown";
 import { useTheme } from "@/components/ThemeProvider";
 import { useIsHalloween } from "@/components/halloween/HalloweenDecor";
 import { HalloweenIcon } from "@/components/halloween/HalloweenIcon";
-import { useIsChristmas } from "@/components/christmas/ChristmasDecor";
-import { ChristmasIcon } from "@/components/christmas/ChristmasIcon";
 import { IconMenu, IconX, IconSearch, IconDiscord } from "@/components/admin/ui/icons";
 
 function ThemeToggle() {
@@ -70,7 +68,6 @@ export function Header({ joinUrl }: { joinUrl?: string }) {
   const pathname = usePathname();
   const mobileRef = useRef<HTMLDivElement>(null);
   const halloween = useIsHalloween();
-  const christmas = useIsChristmas();
 
   useEffect(() => {
     if (!open) return;
@@ -129,9 +126,7 @@ export function Header({ joinUrl }: { joinUrl?: string }) {
             className="relative h-9 w-9 overflow-hidden rounded-full transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6"
             aria-hidden
           >
-            {christmas ? (
-              <ChristmasIcon size={36} priority />
-            ) : halloween ? (
+            {halloween ? (
               <HalloweenIcon size={36} priority />
             ) : (
               <Image

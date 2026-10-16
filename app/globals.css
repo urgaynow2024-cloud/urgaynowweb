@@ -534,33 +534,35 @@ h1, h2, h3, h4 {
   --theme-textMuted: #a3a3a3;
 }
 
-/* Christmas */
+/* Christmas 2026 - winter night. UGN purple + icy blue stay important; red/green/gold
+   are small atmospheric accents only (never the dominant palette). */
 :root[data-site-theme="christmas"] {
-  --theme-brand: #d62828;
-  --theme-brandSoft: rgba(214, 40, 40, 0.12);
-  --theme-brandGlow: rgba(214, 40, 40, 0.35);
-  --theme-background: #fefefe;
-  --theme-surface: #fffdf8;
-  --theme-surfaceHover: #faf5eb;
-  --theme-border: #e8dcc8;
-  --theme-text: #1b4332;
-  --theme-textMuted: #5d7b5d;
-  --theme-decorativePattern: radial-gradient(circle at 20% 80%, rgba(214, 40, 40, 0.08) 0%, transparent 40%), radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.06) 0%, transparent 40%);
-  --theme-decorativeGlow: rgba(255, 215, 0, 0.3);
+  --theme-brand: #6D28D9;
+  --theme-brandSoft: rgba(109, 40, 217, 0.16);
+  --theme-brandGlow: rgba(56, 189, 248, 0.45);
+  --theme-background: #0A0D18;
+  --theme-surface: #142332;
+  --theme-surfaceHover: #1E293B;
+  --theme-border: #334158;
+  --theme-text: #F8FAFC;
+  --theme-textMuted: #94A3B8;
+  --theme-decorativePattern: radial-gradient(ellipse at 50% -10%, rgba(56, 189, 248, 0.10) 0%, transparent 55%), radial-gradient(circle at 8% 92%, rgba(109, 40, 217, 0.12) 0%, transparent 38%);
+  --theme-decorativeGlow: rgba(252, 212, 35, 0.35);
+  color-scheme: dark;
 }
 
 :root[data-site-theme="christmas"].dark {
-  --theme-brand: #ff6b6b;
-  --theme-brandSoft: rgba(255, 107, 107, 0.15);
-  --theme-brandGlow: rgba(255, 107, 107, 0.4);
-  --theme-background: #0d1b0d;
-  --theme-surface: #142314;
-  --theme-surfaceHover: #1a2d1a;
-  --theme-border: #2d4a2d;
-  --theme-text: #e8f5e8;
-  --theme-textMuted: #8fab8f;
-  --theme-decorativePattern: radial-gradient(circle at 20% 80%, rgba(255, 107, 107, 0.1) 0%, transparent 40%), radial-gradient(circle at 80% 20%, rgba(255, 215, 0, 0.08) 0%, transparent 40%);
-  --theme-decorativeGlow: rgba(255, 215, 0, 0.4);
+  --theme-brand: #8B5CF6;
+  --theme-brandSoft: rgba(139, 92, 246, 0.16);
+  --theme-brandGlow: rgba(56, 189, 248, 0.5);
+  --theme-background: #0A0D18;
+  --theme-surface: #142332;
+  --theme-surfaceHover: #1E293B;
+  --theme-border: #334158;
+  --theme-text: #F8FAFC;
+  --theme-textMuted: #94A3B8;
+  --theme-decorativePattern: radial-gradient(ellipse at 50% -10%, rgba(56, 189, 248, 0.12) 0%, transparent 55%), radial-gradient(circle at 8% 92%, rgba(109, 40, 217, 0.16) 0%, transparent 38%);
+  --theme-decorativeGlow: rgba(252, 212, 35, 0.45);
 }
 
 /* Halloween 2026 - official UGN seasonal palette */
@@ -1794,4 +1796,681 @@ h1, h2, h3, h4 {
   .hw-hero::after { width: 10rem; height: 10rem; opacity: 0.1; }
   :root[data-site-theme="halloween"] main > div::before { height: 14rem; }
   :root[data-site-theme="halloween"] main > div:nth-of-type(even)::after { display: none; }
+}
+
+/* ==========================================================================
+   Christmas 2026 — winter night
+   -------------------------------------------------------------------------
+   Christmas is an always-dark winter theme. UGN purple and icy blue stay the
+   important colours ("purple and blue should remain important so the website
+   still feels like UGN"); Christmas red / green / gold appear only as small
+   atmospheric accents, never as the dominant palette.
+
+   SAFETY: there is no enabled Christmas schedule in the database, the resolver
+   falls back to `default`, and production is excluded from every preview path.
+   Every selector here only matches when `data-site-theme="christmas"` is set,
+   which never happens on the live site.
+   ========================================================================== */
+
+/* 1. Palette + full-site colour scales (mirrors Halloween). */
+:root[data-site-theme="christmas"] {
+  /* Christmas-specific palette tokens */
+  --cw-winter-night: #0A0D18;
+  --cw-deep-blue: #111827;
+  --cw-winter-slate: #1E293B;
+  --cw-icy-blue: #38BDF8;
+  --cw-snow: #F8FAFC;
+  --cw-christmas-red: #DC2626;
+  --cw-christmas-green: #16A34A;
+  --cw-warm-lights: #FACC15;
+
+  /* Atmospheric accents */
+  --cw-line: rgba(109, 40, 217, 0.30);
+  --cw-edge: rgba(56, 189, 248, 0.55);
+  --cw-glow-lights: rgba(252, 212, 35, 0.38);
+  --cw-glow-icy: rgba(56, 189, 248, 0.38);
+  --cw-card: 20 30 50;
+  --cw-card-raised: 24 38 68;
+  --cw-border: 40 50 76;
+
+  color-scheme: dark;
+
+  /* Brand scale — UGN purple stays dominant. */
+  --brand-rgb: 109 40 217;
+  --brand-50-rgb: 237 233 250;
+  --brand-100-rgb: 221 214 243;
+  --brand-200-rgb: 199 190 230;
+  --brand-300-rgb: 175 165 216;
+  --brand-400-rgb: 148 135 202;
+  --brand-500-rgb: 109 40 217;
+  --brand-600-rgb: 97 30 204;
+  --brand-700-rgb: 85 20 184;
+  --brand-800-rgb: 58 14 133;
+  --brand-900-rgb: 40 9 101;
+  --brand-950-rgb: 26 6 64;
+
+  /* Surface scale — winter night, page background darkest. */
+  --surface-0-rgb: 14 19 31;
+  --surface-50-rgb: 16 22 37;
+  --surface-100-rgb: 19 26 44;
+  --surface-200-rgb: 22 31 53;
+  --surface-300-rgb: 26 37 60;
+  --surface-400-rgb: 30 43 68;
+  --surface-500-rgb: 35 49 76;
+  --surface-600-rgb: 40 55 84;
+  --surface-700-rgb: 46 62 93;
+  --surface-800-rgb: 52 70 104;
+  --surface-900-rgb: 58 78 115;
+  --surface-950-rgb: 10 13 24;
+
+  /* Ink scale — snow/ice text on dark. */
+  --ink-50-rgb: 248 250 255;
+  --ink-100-rgb: 235 240 250;
+  --ink-200-rgb: 218 226 245;
+  --ink-300-rgb: 200 211 238;
+  --ink-400-rgb: 175 190 230;
+  --ink-500-rgb: 145 166 214;
+  --ink-600-rgb: 118 142 192;
+  --ink-700-rgb: 92 118 172;
+  --ink-800-rgb: 68 94 152;
+  --ink-900-rgb: 44 70 134;
+  --ink-950-rgb: 26 46 100;
+}
+
+/* 2. Page atmosphere — winter night sky, starfield, aurora mist. Fixed, behind
+   everything, never interactive. */
+:root[data-site-theme="christmas"] body {
+  background-color: #0A0D18;
+  background-image:
+    /* warm Christmas-light glow in the upper corners */
+    radial-gradient(60rem 34rem at 78% -8%, rgba(252, 212, 35, 0.10) 0%, transparent 62%),
+    /* deep purple corner */
+    radial-gradient(52rem 46rem at 6% 4%, rgba(109, 40, 217, 0.18) 0%, transparent 60%),
+    /* subtle green accent */
+    radial-gradient(48rem 40rem at 92% 78%, rgba(22, 160, 74, 0.07) 0%, transparent 62%),
+    /* winter blue fill */
+    radial-gradient(60rem 50rem at -10% 105%, rgba(30, 38, 65, 0.5) 0%, transparent 58%),
+    linear-gradient(180deg, #0A0D18 0%, #142332 45%, #0A0D18 100%);
+  background-attachment: fixed;
+  color: #F8FAFC;
+}
+
+:root[data-site-theme="christmas"] body::before,
+:root[data-site-theme="christmas"] body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+}
+
+/* Winter starfield. */
+:root[data-site-theme="christmas"] body::before {
+  background-image:
+    radial-gradient(1.5px 1.5px at 18% 24%, rgba(248, 250, 255, 0.8) 50%, transparent 51%),
+    radial-gradient(1px 1px at 34% 12%, rgba(248, 250, 255, 0.6) 50%, transparent 51%),
+    radial-gradient(1px 1px at 52% 32%, rgba(56, 189, 248, 0.75) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 66% 16%, rgba(248, 250, 255, 0.8) 50%, transparent 51%),
+    radial-gradient(1px 1px at 82% 38%, rgba(248, 250, 255, 0.55) 50%, transparent 51%),
+    radial-gradient(1px 1px at 8% 46%, rgba(248, 250, 255, 0.5) 50%, transparent 51%),
+    radial-gradient(1px 1px at 44% 58%, rgba(252, 212, 35, 0.45) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 72% 62%, rgba(216, 222, 235, 0.7) 50%, transparent 51%),
+    radial-gradient(1px 1px at 24% 76%, rgba(248, 250, 255, 0.35) 50%, transparent 51%),
+    radial-gradient(1px 1px at 90% 72%, rgba(56, 189, 248, 0.5) 50%, transparent 51%);
+  opacity: 0.6;
+  animation: cw-twinkle 7s ease-in-out infinite;
+}
+
+/* Aurora mist drifting across the horizon. */
+:root[data-site-theme="christmas"] body::after {
+  background-image:
+    radial-gradient(60rem 20rem at 34% 26%, rgba(56, 189, 248, 0.18) 0%, transparent 70%),
+    radial-gradient(50rem 22rem at 72% 12%, rgba(109, 40, 217, 0.14) 0%, transparent 70%);
+  filter: blur(28px);
+  animation: cw-drift 36s linear infinite;
+}
+
+/* --------------------------------------------------------------------------
+   3. Decoration layer (rendered by <ChristmasDecorations />)
+   -------------------------------------------------------------------------- */
+.cw-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Aurora glow replacing the moon. */
+.cw-sky {
+  position: absolute;
+  inset: 0;
+}
+.cw-moon {
+  position: absolute;
+  top: 8%;
+  right: 6%;
+  width: min(34vw, 18rem);
+  height: min(34vw, 18rem);
+  border-radius: 9999px;
+  background: radial-gradient(circle at 38% 34%, rgba(248, 250, 255, 0.32) 0%, rgba(56, 189, 248, 0.12) 34%, transparent 74%);
+  filter: blur(1px);
+  animation: cw-breathe 11s ease-in-out infinite;
+}
+.cw-aurora {
+  position: absolute;
+  bottom: 10%;
+  left: 2%;
+  width: 60%;
+  height: 16rem;
+  background:
+    radial-gradient(60rem 18rem at 50% 50%, rgba(56, 189, 248, 0.14) 0%, transparent 70%),
+    radial-gradient(60rem 18rem at 30% 50%, rgba(109, 40, 217, 0.12) 0%, transparent 70%);
+  filter: blur(30px);
+  animation: cw-drift-rev 40s linear infinite;
+}
+.cw-fog {
+  position: absolute;
+  left: -20%;
+  width: 140%;
+  height: 18rem;
+  background: radial-gradient(ellipse at 50% 100%, rgba(109, 40, 217, 0.16) 0%, transparent 70%);
+  filter: blur(28px);
+}
+.cw-fog-a { bottom: -6rem; animation: cw-drift 34s linear infinite; }
+.cw-fog-b { bottom: 2rem; opacity: 0.6; animation: cw-drift-rev 46s linear infinite; }
+
+/* Falling snowflakes */
+.cw-snow {
+  position: absolute;
+  width: 1.4rem;
+  height: 1.4rem;
+  color: var(--cw-snow);
+  opacity: 0.55;
+}
+.cw-snowfall { position: absolute; inset: 0; }
+.cw-snow-1 { top: 8%; left: 10%; animation: cw-fall 22s linear infinite; }
+.cw-snow-2 { top: 14%; left: 52%; width: 1.1rem; height: 1.1rem; opacity: 0.45; animation: cw-fall 28s linear infinite; animation-delay: -11s; }
+.cw-snow-3 { top: 26%; left: 84%; width: 0.9rem; height: 0.9rem; opacity: 0.38; animation: cw-fall 20s linear infinite; animation-delay: -7s; }
+.cw-snow-4 { top: 40%; left: 18%; width: 1.2rem; height: 1.2rem; animation: cw-fall 26s linear infinite; animation-delay: -15s; }
+.cw-snow-5 { top: 52%; left: 66%; opacity: 0.3; animation: cw-fall 30s linear infinite; animation-delay: -3s; }
+.cw-snow-6 { top: 66%; left: 34%; width: 1rem; height: 1rem; opacity: 0.4; animation: cw-fall 24s linear infinite; animation-delay: -18s; }
+.cw-snow-7 { top: 78%; left: 88%; width: 1.3rem; height: 1.3rem; animation: cw-fall 25s linear infinite; animation-delay: -2s; }
+.cw-snow-8 { top: 18%; left: 72%; opacity: 0.35; animation: cw-fall 29s linear infinite; animation-delay: -12s; }
+.cw-snow-9 { top: 90%; left: 15%; width: 0.8rem; height: 0.8rem; opacity: 0.28; animation: cw-fall 21s linear infinite; animation-delay: -9s; }
+.cw-snow-10 { top: 30%; left: 28%; width: 1.2rem; height: 1.2rem; opacity: 0.42; animation: cw-fall 27s linear infinite; animation-delay: -5s; }
+.cw-snow-11 { top: 50%; left: 94%; opacity: 0.33; animation: cw-fall 23s linear infinite; animation-delay: -16s; }
+.cw-snow-12 { top: 62%; left: 50%; width: 1rem; height: 1rem; opacity: 0.36; animation: cw-fall 31s linear infinite; animation-delay: -19s; }
+.cw-snow-13 { top: 12%; left: 40%; width: 1.1rem; height: 1.1rem; opacity: 0.48; animation: cw-fall 24s linear infinite; animation-delay: -8s; }
+.cw-snow-14 { top: 74%; left: 60%; width: 0.9rem; height: 0.9rem; opacity: 0.31; animation: cw-fall 26s linear infinite; animation-delay: -13s; }
+
+/* Bottom snow bank that gently rises/falls with the drift. */
+.cw-snowbank {
+  position: absolute;
+  bottom: -1rem;
+  left: 0;
+  width: 100%;
+  height: 5rem;
+  background: radial-gradient(ellipse at 50% 0%, rgba(248, 250, 255, 0.12) 0%, transparent 70%);
+  filter: blur(2px);
+}
+
+/* Floating fairy lights */
+.cw-lights { position: absolute; inset: 0; }
+.cw-light {
+  position: absolute;
+  width: 1.6rem;
+  height: 1.6rem;
+  color: var(--cw-warm-lights);
+  opacity: 0.55;
+}
+.cw-light-1 { top: 20%; left: 10%; animation: cw-float-sway 30s ease-in-out infinite; animation-delay: -1s; }
+.cw-light-2 { top: 34%; left: 78%; width: 1.3rem; height: 1.3rem; opacity: 0.45; animation: cw-float-sway 38s ease-in-out infinite; animation-delay: -15s; }
+.cw-light-3 { top: 58%; left: 46%; width: 1.2rem; height: 1.2rem; opacity: 0.38; animation: cw-float-sway 42s ease-in-out infinite; animation-delay: -28s; }
+.cw-light-4 { top: 16%; left: 62%; width: 1.4rem; height: 1.4rem; opacity: 0.5; animation: cw-float-sway 34s ease-in-out infinite; animation-delay: -9s; }
+.cw-light-5 { top: 70%; left: 20%; opacity: 0.32; animation: cw-float-sway 40s ease-in-out infinite; animation-delay: -5s; }
+.cw-light-6 { top: 42%; left: 90%; width: 1.3rem; height: 1.3rem; opacity: 0.4; animation: cw-float-sway 36s ease-in-out infinite; animation-delay: -22s; }
+.cw-light-7 { top: 28%; left: 30%; width: 1.2rem; height: 1.2rem; opacity: 0.36; animation: cw-float-sway 44s ease-in-out infinite; animation-delay: -17s; }
+.cw-light-8 { top: 80%; left: 68%; width: 1.3rem; height: 1.3rem; opacity: 0.44; animation: cw-float-sway 32s ease-in-out infinite; animation-delay: -24s; }
+.cw-light-9 { top: 10%; left: 82%; opacity: 0.3; animation: cw-float-sway 46s ease-in-out infinite; animation-delay: -6s; }
+
+/* --------------------------------------------------------------------------
+   4. Hero — the strongest Christmas area
+   -------------------------------------------------------------------------- */
+:root[data-site-theme="christmas"] .cw-hero {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Aurora glow behind the heading. */
+:root[data-site-theme="christmas"] .cw-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(34rem 20rem at 32% 34%, rgba(252, 212, 35, 0.18) 0%, transparent 68%),
+    radial-gradient(40rem 26rem at 74% 18%, rgba(109, 40, 217, 0.24) 0%, transparent 66%),
+    radial-gradient(30rem 18rem at 12% 82%, rgba(56, 189, 248, 0.16) 0%, transparent 70%);
+}
+
+:root[data-site-theme="christmas"] .cw-hero .text-gradient {
+  background-image: linear-gradient(90deg, #38BDF8 0%, #6D28D9 35%, #DC2626 60%, #FACC15 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+:root[data-site-theme="christmas"] .cw-hero h1 {
+  text-shadow: 0 0 42px rgba(252, 212, 35, 0.4), 0 0 60px rgba(109, 40, 217, 0.3);
+}
+
+:root[data-site-theme="christmas"] .cw-hero::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 16rem;
+  height: 16rem;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.12;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120' fill='none' stroke='%23e0f2fe' stroke-width='0.8'%3E%3Cg%3E%3Ccircle cx='120' cy='0' r='16'/%3E%3Ccircle cx='120' cy='0' r='30'/%3E%3Ccircle cx='120' cy='0' r='44'/%3E%3Ccircle cx='120' cy='0' r='58'/%3E%3Cline x1='120' y1='0' x2='72' y2='-46' transform='rotate(30 120 0)'/%3E%3Cline x1='120' y1='0' x2='72' y2='-46' transform='rotate(60 120 0)'/%3E%3Cline x1='120' y1='0' x2='72' y2='-46' transform='rotate(90 120 0)'/%3E%3Cline x1='120' y1='0' x2='72' y2='-46' transform='rotate(120 120 0)'/%3E%3Cline x1='120' y1='0' x2='72' y2='-46' transform='rotate(150 120 0)'/%3E%3Cline x1='120' y1='0' x2='72' y2='-46' transform='rotate(180 120 0)'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* --------------------------------------------------------------------------
+   5. Cards — same UGN card, Christmas surface treatment
+   -------------------------------------------------------------------------- */
+:root[data-site-theme="christmas"] .card,
+:root[data-site-theme="christmas"] .card-premium {
+  background-color: rgb(var(--cw-card));
+  border-color: var(--cw-line);
+  box-shadow: 0 10px 30px -20px rgba(10, 13, 24, 0.55);
+}
+
+:root[data-site-theme="christmas"] .card-premium:hover,
+:root[data-site-theme="christmas"] .card-hover:hover {
+  border-color: rgba(56, 189, 248, 0.45);
+  box-shadow: 0 18px 40px -20px rgba(252, 212, 35, 0.22), 0 0 30px -12px rgba(109, 40, 217, 0.45);
+}
+
+/* Light surfaces (Tailwind `bg-white` literals) become winter cards. */
+:root[data-site-theme="christmas"] .bg-white {
+  background-color: rgb(var(--cw-card));
+}
+
+/* The `cw-*` helper classes below are attached to shared components that always
+   render (announcement, staff, event, feature, stat and gallery cards), so every
+   one of them is scoped to the Christmas theme. They reference `--cw-*` custom
+   properties that are ONLY declared on `:root[data-site-theme="christmas"]`; left
+   unscoped they would resolve to invalid values on Halloween and the normal
+   theme and, because these declarations are `!important` and come later in the
+   file than their `hw-*` equivalents, they would override and destroy the live
+   Halloween card borders and shadows. */
+:root[data-site-theme="christmas"] .cw-card-treat {
+  position: relative;
+  border-color: var(--cw-line) !important;
+  box-shadow: 0 10px 30px -18px rgba(252, 212, 35, 0.28), 0 0 0 1px var(--cw-line) !important;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease;
+}
+
+/* Hairline of warm light along the top edge of a card. */
+:root[data-site-theme="christmas"] .cw-card-treat::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 0%, rgba(252, 212, 35, 0.45) 45%, transparent 100%);
+  opacity: 0.7;
+}
+
+:root[data-site-theme="christmas"] .cw-card-treat:hover {
+  border-color: rgba(56, 189, 248, 0.55) !important;
+  box-shadow: 0 18px 44px -18px rgba(252, 212, 35, 0.38), 0 0 34px -14px rgba(109, 40, 217, 0.55), 0 0 0 1px var(--cw-line) !important;
+}
+
+/* Decorative corner accent on feature and staff cards (snowflake). */
+:root[data-site-theme="christmas"] .cw-feature-card::after,
+:root[data-site-theme="christmas"] .cw-staff-card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 7rem;
+  height: 7rem;
+  pointer-events: none;
+  opacity: 0.14;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e0f2fe' stroke-width='0.8'%3E%3Cg%3E%3Cline x1='12' y1='2' x2='12' y2='22'/%3E%3Cline x1='2' y1='12' x2='22' y2='12'/%3E%3Cline x1='4.93' y1='4.93' x2='19.07' y2='19.07'/%3E%3Cline x1='19.07' y1='4.93' x2='4.93' y2='19.07'/%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+:root[data-site-theme="christmas"] .cw-feature-card:hover::after,
+:root[data-site-theme="christmas"] .cw-staff-card:hover::after {
+  opacity: 0.26;
+}
+
+:root[data-site-theme="christmas"] .cw-feature-card .rounded-2xl {
+  box-shadow: 0 10px 30px -14px rgba(109, 40, 217, 0.38);
+}
+:root[data-site-theme="christmas"] .cw-feature-card:hover .rounded-2xl {
+  box-shadow: 0 14px 38px -12px rgba(56, 189, 248, 0.45), 0 0 26px -8px rgba(252, 212, 35, 0.4);
+}
+
+:root[data-site-theme="christmas"] .cw-staff-card {
+  position: relative;
+  border-color: var(--cw-line) !important;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.4s ease;
+}
+:root[data-site-theme="christmas"] .cw-staff-card:hover {
+  border-color: rgba(56, 189, 248, 0.55) !important;
+  box-shadow: 0 22px 46px -20px rgba(10, 13, 24, 0.65), 0 0 30px -14px rgba(109, 40, 217, 0.5) !important;
+}
+
+:root[data-site-theme="christmas"] .cw-event-card {
+  position: relative;
+  border-color: var(--cw-line) !important;
+}
+:root[data-site-theme="christmas"] .cw-event-card:hover {
+  border-color: rgba(56, 189, 248, 0.55) !important;
+  box-shadow: 0 18px 40px -20px rgba(252, 212, 35, 0.28) !important;
+}
+
+/* --------------------------------------------------------------------------
+   6. Buttons, links, badges, inputs, modals
+   -------------------------------------------------------------------------- */
+:root[data-site-theme="christmas"] .btn-primary {
+  background-image: linear-gradient(135deg, #6D28D9 0%, #38BDF8 45%, #DC2626 100%);
+  box-shadow: 0 10px 26px -12px rgba(109, 40, 217, 0.65);
+}
+:root[data-site-theme="christmas"] .btn-primary:hover {
+  box-shadow: 0 14px 32px -12px rgba(252, 212, 35, 0.45), 0 0 24px -10px rgba(109, 40, 217, 0.55);
+}
+
+:root[data-site-theme="christmas"] .btn-cta {
+  background-image: linear-gradient(120deg, #6D28D9 0%, #16A34A 55%, #FACC15 100%);
+  box-shadow: 0 10px 28px -12px rgba(252, 212, 35, 0.35);
+}
+:root[data-site-theme="christmas"] .btn-cta:hover {
+  box-shadow: 0 16px 36px -12px rgba(252, 212, 35, 0.55), 0 0 26px -10px rgba(109, 40, 217, 0.45);
+}
+
+:root[data-site-theme="christmas"] .btn-secondary,
+:root[data-site-theme="christmas"] .btn-outline {
+  background-color: rgba(14, 19, 31, 0.6);
+  border-color: rgba(56, 189, 248, 0.35);
+  color: #e0f2fe;
+}
+:root[data-site-theme="christmas"] .btn-secondary:hover,
+:root[data-site-theme="christmas"] .btn-outline:hover {
+  border-color: rgba(252, 212, 35, 0.55);
+  background-color: rgba(24, 36, 58, 0.7);
+  box-shadow: 0 10px 26px -14px rgba(252, 212, 35, 0.32);
+}
+
+:root[data-site-theme="christmas"] .btn-ghost:hover {
+  background-color: rgba(109, 40, 217, 0.18);
+  color: var(--cw-icy-blue);
+}
+
+:root[data-site-theme="christmas"] .badge-brand {
+  background-color: rgba(109, 40, 217, 0.22);
+  border-color: rgba(56, 189, 248, 0.35);
+  color: #e0f2fe;
+}
+
+:root[data-site-theme="christmas"] .input:focus,
+:root[data-site-theme="christmas"] select:focus,
+:root[data-site-theme="christmas"] textarea:focus {
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 0 3px rgba(109, 40, 217, 0.22);
+}
+
+:root[data-site-theme="christmas"] [role="dialog"],
+:root[data-site-theme="christmas"] .modal-panel {
+  background-color: #142332;
+  border: 1px solid var(--cw-line);
+  box-shadow: 0 30px 70px -30px rgba(10, 13, 24, 0.8), 0 0 40px -22px rgba(252, 212, 35, 0.28);
+}
+:root[data-site-theme="christmas"] [role="dialog"] {
+  background-image: radial-gradient(24rem 12rem at 80% -10%, rgba(252, 212, 35, 0.10) 0%, transparent 70%);
+}
+
+:root[data-site-theme="christmas"] *:focus-visible {
+  --tw-ring-color: rgba(252, 212, 35, 0.65);
+  --tw-ring-offset-color: #0A0D18;
+}
+
+/* --------------------------------------------------------------------------
+   7. Section dividers, scrollbars, selection
+   -------------------------------------------------------------------------- */
+:root[data-site-theme="christmas"] main > div[class*="border-t"],
+:root[data-site-theme="christmas"] main > div[class*="border-b"],
+:root[data-site-theme="christmas"] hr {
+  border-color: var(--cw-line);
+}
+
+:root[data-site-theme="christmas"] main > div[class*="border-t"]::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.38) 50%, transparent 100%);
+}
+
+:root[data-site-theme="christmas"] .scrollbar-thin {
+  scrollbar-color: rgba(109, 40, 217, 0.5) transparent;
+}
+
+:root[data-site-theme="christmas"] ::selection {
+  background-color: rgba(252, 212, 35, 0.32);
+}
+
+/* --------------------------------------------------------------------------
+   8. Seasonal banner, strips and icon helpers
+   -------------------------------------------------------------------------- */
+.cw-strip {
+  background: linear-gradient(90deg, rgba(10, 13, 24, 0.96) 0%, rgba(20, 33, 61, 0.96) 45%, rgba(56, 189, 248, 0.96) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #e0f2fe;
+  box-shadow: 0 8px 30px -18px rgba(252, 212, 35, 0.45);
+}
+
+.cw-fallback {
+  display: inline-flex;
+  filter: drop-shadow(0 2px 6px rgba(252, 212, 35, 0.35));
+}
+
+/* --------------------------------------------------------------------------
+   9. Keyframes
+   -------------------------------------------------------------------------- */
+@keyframes cw-breathe {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+@keyframes cw-drift {
+  0% { transform: translateX(-6%); }
+  50% { transform: translateX(4%); }
+  100% { transform: translateX(-6%); }
+}
+@keyframes cw-drift-rev {
+  0% { transform: translateX(5%); }
+  50% { transform: translateX(-5%); }
+  100% { transform: translateX(5%); }
+}
+@keyframes cw-fall {
+  0% { transform: translate3d(0, -10vh, 0) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.45; }
+  90% { opacity: 0.22; }
+  100% { transform: translate3d(6vw, 110vh, 0) rotate(360deg); opacity: 0; }
+}
+@keyframes cw-float-sway {
+  0% { transform: translate3d(0, 0, 0) rotate(-3deg); opacity: 0.22; }
+  50% { transform: translate3d(1.6rem, -1.6rem, 0) rotate(4deg); opacity: 0.45; }
+  100% { transform: translate3d(0, 0, 0) rotate(-3deg); opacity: 0.22; }
+}
+@keyframes cw-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.6); }
+  40% { opacity: 0.75; transform: scale(1); }
+  60% { opacity: 0.2; transform: scale(0.8); }
+}
+
+/* --------------------------------------------------------------------------
+   10. Reduced motion - keep the atmosphere, drop every animation
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .cw-moon,
+  .cw-aurora,
+  .cw-fog,
+  .cw-snow,
+  .cw-light,
+  :root[data-site-theme="christmas"] body::before,
+  :root[data-site-theme="christmas"] body::after {
+    animation: none !important;
+  }
+  /* Snowfall is removed entirely rather than merely slowed: a static field of
+     flakes reads as noise behind text, and the MMD asks for reduced, readable
+     styling when reduced motion is requested. */
+  .cw-snow { display: none; }
+  .cw-fog { display: none; }
+  .cw-light { opacity: 0.36; }
+}
+
+/* --------------------------------------------------------------------------
+   11. Small screens - fewer, smaller decorations so they never crowd text
+   -------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  .cw-moon { width: 12rem; height: 12rem; top: 6%; right: -6%; }
+  .cw-aurora { display: none; }
+  .cw-fog { height: 12rem; }
+  .cw-snow { width: 1.1rem; height: 1.1rem; }
+  .cw-light { width: 1.3rem; height: 1.3rem; }
+  :root[data-site-theme="christmas"] .cw-hero::after { width: 10rem; height: 10rem; opacity: 0.1; }
+  :root[data-site-theme="christmas"] main > div::before { height: 14rem; }
+  :root[data-site-theme="christmas"] main > div:nth-of-type(even)::after { display: none; }
+}
+
+/* --------------------------------------------------------------------------
+   12. Deeper atmosphere - hero aurora, section mood, live event, stats
+   -------------------------------------------------------------------------- */
+
+/* Every major homepage band picks up a little of the night: a soft glow from
+   the top edge. */
+:root[data-site-theme="christmas"] main > div {
+  position: relative;
+}
+
+:root[data-site-theme="christmas"] main > div::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 22rem;
+  pointer-events: none;
+  background:
+    radial-gradient(38rem 14rem at 18% 0%, rgba(109, 40, 217, 0.14) 0%, transparent 70%),
+    radial-gradient(30rem 12rem at 84% 0%, rgba(252, 212, 35, 0.08) 0%, transparent 72%);
+  opacity: 0.9;
+}
+
+:root[data-site-theme="christmas"] main > div:nth-of-type(even)::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 11rem;
+  height: 11rem;
+  pointer-events: none;
+  opacity: 0.07;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e0f2fe' stroke-width='0.8'%3E%3Cg%3E%3Cline x1='12' y1='2' x2='12' y2='22'/%3E%3Cline x1='2' y1='12' x2='22' y2='12'/%3E%3Cline x1='4.93' y1='4.93' x2='19.07' y2='19.07'/%3E%3Cline x1='19.07' y1='4.93' x2='4.93' y2='19.07'/%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* The hero keeps its own stronger treatment. */
+:root[data-site-theme="christmas"] .cw-hero::before {
+  content: none;
+}
+
+/* Live Now banner: the loudest seasonal accent. */
+:root[data-site-theme="christmas"] .cw-live-pill {
+  position: relative;
+  background-image:
+    linear-gradient(90deg, rgba(109, 40, 217, 0.22) 0%, rgba(14, 19, 31, 0.45) 45%, rgba(56, 189, 248, 0.26) 100%);
+  border-color: rgba(56, 189, 248, 0.4) !important;
+  box-shadow: 0 14px 40px -22px rgba(252, 212, 35, 0.5), 0 0 30px -18px rgba(109, 40, 217, 0.55);
+  animation: cw-live-breathe 5.5s ease-in-out infinite;
+}
+
+:root[data-site-theme="christmas"] .cw-live-pill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 30%, rgba(252, 212, 35, 0.12) 50%, transparent 70%);
+  background-size: 220% 100%;
+  animation: cw-sheen 7s linear infinite;
+}
+
+:root[data-site-theme="christmas"] .cw-live-pill span.uppercase {
+  text-shadow: 0 0 18px rgba(252, 212, 35, 0.6);
+}
+
+:root[data-site-theme="christmas"] .cw-event-card {
+  background-image: linear-gradient(180deg, rgba(24, 36, 58, 0.32) 0%, transparent 45%);
+}
+
+:root[data-site-theme="christmas"] .cw-stat-card {
+  position: relative;
+  overflow: hidden;
+}
+
+:root[data-site-theme="christmas"] .cw-stat-card::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -3.5rem;
+  width: 12rem;
+  height: 12rem;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(252, 212, 35, 0.2) 0%, transparent 65%);
+  animation: cw-stat-glow 6s ease-in-out infinite;
+}
+
+:root[data-site-theme="christmas"] .cw-stat-card .text-4xl {
+  text-shadow: 0 0 26px rgba(252, 212, 35, 0.5);
+}
+
+:root[data-site-theme="christmas"] .cw-gallery-tile {
+  box-shadow: 0 14px 34px -22px rgba(252, 212, 35, 0.26), 0 0 0 1px var(--cw-line) !important;
+}
+
+@keyframes cw-live-breathe {
+  0%, 100% { box-shadow: 0 14px 40px -22px rgba(252, 212, 35, 0.4), 0 0 26px -18px rgba(109, 40, 217, 0.45); }
+  50% { box-shadow: 0 18px 48px -20px rgba(252, 212, 35, 0.6), 0 0 38px -16px rgba(56, 189, 248, 0.5); }
+}
+
+@keyframes cw-sheen {
+  0% { background-position: 140% 0; }
+  100% { background-position: -40% 0; }
+}
+
+@keyframes cw-stat-glow {
+  0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(0.92); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.08); }
+}
+
+/* Reduced motion for the new atmosphere. */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-site-theme="christmas"] .cw-live-pill,
+  :root[data-site-theme="christmas"] .cw-live-pill::after,
+  :root[data-site-theme="christmas"] .cw-stat-card::after {
+    animation: none !important;
+  }
 }

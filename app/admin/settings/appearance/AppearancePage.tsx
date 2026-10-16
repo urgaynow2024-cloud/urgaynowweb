@@ -6,6 +6,7 @@ import { Badge } from "@/components/admin/ui/Badge";
 import { IconPalette, IconCalendar, IconEye, IconPlus, IconTrash, IconSun, IconMoon, IconEdit } from "@/components/admin/ui/icons";
 import { ConfirmDeleteButton } from "@/components/admin/ConfirmDeleteButton";
 import { getAllThemes, THEME_REGISTRY, type ThemeDefinition } from "@/lib/themes";
+import { resolveTokens } from "@/lib/theme-engine/resolve";
 
 interface ScheduleFormData {
   id?: string;
@@ -271,6 +272,7 @@ function ThemePreviewCard({
 }) {
   const isPreviewed = previewThemeId === theme.id;
   const isActiveOverall = isActive || isScheduledActive;
+  const tokens = resolveTokens(theme);
 
   return (
     <div
@@ -297,19 +299,22 @@ function ThemePreviewCard({
         </div>
 
         <div className="mt-auto space-y-3">
+          {/* Swatches come from the resolved token set, so they always match
+              what the theme actually renders — including every value inherited
+              from the Default design system. */}
           <div className="flex gap-1.5" role="img" aria-label="Color palette">
             {[
-              theme.variables.brand,
-              theme.variables.brandSoft.replace("rgba(", "").replace(")", "").split(",")[0],
-              theme.variables.background,
-              theme.variables.surface,
-              theme.variables.text,
-            ].slice(0, 5).map((color, i) => (
+              tokens.brand[500],
+              tokens.brand[700],
+              tokens.accents.primary,
+              tokens.visual.card.background,
+              tokens.accents.onCanvas,
+            ].slice(0, 5).map((triplet, i) => (
               <div
                 key={i}
                 className="w-6 h-6 rounded-full border border-white/30 flex-shrink-0"
-                style={{ backgroundColor: color }}
-                title={`Color ${i + 1}`}
+                style={{ backgroundColor: `rgb(${triplet})` }}
+                title={`Swatch ${i + 1}`}
               />
             ))}
           </div>

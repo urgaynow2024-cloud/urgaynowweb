@@ -8,6 +8,7 @@ import {
   getPreviousReleaseCommit,
   type CommitInfo,
 } from "@/lib/release-generator";
+import type { ChangedFile, DeploymentDiff } from "@/lib/changelog";
 import { sendContentWebhook } from "@/lib/discord-webhook";
 
 export const runtime = "nodejs";
@@ -19,6 +20,7 @@ const SHA_PATTERN = /^[0-9a-f]{40}$/i;
 /** Deployment states that mean "this build is live in production". */
 const READY_STATES = new Set(["ready", "success", "served", "active"]);
 const MAX_COMMITS = 200;
+const MAX_FILES = 500;
 
 function expectedRepository(): string {
   return (process.env.RELEASE_GITHUB_REPOSITORY || DEFAULT_REPOSITORY)
@@ -42,8 +44,40 @@ function authorized(request: NextRequest): boolean {
   return timingSafeEqual(provided, expected);
 }
 
-function parseCommits(raw: unknown): CommitInfo[] {
-  if (!Array.isArray(raw)) return [];
+/**
+ * The files the deployment actually changed. This is the primary source of the
+ * public changelog, so a release still reads correctly even when its commit
+ * subjects are internal or unhelpful.
+ */
+function parseDiff(raw: unknown): DeploymentDiff | null {
+  if (!raw || typeof raw !== "object") return null;
+  const input = raw as Record<string, unknown>;
+
+  const files: ChangedFile[] = [];
+  if (Array.isArray(input.files)) {
+    for (const entry of input.files.slice(0, MAX_FILES)) {
+      if (!entry || typeof entry !== "object") continue;
+      const file = entry as Record<string, unknown>;
+      const path = typeof file.path === "string" ? file.path.trim() : "";
+      if (!path || path.length > 400) continue;
+      const status = typeof file.status === "string" ? file.status.trim() : "M";
+      files.push({ path, status: /^[A-Z]$/i.test(status) ? status.toUpperCase() : "M" });
+    }
+  }
+
+  const additions = toCount(input.additions);
+  const deletions = toCount(input.deletions);
+
+  if (files.length === 0 && additions === 0 && deletions === 0) return null;
+  return { files, additions, deletions };
+}
+
+function toCount(value: unknown): number {
+  const parsed = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 0;
+}
+
+function parseCommits(raw: unknown): CommitInfo[] {  if (!Array.isArray(raw)) return [];
 
   const commits: CommitInfo[] = [];
   for (const entry of raw.slice(0, MAX_COMMITS)) {
@@ -136,6 +170,7 @@ export async function POST(request: NextRequest) {
       repository,
       deployment,
       commits,
+      diff,
     } = body as Record<string, any>;
 
     if (typeof headSha !== "string" || !SHA_PATTERN.test(headSha.trim())) {
@@ -202,6 +237,7 @@ export async function POST(request: NextRequest) {
     const result = await createReleaseFromCommits({
       headSha: commitSha,
       commits: parsedCommits,
+      diff: parseDiff(diff),
       branch: typeof branch === "string" ? branch : "main",
       deploymentId: typeof deploymentId === "string" ? deploymentId : null,
       previousSha: typeof previousSha === "string" ? previousSha : null,

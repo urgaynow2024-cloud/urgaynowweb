@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { prisma } from "@/lib/db";
 import { Container, Section } from "@/components/Container";
 import { HalloweenHeroStrip } from "@/components/halloween/HalloweenDecor";
+import { ChristmasHeroStrip } from "@/components/christmas/ChristmasDecor";
 import { AnnouncementCard } from "@/components/AnnouncementCard";
 import { EventCard } from "@/components/EventCard";
 import { StaffCard } from "@/components/StaffCard";
@@ -216,7 +217,7 @@ async function HomeEvents() {
       {live.length > 0 && (
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-brand-500/10 via-transparent to-brand-700/10 dark:from-brand-500/5 dark:via-transparent dark:to-brand-700/5" />
-          <div className="hw-live-pill relative flex items-center gap-3 mb-6 p-4 rounded-2xl bg-gradient-to-r from-brand-500/10 to-brand-700/10 border border-brand-200/50 dark:border-brand-800/50">
+          <div className="cw-live-pill hw-live-pill relative flex items-center gap-3 mb-6 p-4 rounded-2xl bg-gradient-to-r from-brand-500/10 to-brand-700/10 border border-brand-200/50 dark:border-brand-800/50">
             <div className="flex items-center gap-2">
               <span className="relative flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-500 opacity-75" />
@@ -329,7 +330,7 @@ async function HomeGallery() {
           <StaggeredList className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {gallery.map((g) => (
               <ScrollFadeIn key={g.id} delay={0}>
-                <div className="hw-gallery-tile hw-card-treat group relative overflow-hidden rounded-2xl border border-ink-200/80 bg-white shadow-card-premium transition-all duration-500 hover:-translate-y-1 hover:shadow-card-premium-hover dark:border-ink-800 dark:bg-ink-900">
+                <div className="cw-gallery-tile cw-card-treat hw-gallery-tile hw-card-treat group relative overflow-hidden rounded-2xl border border-ink-200/80 bg-white shadow-card-premium transition-all duration-500 hover:-translate-y-1 hover:shadow-card-premium-hover dark:border-ink-800 dark:bg-ink-900">
                   <Image
                     src={g.imageUrl}
                     alt={g.title}
@@ -478,7 +479,7 @@ async function CommunityHighlights() {
           <StaggeredList className="grid gap-6 sm:grid-cols-3">
             {highlights.map((h, i) => (
               <ScrollFadeIn key={h.label} delay={i * 80}>
-                <div className="hw-stat-card hw-card-treat card-premium flex flex-col items-center p-8 text-center">
+                <div className="cw-stat-card cw-card-treat hw-stat-card hw-card-treat card-premium flex flex-col items-center p-8 text-center">
                   <span className="text-4xl mb-4">{h.icon}</span>
                   <span className="text-4xl font-extrabold text-brand-700 dark:text-brand-200">
                     {h.value}
@@ -541,7 +542,7 @@ function CommunitySection() {
           <StaggeredList className="grid gap-6 sm:grid-cols-2 lg:grid-cols-5">
             {COMMUNITY_FEATURES.map((f) => (
               <ScrollFadeIn key={f.title} delay={0}>
-                <div className="hw-feature-card hw-card-treat group card-premium flex flex-col items-center p-6 text-center">
+                <div className="cw-feature-card cw-card-treat hw-feature-card hw-card-treat group card-premium flex flex-col items-center p-6 text-center">
                   <div className={`mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${f.color} text-white shadow-glow transition-all duration-300 group-hover:scale-110 group-hover:shadow-glow-strong`}>
                     {f.icon}
                   </div>
@@ -579,7 +580,7 @@ export default function HomePage() {
   return (
     <>
       {/* Hero */}
-      <div className="hw-hero relative flex min-h-[90vh] items-center overflow-hidden border-b border-ink-200/80 dark:border-ink-800/80">
+      <div className="cw-hero hw-hero relative flex min-h-[90vh] items-center overflow-hidden border-b border-ink-200/80 dark:border-ink-800/80">
         <HeroBackground />
         <ParticlesBackground />
         <div className="hw-hero-sky" aria-hidden>
@@ -594,6 +595,7 @@ export default function HomePage() {
         <Container className="relative z-10 py-24 sm:py-32 lg:py-36">
           <div className="animate-fade-in">
             <HalloweenHeroStrip />
+            <ChristmasHeroStrip />
             <ScrollFadeIn>
               <p className="inline-flex items-center gap-2 rounded-full border border-brand-200/50 bg-white/80 px-4 py-1.5 text-sm font-semibold text-brand-700 shadow-sm backdrop-blur-sm dark:border-brand-700/40 dark:bg-ink-900/80 dark:text-brand-200">
                 <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse-soft" />

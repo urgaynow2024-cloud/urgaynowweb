@@ -51,9 +51,10 @@ export function SupportContactForm() {
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState<{ ticketNumber: string } | null>(null);
+  const [success, setSuccess] = useState<{ ticketNumber: string; duplicate?: boolean } | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const idempotencyKey = crypto.randomUUID();
 
   function update<K extends keyof FormData>(key: K, value: FormData[K]) {
     setFormData((prev) => ({ ...prev, [key]: value }));
@@ -102,13 +103,14 @@ export function SupportContactForm() {
           description: formData.description.trim(),
           contactMethod: formData.contactMethod,
           contactInfo: formData.contactInfo.trim(),
+          idempotencyKey,
         }),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        setSuccess({ ticketNumber: data.ticketNumber });
+        setSuccess({ ticketNumber: data.ticketNumber, duplicate: Boolean(data.duplicate) });
         setFormData({
           category: "",
           subject: "",
@@ -116,6 +118,11 @@ export function SupportContactForm() {
           contactMethod: "",
           contactInfo: "",
         });
+      } else if (response.status === 409 || data.duplicate) {
+        setSubmitError(
+          data.error || "You already submitted this request. We have not created a duplicate ticket." +
+            (data.ticketNumber ? ` Your existing ticket number is ${data.ticketNumber}.` : ""),
+        );
       } else {
         setSubmitError(data.error || "Could not submit your request. Please try again.");
       }
@@ -131,16 +138,25 @@ export function SupportContactForm() {
       <div className="mx-auto max-w-2xl">
         <div
           role="status"
-          className="rounded-2xl border border-emerald-200 bg-emerald-50 px-6 py-8 text-center dark:border-emerald-800 dark:bg-emerald-950/30"
+          className={`rounded-2xl border px-6 py-8 text-center ${
+            success.duplicate
+              ? "border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30"
+              : "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30"
+          }`}
         >
           <h2 className="text-2xl font-extrabold text-ink-900 dark:text-white">
-            Support request submitted!
+            {success.duplicate ? "Already submitted" : "Support request submitted!"}
           </h2>
           <p className="mt-4 text-sm text-ink-600 dark:text-ink-400">
-            Your ticket number is:
+            {success.duplicate
+              ? "You already submitted this request. We have not created a duplicate ticket."
+              : "Your ticket number is:"}
           </p>
           <div className="mt-3 flex items-center justify-center gap-2">
-            <p className="font-mono text-3xl font-bold text-emerald-700 dark:text-emerald-300">
+            <p
+              className="font-mono text-3xl font-bold"
+              style={{ color: success.duplicate ? "#d97706" : "#059669" }}
+            >
               {success.ticketNumber}
             </p>
             <button

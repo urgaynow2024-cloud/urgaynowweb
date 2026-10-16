@@ -1,7 +1,7 @@
 import { execSync } from "child_process";
 import { Prisma } from "@prisma/client";
 import { prisma } from "./db";
-import { suggestCategory } from "./update-utils";
+import { buildChangelog, type ChangedFile, type DeploymentDiff } from "./changelog";
 
 export interface CommitInfo {
   sha: string;
@@ -30,6 +30,8 @@ export interface ReleaseInfo {
   improvements: string;
   bugFixes: string;
   securityNotes: string;
+  /** Suggested `Update.category` from the dominant change kind. */
+  category: "NEW" | "IMPROVEMENT" | "FIX" | "SECURITY" | "PERFORMANCE" | "MAINTENANCE";
 }
 
 function execGit(args: string): string {
@@ -197,57 +199,46 @@ function sanitizeForRelease(text: string): string {
     .replace(/[A-Za-z0-9+/]{40,}={0,2}/g, "[REDACTED]");
 }
 
+/**
+ * Builds the public changelog for a release.
+ *
+ * The content comes from the deployment itself: the files it actually changed and
+ * the commit subjects that read as descriptions of a change. `lib/changelog.ts`
+ * owns that logic; this function only versions the result and redacts secrets
+ * from anything that reaches the database.
+ */
 export function generateReleaseInfo(
   classified: ClassifiedCommits,
   version: string,
-  type: "MAJOR" | "MINOR" | "PATCH"
+  diff?: DeploymentDiff | null
 ): ReleaseInfo {
-  const typeLabels: Record<"MAJOR" | "MINOR" | "PATCH", string> = {
-    MAJOR: "Major Release",
-    MINOR: "Feature Release",
-    PATCH: "Patch Release",
-  };
+  const changelog = buildChangelog({
+    commits: [
+      ...classified.breaking,
+      ...classified.features,
+      ...classified.fixes,
+      ...classified.improvements,
+      ...classified.docs,
+      ...classified.chore,
+      ...classified.other,
+    ],
+    diff,
+  });
 
-  const whatsNew = formatCommitList(classified.features);
-  // `other` is the catch-all for commits that match no pattern. It is listed
-  // rather than dropped, so a push can never produce an empty changelog.
-  const improvements = formatCommitList([
-    ...classified.improvements,
-    ...classified.docs,
-    ...classified.chore,
-    ...classified.other,
-  ]);
-  const bugFixes = formatCommitList(classified.fixes);
-  const securityNotes = formatCommitList(classified.breaking);
-
-  const allChanges = [
-    ...classified.features,
-    ...classified.fixes,
-    ...classified.improvements,
-    ...classified.docs,
-    ...classified.chore,
-    ...classified.other,
-    ...classified.breaking,
-  ];
-
-  const summary =
-    allChanges.length === 0
-      ? "No changes recorded"
-      : allChanges.length === 1 && allChanges[0].subject
-        ? allChanges[0].subject
-        : `${allChanges.length} changes in this release`;
-
-  const title = `v${version} — ${typeLabels[type]}`;
+  // Breaking change -> MAJOR, anything new -> MINOR, otherwise PATCH. Every
+  // release increments at least the patch number, so every push is unique.
+  const type: "MAJOR" | "MINOR" | "PATCH" = changelog.breaking ? "MAJOR" : changelog.kind === "feature" ? "MINOR" : "PATCH";
 
   return {
     version,
     type,
-    title,
-    summary: sanitizeForRelease(summary),
-    whatsNew: sanitizeForRelease(whatsNew),
-    improvements: sanitizeForRelease(improvements),
-    bugFixes: sanitizeForRelease(bugFixes),
-    securityNotes: sanitizeForRelease(securityNotes),
+    category: changelog.category,
+    title: changelog.title,
+    summary: sanitizeForRelease(changelog.summary),
+    whatsNew: sanitizeForRelease(changelog.whatsNew),
+    improvements: sanitizeForRelease(changelog.improvements),
+    bugFixes: sanitizeForRelease(changelog.bugFixes),
+    securityNotes: sanitizeForRelease(changelog.securityNotes),
   };
 }
 
@@ -273,6 +264,12 @@ export interface CreateReleaseInput {
    * serverless function has no `.git` directory and cannot run `git log`.
    */
   commits: CommitInfo[];
+  /**
+   * The files this deployment actually changed, with their status. This is the
+   * primary source of the public changelog, so a release still reads correctly
+   * when its commit subjects are internal or unhelpful.
+   */
+  diff?: DeploymentDiff | null;
   branch?: string | null;
   deploymentId?: string | null;
   previousSha?: string | null;
@@ -325,6 +322,7 @@ export async function createReleaseFromCommits(
   const {
     headSha,
     commits,
+    diff = null,
     branch = "main",
     deploymentId = null,
     previousSha = null,
@@ -333,7 +331,6 @@ export async function createReleaseFromCommits(
   if (commits.length === 0) return null;
 
   const classified = classifyCommits(commits);
-  const versionType = determineVersionType(classified);
 
   const existing = await findReleaseByCommit(headSha);
   if (existing) {
@@ -358,6 +355,7 @@ export async function createReleaseFromCommits(
         improvements: existing.improvements,
         bugFixes: existing.bugFixes,
         securityNotes: existing.securityNotes,
+        category: existing.category as ReleaseInfo["category"],
       },
       created: false,
     };
@@ -365,8 +363,11 @@ export async function createReleaseFromCommits(
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const baseVersion = await getLatestPublishedVersion();
-    const version = incrementVersion(baseVersion, versionType);
-    const releaseInfo = generateReleaseInfo(classified, version, versionType);
+    // Version type is decided from the changelog, which needs the diff, so the
+    // base is read first and the type resolved from the rendered content.
+    const probe = generateReleaseInfo(classified, baseVersion, diff);
+    const version = incrementVersion(baseVersion, probe.type);
+    const releaseInfo = generateReleaseInfo(classified, version, diff);
     const slug = `${toSlug(releaseInfo.title)}-${version.replace(/\./g, "-")}`;
 
     try {
@@ -375,7 +376,7 @@ export async function createReleaseFromCommits(
           slug,
           version: releaseInfo.version,
           type: releaseInfo.type,
-          category: suggestCategory(versionType),
+          category: releaseInfo.category,
           title: releaseInfo.title,
           summary: releaseInfo.summary,
           whatsNew: releaseInfo.whatsNew,

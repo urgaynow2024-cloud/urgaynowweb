@@ -168,6 +168,26 @@ jobs:
 
           count=$(jq 'length' <<<"$commits")
 
+          # The files this deployment actually changed. This is what the changelog
+          # describes, so a release reads correctly even when the commit subjects
+          # are internal or unhelpful.
+          name_status=$(mktemp)
+          short_stat=$(mktemp)
+          git diff --name-status "$from..$sha" > "$name_status"
+          git diff --shortstat "$from..$sha" > "$short_stat"
+
+          diff=$(jq -n --rawfile st "$name_status" --rawfile ss "$short_stat" '
+            ($st | split("\n") | map(select(length > 0) | split("\t")) | map(select(length >= 2))
+              | map({ status: (.[0] | .[0:1]), path: .[-1] })) as $files
+            | ($ss | capture("(?<files>[0-9]+) files? changed(?:, (?<adds>[0-9]+) insertions?\\(\\+\\))?(?:, (?<dels>[0-9]+) deletions?\\(-\\))?") // {}) as $stats
+            | {
+                files: $files,
+                additions: (($stats.adds // "0") | tonumber),
+                deletions: (($stats.dels // "0") | tonumber)
+              }
+          ')
+          rm -f "$name_status" "$short_stat"
+
           {
             echo "sha=$sha"
             echo "from=$from"
@@ -175,12 +195,15 @@ jobs:
             echo "has_commits=$([ "$count" -gt 0 ] && echo true || echo false)"
             echo "site=$site"
             echo "branch=$branch"
+            echo "diff<<DIFF_EOF"
+            echo "$diff"
+            echo "DIFF_EOF"
             echo "commits<<COMMITS_EOF"
             echo "$commits"
             echo "COMMITS_EOF"
           } >> "$GITHUB_OUTPUT"
 
-          echo "Release range: $from..$sha ($count commit(s))"
+          echo "Release range: $from..$sha ($count commit(s), $(jq '.files | length' <<<"$diff") file(s) changed)"
 
       - name: Publish the update
         id: publish
@@ -193,6 +216,7 @@ jobs:
           BRANCH: ${{ steps.release.outputs.branch }}
           DEPLOYMENT_ID: ${{ steps.deploy.outputs.deployment_id }}
           COMMITS: ${{ steps.release.outputs.commits }}
+          DIFF: ${{ steps.release.outputs.diff }}
           REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
@@ -204,10 +228,11 @@ jobs:
             --arg deploymentId "$DEPLOYMENT_ID" \
             --arg repository "$REPOSITORY" \
             --argjson commits "$COMMITS" \
+            --argjson diff "$DIFF" \
             '{ headSha: $headSha, branch: $branch, previousSha: $previousSha,
                deploymentId: $deploymentId, repository: $repository,
                deployment: { target: "production", state: "ready" },
-               commits: $commits }')
+               commits: $commits, diff: $diff }')
 
           response=$(curl -sS -w '\n%{http_code}' --max-time 60 \
             -X POST "${SITE_URL}/api/releases" \

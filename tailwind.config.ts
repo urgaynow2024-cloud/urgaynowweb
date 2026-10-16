@@ -2,14 +2,17 @@ import type { Config } from "tailwindcss";
 
 const config: Config = {
   /*
-     * Seasonal themes are night themes. Treating `[data-site-theme="halloween"]`
-     * as a dark theme means the existing `dark:` variants - which every UGN
-     * component already writes for night backgrounds - resolve to the UGN
-     * Halloween palette in `app/globals.css`. Same markup, no component edits.
+     * Seasonal night themes. Treating `[data-site-theme="halloween"]` and
+     * `[data-site-theme="christmas"]` as dark themes means the existing `dark:`
+     * variants — which every UGN component already writes for night backgrounds
+     * — resolve to the seasonal palettes in `app/globals.css` with no component
+     * or layout edits. In production neither attribute ever appears on `<html>`
+     * (Halloween only while its schedule is active, Christmas has no schedule), so
+     * this only affects a theme that is not live.
      */
   darkMode: [
     "variant",
-    "&:where(.dark, .dark *, [data-site-theme='halloween'], [data-site-theme='halloween'] *)",
+    "&:where(.dark, .dark *, [data-site-theme='halloween'], [data-site-theme='halloween'] *, [data-site-theme='christmas'], [data-site-theme='christmas'] *)",
   ],
   content: [
     "./app/**/*.{ts,tsx}",

@@ -5,9 +5,12 @@ import { Footer } from "@/components/Footer";
 import { ThemeProvider, SeasonalThemeProvider, themeInitScript } from "@/components/ThemeProvider";
 import { ToastProvider } from "@/components/Toast";
 import { HalloweenDecorations } from "@/components/halloween/HalloweenDecorations";
+import { ChristmasDecorations } from "@/components/christmas/ChristmasDecorations";
 import { SeasonalBanner } from "@/components/halloween/SeasonalBanner";
 import { HalloweenIconProvider } from "@/components/halloween/HalloweenIconProvider";
+import { ChristmasIconProvider } from "@/components/christmas/ChristmasIconProvider";
 import { hasHalloweenIcon } from "@/lib/halloween-icon-server";
+import { hasChristmasIcon } from "@/lib/christmas-icon-server";
 import { getActiveThemeId } from "@/lib/theme-resolver";
 import { safeQuery } from "@/lib/safeQuery";
 import { Analytics } from "@vercel/analytics/next";
@@ -50,6 +53,7 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const halloweenIconAvailable = hasHalloweenIcon();
+  const christmasIconAvailable = hasChristmasIcon();
   // Resolved on the server so the seasonal theme is painted on the very first
   // frame instead of flashing the normal UGN palette until the client fetch
   // resolves. Cached for a minute by the theme resolver.
@@ -64,18 +68,21 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ThemeProvider>
           <SeasonalThemeProvider initialThemeId={seasonalTheme}>
             <HalloweenIconProvider available={halloweenIconAvailable}>
-            <ToastProvider>
-            <HalloweenDecorations />
-            <a href="#main" className="skip-link">
-              Skip to content
-            </a>
-            <SeasonalBanner />
-            <HeaderWrapper />
-              <main id="main" className="min-h-[60vh]">
-                {children}
-              </main>
-              <Footer />
-            </ToastProvider>
+              <ChristmasIconProvider available={christmasIconAvailable}>
+                <ToastProvider>
+                  <HalloweenDecorations />
+                  <ChristmasDecorations />
+                  <a href="#main" className="skip-link">
+                    Skip to content
+                  </a>
+                  <SeasonalBanner />
+                  <HeaderWrapper />
+                  <main id="main" className="min-h-[60vh]">
+                    {children}
+                  </main>
+                  <Footer />
+                </ToastProvider>
+              </ChristmasIconProvider>
             </HalloweenIconProvider>
           </SeasonalThemeProvider>
         </ThemeProvider>

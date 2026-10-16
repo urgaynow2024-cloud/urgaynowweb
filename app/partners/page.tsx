@@ -6,6 +6,9 @@ import { safeQuery } from "@/lib/safeQuery";
 import { SectionHeading } from "@/components/SectionHeading";
 import { ScrollFadeIn, StaggeredList } from "@/components/ScrollAnimation";
 import { EmptyState } from "@/components/EmptyState";
+import Link from "next/link";
+import { Alert } from "@/components/ui";
+import { Card } from "@/components/ui";
 
 export const revalidate = 3600;
 
@@ -44,36 +47,56 @@ export default async function PartnersPage() {
       <Container className="py-16">
         {partners.length === 0 ? (
           <EmptyState
-            icon="🤝"
+            icon="ðŸ¤"
             title="No partners yet"
             description="Check back soon for our growing list of community friends!"
+            action={
+              <Link href="/partnership/apply" className="btn-primary">
+                Apply to become a partner
+              </Link>
+            }
           />
         ) : (
-          <div className="space-y-16">
-            {tags.map((tag) => (
-              <section key={tag}>
-                <SectionHeading>{tag}</SectionHeading>
-                <StaggeredList className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {partners
-                    .filter((p) => p.tag === tag)
-                    .map((p, i) => (
-                      <ScrollFadeIn key={p.id} delay={i * 60}>
-                        <PartnerCard
-                          partner={{
-                            id: p.id,
-                            name: p.name,
-                            logoUrl: p.logoUrl ?? "",
-                            description: p.description ?? "",
-                            links: parseSocials(p.links),
-                            tag: p.tag ?? "",
-                          }}
-                        />
-                      </ScrollFadeIn>
-                    ))}
-                </StaggeredList>
-              </section>
-            ))}
-          </div>
+          <>
+            <div className="space-y-16">
+              {tags.map((tag) => (
+                <section key={tag}>
+                  <SectionHeading>{tag}</SectionHeading>
+                  <StaggeredList className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {partners
+                      .filter((p) => p.tag === tag)
+                      .map((p, i) => (
+                        <ScrollFadeIn key={p.id} delay={i * 60}>
+                          <PartnerCard
+                            partner={{
+                              id: p.id,
+                              name: p.name,
+                              logoUrl: p.logoUrl ?? "",
+                              description: p.description ?? "",
+                              links: parseSocials(p.links),
+                              tag: p.tag ?? "",
+                            }}
+                          />
+                        </ScrollFadeIn>
+                      ))}
+                  </StaggeredList>
+                </section>
+              ))}
+            </div>
+
+            <Card className="mt-12 p-6 sm:p-8">
+              <h2 className="text-2xl sm:text-3xl font-bold text-ink-900 dark:text-white mb-4">
+                Interested in partnering with us?
+              </h2>
+              <p className="text-sm text-ink-600 dark:text-ink-400 mb-6">
+                Weâ€™re always looking for communities, creators, and groups to partner with.
+                Submit an application and our staff team will review it.
+              </p>
+              <Link href="/partnership/apply" className="btn-primary">
+                Apply for a partnership
+              </Link>
+            </Card>
+          </>
         )}
       </Container>
     </>

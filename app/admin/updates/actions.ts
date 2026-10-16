@@ -328,10 +328,12 @@ export async function generateDraftFromRecentChanges() {
   if (commits.length === 0) redirect("/admin/updates?error=1");
 
   const classified = classifyCommitsRG(commits);
-  const versionType = determineVersionType(classified);
   const latestVersion = await getLatestPublishedVersion();
-  const newVersion = incrementVersion(latestVersion, versionType);
-  const releaseInfo = generateReleaseInfo(classified, newVersion, versionType);
+  // No diff is available in a server action, so the changelog is built from the
+  // commit subjects alone; the release type is resolved from that content.
+  const probe = generateReleaseInfo(classified, latestVersion, null);
+  const newVersion = incrementVersion(latestVersion, probe.type);
+  const releaseInfo = generateReleaseInfo(classified, newVersion, null);
 
   const slug = await uniqueSlug(releaseInfo.title);
 

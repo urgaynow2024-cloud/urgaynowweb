@@ -31,6 +31,7 @@ model Staff {
   reportAuditLogs ReportAuditLog[] @relation("ReportAuditActor")
   reviewedReviews Review[] @relation("ReviewReviewer")
   reviewModerationLogs ReviewModerationLog[] @relation("ReviewModerationLogStaff")
+  partnerApplications PartnerApplication[] @relation("PartnerApplicationReviewer")
 
   @@index([rank])
   @@index([sortOrder])
@@ -46,6 +47,40 @@ model Partner {
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+/// Partnership applications submitted through the public application form.
+enum PartnerApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model PartnerApplication {
+  id             String                 @id @default(cuid())
+  name           String
+  email          String
+  discord        String                 @default("")
+  website        String                 @default("")
+  description    String
+  status         PartnerApplicationStatus @default(PENDING)
+  submittedAt    DateTime               @default(now())
+  reviewedAt     DateTime?
+  reviewedBy     String?
+  reviewedByStaff Staff?                @relation("PartnerApplicationReviewer", fields: [reviewedBy], references: [id])
+  rejectionReason String                @default("")
+  internalNotes  String                 @default("")
+  // Client-generated submit token used to make retries idempotent (unique when present).
+  idempotencyKey   String?              @unique
+  // Fingerprint used to detect accidental/near-identical duplicate submissions.
+  dedupeHash       String               @default("")
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+
+  @@index([status, createdAt])
+  @@index([email])
+  @@index([idempotencyKey])
+  @@index([dedupeHash, createdAt])
 }
 
 model Announcement {
@@ -592,6 +627,9 @@ model SiteTheme {
   id             String     @id @default(cuid())
   mode           ThemeMode  @default(MANUAL)
   manualThemeId  String?    // references theme registry ID
+  /// When the manual override stops applying. NULL = never expires.
+  /// A NULL on pre-existing rows preserves the previous behaviour exactly.
+  overrideExpiresAt DateTime?
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
   schedules      ThemeSchedule[]
@@ -681,9 +719,23 @@ model SupportRequest {
   assignedStaffId   String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  // Salted SHA-256 of the submitter IP. Never stores the raw address.
+  reporterIpHash    String    @default("")
+  // Client-generated submit token used to make retries idempotent (unique when present).
+  idempotencyKey    String?   @unique
+  // Fingerprint used to detect accidental/near-identical duplicate submissions.
+  dedupeHash        String    @default("")
+  // Discord staff notification delivery state: PENDING | SENT | FAILED | SKIPPED
+  webhookStatus     String    @default("PENDING")
+  webhookError      String    @default("")
+  webhookAttempts   Int       @default(0)
+  webhookSentAt     DateTime?
 
   @@index([status, createdAt])
   @@index([ticketNumber])
+  @@index([idempotencyKey])
+  @@index([dedupeHash, createdAt])
+  @@index([webhookStatus])
 }
 
 model ErrorLog {

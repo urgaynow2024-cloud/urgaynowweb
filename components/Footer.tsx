@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getFooterSocials } from "@/lib/nav";
 import { HalloweenFooterMark } from "@/components/halloween/HalloweenDecor";
+import { ChristmasFooterMark } from "@/components/christmas/ChristmasDecor";
 
 export async function Footer() {
   const socials = await getFooterSocials();
@@ -169,6 +170,7 @@ export async function Footer() {
           <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
             <p className="text-sm text-ink-500 dark:text-ink-400">
               <HalloweenFooterMark />
+              <ChristmasFooterMark />
               © {year} Ur Gay Now. Made with <span className="text-brand-500">💜</span> for the community.
             </p>
             <div className="flex items-center gap-4 text-sm">

@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { Card } from "@/components/admin/ui/Card";
 import { Badge } from "@/components/admin/ui/Badge";
 import { EmptyState } from "@/components/admin/ui/Avatar";
-import { IconLink, IconPlus, IconSearch, IconFilter } from "@/components/admin/ui/icons";
+import { IconArrowRight, IconLink, IconPlus, IconSearch, IconFilter } from "@/components/admin/ui/icons";
 import { Alert } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
 import { updatePartnershipStatus } from "./actions";
@@ -183,6 +183,12 @@ export default async function AdminPartnershipsPage({
                     </td>
                     <td className="px-5 py-3 text-right font-semibold">
                       <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/admin/partnerships/${app.id}`}
+                          className="btn-xs btn-outline"
+                        >
+                          <IconArrowRight size={14} /> View
+                        </Link>
                         {app.status === "PENDING" && (
                           <form action={updatePartnershipStatus} className="inline">
                             <input type="hidden" name="id" value={app.id} />

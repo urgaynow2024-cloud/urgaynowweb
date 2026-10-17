@@ -8,7 +8,8 @@ import { Card } from "@/components/admin/ui/Card";
 import { Badge } from "@/components/admin/ui/Badge";
 import { Alert } from "@/components/ui";
 import { Button } from "@/components/ui/Button";
-import { IconCalendar, IconClock, IconFlag, IconArrowLeft } from "@/components/admin/ui/icons";
+import { IconArrowLeft } from "@/components/admin/ui/icons";
+import { updateTicket } from "../actions";
 
 export const metadata: Metadata = {
   title: "Ticket Detail",
@@ -51,17 +52,39 @@ function priorityTone(priority: string): "brand" | "danger" | "neutral" {
   }
 }
 
-export default async function AdminTicketDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+const STATUSES: { value: string; label: string }[] = [
+  { value: "OPEN", label: "Open" },
+  { value: "IN_REVIEW", label: "In Review" },
+  { value: "WAITING_INFO", label: "Waiting for Information" },
+  { value: "RESOLVED", label: "Resolved" },
+  { value: "DISMISSED", label: "Dismissed" },
+  { value: "CLOSED", label: "Closed" },
+];
+
+const PRIORITIES: { value: string; label: string }[] = [
+  { value: "URGENT", label: "Urgent" },
+  { value: "HIGH", label: "High" },
+  { value: "NORMAL", label: "Normal" },
+  { value: "LOW", label: "Low" },
+];
+
+async function requireStaff() {
   const session = await getSession();
   if (!session) redirect("/admin/login");
 
   const staff = await prisma.staff.findUnique({ where: { id: session.sub } });
   const allowedRanks = ["founder", "co_founder", "co_owner", "admin", "safeguarding", "moderator"];
   if (!staff || !allowedRanks.includes(staff.rank)) redirect("/admin");
+
+  return staff;
+}
+
+export default async function AdminTicketDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const staff = await requireStaff();
 
   const { id } = await params;
   if (!id || !/^[a-z0-9]{15,32}$/i.test(id)) {
@@ -122,17 +145,14 @@ export default async function AdminTicketDetailPage({
 
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-2">
-              <IconFlag size={16} className="text-ink-500 dark:text-ink-400" />
               <span className="text-sm font-mono font-bold text-brand-600 dark:text-brand-400">{ticket.ticketNumber}</span>
             </div>
             <div className="flex items-center gap-2">
-              <IconCalendar size={16} className="text-ink-500 dark:text-ink-400" />
               <span className="text-sm text-ink-600 dark:text-ink-400">
                 {new Date(ticket.createdAt).toLocaleString()}
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <IconClock size={16} className="text-ink-500 dark:text-ink-400" />
               <span className="text-sm text-ink-600 dark:text-ink-400">
                 {new Date(ticket.updatedAt).toLocaleString()}
               </span>
@@ -151,26 +171,52 @@ export default async function AdminTicketDetailPage({
             <label className="block text-xs font-semibold text-ink-500 dark:text-ink-400 uppercase tracking-wider mb-1">Contact Information</label>
             <span className="text-sm text-ink-700 dark:text-ink-300 break-all">{ticket.contactInfo}</span>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-ink-500 dark:text-ink-400 uppercase tracking-wider mb-1">Status</label>
-            <Badge tone={statusTone(ticket.status) as "brand" | "success" | "danger" | "warning" | "neutral"}>
-              {statusLabel(ticket.status)}
-            </Badge>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-ink-500 dark:text-ink-400 uppercase tracking-wider mb-1">Priority</label>
-            <Badge tone={priorityTone(ticket.priority) as "brand" | "danger" | "neutral"}>
-              {ticket.priority}
-            </Badge>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-ink-500 dark:text-ink-400 uppercase tracking-wider mb-1">Assigned Staff</label>
-            {ticket.assignedStaffId ? (
-              <span className="text-sm text-ink-700 dark:text-ink-300">{ticket.assignedStaffId}</span>
-            ) : (
-              <span className="text-sm text-ink-400 dark:text-ink-500">Unassigned</span>
-            )}
-          </div>
+        </div>
+
+        <div className="mt-6 pt-6 border-t border-ink-100 dark:border-ink-800">
+          <h3 className="text-sm font-semibold text-ink-900 dark:text-white mb-3">Manage Ticket</h3>
+          <form action={updateTicket} className="space-y-4">
+            <input type="hidden" name="id" value={ticket.id} />
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div>
+                <label className="block text-xs font-semibold text-ink-500 dark:text-ink-400 uppercase tracking-wider mb-1">Status</label>
+                <select
+                  name="status"
+                  defaultValue={ticket.status}
+                  className="block w-full rounded-xl border border-ink-200 bg-white px-4 py-3 text-sm text-ink-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-ink-700 dark:bg-ink-900 dark:text-white dark:focus:border-brand-500"
+                >
+                  {STATUSES.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-ink-500 dark:text-ink-400 uppercase tracking-wider mb-1">Priority</label>
+                <select
+                  name="priority"
+                  defaultValue={ticket.priority}
+                  className="block w-full rounded-xl border border-ink-200 bg-white px-4 py-3 text-sm text-ink-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-ink-700 dark:bg-ink-900 dark:text-white dark:focus:border-brand-500"
+                >
+                  {PRIORITIES.map((p) => (
+                    <option key={p.value} value={p.value}>
+                      {p.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-ink-500 dark:text-ink-400 uppercase tracking-wider mb-1">Assigned Staff</label>
+                <select name="assignedStaffId" defaultValue={ticket.assignedStaffId ?? ""} className="block w-full rounded-xl border border-ink-200 bg-white px-4 py-3 text-sm text-ink-900 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 dark:border-ink-700 dark:bg-ink-900 dark:text-white dark:focus:border-brand-500">
+                  <option value="">Unassigned</option>
+                </select>
+              </div>
+            </div>
+            <Button type="submit" variant="primary" className="w-full sm:w-auto">
+              Save Changes
+            </Button>
+          </form>
         </div>
 
         <div className="mt-6 pt-6 border-t border-ink-100 dark:border-ink-800">

@@ -121,7 +121,7 @@ export default async function ReportDetailPage({
     redirect("/admin/login?from=/admin/reports");
   }
 
-  const staff = await prisma.staff.findUnique({ where: { id: session.sub } });
+  const staff = await prisma.staff.findFirst({ where: { name: session.sub } });
   const permissions = getReportPermissionsForRank(staff?.rank);
   if (!staff || !permissions.includes("reports.view")) {
     redirect("/admin");

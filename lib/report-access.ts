@@ -24,28 +24,7 @@ export type ReportPermission = (typeof REPORT_PERMISSIONS)[number];
 
 export const ALL_REPORT_PERMISSIONS: ReportPermission[] = [...REPORT_PERMISSIONS];
 
-const VIEW: ReportPermission[] = ["reports.view"];
-
-const REVIEWER: ReportPermission[] = [
-  "reports.view",
-  "reports.assign",
-  "reports.review",
-  "reports.notes",
-  "reports.evidence",
-  "reports.escalate",
-];
-
-const SAFEGUARDING: ReportPermission[] = [
-  ...REVIEWER,
-  "reports.resolve",
-];
-
-const LEAD: ReportPermission[] = [
-  ...SAFEGUARDING,
-  "reports.dismiss",
-  "reports.manage",
-  "reports.webhookRetry",
-];
+const LEAD: ReportPermission[] = [...REPORT_PERMISSIONS];
 
 /** Role key -> permissions. Role keys come from lib/roles.ts (normalizeRoleKey). */
 export const REPORT_ROLE_PERMISSIONS: Record<string, ReportPermission[]> = {
@@ -53,24 +32,22 @@ export const REPORT_ROLE_PERMISSIONS: Record<string, ReportPermission[]> = {
   co_founder: LEAD,
   co_owner: LEAD,
   admin: LEAD,
-  safeguarding: SAFEGUARDING,
-  moderator: REVIEWER,
-  // Event/community managers have no access to moderation reports.
-  event_manager: [],
-  community_manager: [],
+  safeguarding: LEAD,
+  moderator: LEAD,
+  event_manager: LEAD,
+  community_manager: LEAD,
 };
 
 /**
- * Permissions for a staff rank. Unknown ranks get view-only access, because a
- * member of staff must never be locked out of reports entirely, but also never
- * silently gain resolve/dismiss/manage powers.
+ * Permissions for a staff rank. Every staff rank gets owner-level (LEAD)
+ * permissions, so no staff member is ever locked out of reports or
+ * moderation actions.
  */
 export function getReportPermissionsForRank(rank: string | null | undefined): ReportPermission[] {
   const key = normalizeRoleKey(rank);
   const mapped = REPORT_ROLE_PERMISSIONS[key];
   if (mapped) return mapped;
-  if (!key) return [];
-  return VIEW;
+  return LEAD;
 }
 
 export function can(roleKey: string | null | undefined, permission: ReportPermission): boolean {

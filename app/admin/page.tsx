@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
+import { prisma } from "@/lib/db";
 import {
   getAttentionCounts,
   getRecentActivity,
@@ -11,6 +14,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { ThemeStatus } from "@/components/admin/ThemeStatus";
 import { StatGridSkeleton, ListSkeleton } from "@/components/Skeleton";
 import { formatDate } from "@/lib/utils";
+import { getReportPermissionsForRank } from "@/lib/report-access";
 import {
   IconUsers,
   IconCalendar,
@@ -57,7 +61,13 @@ function statusTone(status: string) {
   return "badge-danger";
 }
 
-async function DashboardContent({ userName }: { userName: string }) {
+async function DashboardContent({
+  userName,
+  canViewReports,
+}: {
+  userName: string;
+  canViewReports: boolean;
+}) {
   const [attention, overview, activity, health] = await Promise.all([
     getAttentionCounts(),
     getSiteOverview(),
@@ -75,15 +85,19 @@ async function DashboardContent({ userName }: { userName: string }) {
       tone: "text-amber-600 dark:text-amber-400",
       surface: "bg-amber-50 dark:bg-amber-950/30",
     },
-    {
-      label: "Open reports",
-      count: attention.openReports,
-      description: "Reports waiting for a safety review",
-      href: "/admin/reports",
-      icon: <IconFlag size={20} />,
-      tone: "text-red-600 dark:text-red-400",
-      surface: "bg-red-50 dark:bg-red-950/30",
-    },
+    ...(canViewReports
+      ? [
+          {
+            label: "Open reports",
+            count: attention.openReports,
+            description: "Reports waiting for a safety review",
+            href: "/admin/reports",
+            icon: <IconFlag size={20} />,
+            tone: "text-red-600 dark:text-red-400",
+            surface: "bg-red-50 dark:bg-red-950/30",
+          },
+        ]
+      : []),
     {
       label: "Draft announcements",
       count: attention.draftAnnouncements,
@@ -253,10 +267,20 @@ async function DashboardContent({ userName }: { userName: string }) {
 
 export default async function AdminDashboard() {
   const session = await requireAdmin();
+
+  let canViewReports = false;
+  try {
+    const staff = await prisma.staff.findUnique({ where: { id: session.sub } });
+    const permissions = getReportPermissionsForRank(staff?.rank);
+    canViewReports = permissions.includes("reports.view");
+  } catch {
+    canViewReports = false;
+  }
+
   return (
     <AdminLayout>
       <Suspense fallback={<div className="space-y-6"><StatGridSkeleton /><ListSkeleton rows={6} /></div>}>
-        <DashboardContent userName={session.name} />
+        <DashboardContent userName={session.name} canViewReports={canViewReports} />
       </Suspense>
     </AdminLayout>
   );

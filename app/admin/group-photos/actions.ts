@@ -59,7 +59,7 @@ export async function updateGroupPhoto(id: string, formData: FormData) {
   });
   revalidatePath("/", "layout");
   revalidatePath("/groups", "layout");
-  revalidatePath(`/groups/${id}`);
+  revalidatePath(`/groups/${id}`, "page");
   redirect("/admin/group-photos");
 }
 

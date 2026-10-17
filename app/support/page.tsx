@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { Container, PageHeader } from "@/components/Container";
 import { getSetting } from "@/lib/settings";
-import { Alert, Card } from "@/components/ui";
+import { Alert, Button, Card } from "@/components/ui";
 import { SupportContactForm } from "@/components/support/SupportContactForm";
+import { IconTicket } from "@/components/admin/ui/icons";
 
 export const revalidate = 3600;
 
@@ -117,9 +119,18 @@ export default async function SupportPage() {
           )}
 
           <div id="support-form" className="mb-12">
-            <h2 className="section-title-accent text-2xl sm:text-3xl mb-6">
-              Submit a request
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="section-title-accent text-2xl sm:text-3xl mb-0">
+                Submit a request
+              </h2>
+              <Link
+                href="/supporttracker"
+                className="inline-flex items-center gap-2 btn-secondary btn-sm"
+              >
+                <IconTicket size={14} aria-hidden />
+                Track Your Report or Support Ticket
+              </Link>
+            </div>
             <Card className="p-6 sm:p-8">
               <SupportContactForm />
             </Card>

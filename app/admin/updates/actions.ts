@@ -143,7 +143,7 @@ export async function regenerateSummary(id: string, formData: FormData) {
   }
   revalidatePath("/", "layout");
   revalidatePath("/updates");
-  revalidatePath(`/updates/${existing.slug}`);
+  revalidatePath(`/updates/${existing.slug}`, "page");
   redirect("/admin/updates");
 }
 
@@ -251,7 +251,7 @@ export async function updateUpdate(id: string, formData: FormData) {
   }
   revalidatePath("/", "layout");
   revalidatePath("/updates");
-  revalidatePath(`/updates/${slug}`);
+  revalidatePath(`/updates/${slug}`, "page");
   redirect("/admin/updates");
 }
 
@@ -301,7 +301,7 @@ export async function toggleFeatured(id: string, featured: boolean) {
     const update = await prisma.update.update({ where: { id }, data: { featured } });
     revalidatePath("/", "layout");
     revalidatePath("/updates");
-    revalidatePath(`/updates/${update.slug}`);
+    revalidatePath(`/updates/${update.slug}`, "page");
   } catch {
     redirect("/admin/updates");
   }

@@ -225,6 +225,10 @@ export const IconNote = (p: IconProps) => (
   <svg {...base(p)}><path d="M14 2.5H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8z" /><path d="M14 2.5v6h6" /><path d="M8 12h8M8 16h8" /></svg>
 );
 
+export const IconTicket = (p: IconProps) => (
+  <svg {...base(p)}><path d="M3 5a2 2 0 0 1 2-2h1.17a2 2 0 0 1 0 4H5a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-1.17a2 2 0 0 1 4 0V19a2 2 0 0 0 2 2h5a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H9.83a2 2 0 0 1 0-4H21a2 2 0 0 0-2-2V5a2 2 0 0 0-2-2Z" /><path d="M8 7h1M15 7h1M10 12h1" /></svg>
+);
+
 export const IconClipboardText = (p: IconProps) => (
   <svg {...base(p)}><path d="M9 11h6M9 15h6M9 7h6" /><rect x="4" y="5" width="16" height="16" rx="2" /></svg>
 );

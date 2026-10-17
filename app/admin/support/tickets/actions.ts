@@ -41,7 +41,7 @@ export async function updateTicket(formData: FormData) {
       where: { id },
       data: updateData,
     });
-    revalidatePath(`/admin/support/tickets/${id}`);
+    revalidatePath(`/admin/support/tickets/${id}`, "page");
     revalidatePath("/admin/support/tickets");
   } catch {
     redirect(`/admin/support/tickets/${id}?error=1`);

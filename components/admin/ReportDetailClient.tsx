@@ -519,6 +519,7 @@ export function ReportDetailClient({
                 <div className="grid gap-2">
                   {report.status === "OPEN" && report.assignedToId !== currentStaff.id && (
                     <Button
+                      type="button"
                       className="w-full"
                       onClick={() => void runAction("assign", { assigneeId: currentStaff.id })}
                       loading={busyAction === "assign"}
@@ -529,6 +530,7 @@ export function ReportDetailClient({
                   )}
                   {report.assignedToId && report.assignedToId !== currentStaff.id && (
                     <Button
+                      type="button"
                       variant="outline"
                       className="w-full"
                       onClick={() => void runAction("assign", { assigneeId: currentStaff.id })}
@@ -540,6 +542,7 @@ export function ReportDetailClient({
                   )}
                   {report.assignedToId === currentStaff.id && (
                     <Button
+                      type="button"
                       variant="outline"
                       className="w-full"
                       onClick={() => void runAction("unassign")}
@@ -554,6 +557,7 @@ export function ReportDetailClient({
 
               {can("reports.notes") && (
                 <Button
+                  type="button"
                   variant="secondary"
                   className="w-full"
                   onClick={() => {
@@ -568,6 +572,7 @@ export function ReportDetailClient({
 
               {can("reports.resolve") && (
                 <Button
+                  type="button"
                   variant="secondary"
                   className="w-full"
                   onClick={() => {
@@ -583,6 +588,7 @@ export function ReportDetailClient({
               <div className="grid gap-2 sm:grid-cols-2">
                 {can("reports.escalate") && report.status !== "ESCALATED" && (
                   <Button
+                    type="button"
                     variant={report.priority === "URGENT" ? "primary" : "secondary"}
                     className="w-full"
                     onClick={() => {
@@ -597,6 +603,7 @@ export function ReportDetailClient({
 
                 {can("reports.resolve") && (
                   <Button
+                    type="button"
                     variant="success"
                     className="w-full"
                     onClick={() => {
@@ -611,6 +618,7 @@ export function ReportDetailClient({
 
                 {can("reports.dismiss") && (
                   <Button
+                    type="button"
                     variant="ghost"
                     className="w-full"
                     onClick={() => {
@@ -708,6 +716,7 @@ export function ReportDetailClient({
               )}
               {can("reports.webhookRetry") ? (
                 <Button
+                  type="button"
                   variant="secondary"
                   className="w-full"
                   onClick={() => void runAction("retryWebhook")}

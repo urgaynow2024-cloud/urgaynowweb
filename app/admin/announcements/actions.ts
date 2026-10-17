@@ -204,7 +204,7 @@ export async function updateAnnouncement(id: string, formData: FormData) {
   }
   revalidatePath("/", "layout");
   revalidatePath("/news");
-  revalidatePath(`/news/${slug}`);
+  revalidatePath("/news/${slug}", "page");
   redirect("/admin/announcements");
 }
 

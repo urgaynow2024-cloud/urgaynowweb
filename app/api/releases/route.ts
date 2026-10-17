@@ -266,12 +266,12 @@ export async function POST(request: NextRequest) {
 
     // Clear the CDN/full-route cache for the changelog so the new entry is
     // visible immediately rather than after the 60s cache window.
-    for (const path of ["/updates", "/updates/[slug]", "/"]) {
-      try {
-        revalidatePath(path);
-      } catch {
-        // A failed cache purge must not stop the update being published.
-      }
+    try {
+      revalidatePath("/updates");
+      revalidatePath("/updates/[slug]", "page");
+      revalidatePath("/");
+    } catch {
+      // A failed cache purge must not stop the update being published.
     }
 
     // Local verification runs must not post to the live changelog channel.
